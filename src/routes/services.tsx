@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Clock, MessageCircle, ChevronRight } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { Frame } from "@/components/Frame";
 import { SERVICES, formatFCFA, waLink } from "@/lib/salon-data";
 import { useState } from "react";
 
@@ -40,9 +41,7 @@ function ServicesPage() {
         {SERVICES.filter((s) => !active || s.title === active).map((s, i) => (
           <div key={s.id} className="glass animate-fade-up rounded-[28px] p-4" style={{ animationDelay: `${i * 40}ms` }}>
             <div className="flex gap-4">
-              <div className={`grid h-24 w-24 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${s.tone} text-4xl shadow-soft`}>
-                {s.emoji}
-              </div>
+              <Frame tone={s.tone} rounded="rounded-2xl" className="h-24 w-24 shrink-0" />
               <div className="flex-1 min-w-0">
                 <h3 className="font-display text-lg font-semibold leading-tight">{s.title}</h3>
                 <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{s.desc}</p>

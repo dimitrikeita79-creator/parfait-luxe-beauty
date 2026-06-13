@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Calendar, MessageCircle, MapPin, BookOpen, Star, ChevronRight, Sparkles } from "lucide-react";
 import { AppShell, GlassCard, SectionTitle } from "@/components/AppShell";
-import { SERVICES, PRODUCTS, GALLERY, TESTIMONIALS, formatFCFA, waLink, LOCATION } from "@/lib/salon-data";
+import { Frame } from "@/components/Frame";
+import { SERVICES, CATALOG, CATALOG_ITEMS, GALLERY, TESTIMONIALS, formatFCFA, waLink, LOCATION } from "@/lib/salon-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,9 +18,10 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const popularServices = SERVICES.slice(0, 4);
-  const popularWigs = PRODUCTS.filter((p) => p.category.includes("Perruque")).slice(0, 4);
-  const popularMeches = PRODUCTS.filter((p) => p.category.includes("Mèches")).slice(0, 4);
+  const popularWigs = CATALOG_ITEMS.perruques.slice(0, 4);
+  const popularBraids = CATALOG_ITEMS.coiffure.slice(0, 4);
   const works = GALLERY.slice(0, 6);
+  const topCategories = CATALOG.slice(0, 4);
 
   return (
     <AppShell>
@@ -65,7 +66,7 @@ function Index() {
           { label: "Réserver", icon: Calendar, to: "/contact" as const, href: undefined },
           { label: "WhatsApp", icon: MessageCircle, to: undefined, href: waLink() },
           { label: "Itinéraire", icon: MapPin, to: undefined, href: LOCATION.mapsLink },
-          { label: "Catalogue", icon: BookOpen, to: "/products" as const, href: undefined },
+          { label: "Catalogue", icon: BookOpen, to: "/catalog" as const, href: undefined },
         ].map(({ label, icon: Icon, to, href }) => {
           const inner = (
             <div className="glass flex flex-col items-center gap-1.5 rounded-2xl p-3 transition active:scale-95">
@@ -89,7 +90,7 @@ function Index() {
         {popularServices.map((s) => (
           <Link key={s.id} to="/services" className="snap-start">
             <div className="glass w-44 shrink-0 rounded-[24px] p-4">
-              <div className={`grid h-24 w-full place-items-center rounded-2xl bg-gradient-to-br ${s.tone} text-4xl`}>{s.emoji}</div>
+              <Frame tone={s.tone} rounded="rounded-2xl" className="h-24 w-full" />
               <p className="mt-3 font-semibold text-sm leading-tight">{s.title}</p>
               <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2">{s.desc}</p>
               <p className="mt-2 text-xs font-semibold text-gold">Dès {formatFCFA(s.price)}</p>
@@ -98,40 +99,56 @@ function Index() {
         ))}
       </div>
 
+      {/* Catalogue teaser */}
+      <SectionTitle title="Catalogue" action={<Link to="/catalog" className="text-xs font-medium text-[var(--gold-deep)]">Tout voir</Link>} />
+      <div className="grid grid-cols-2 gap-3">
+        {topCategories.map((c) => (
+          <Link key={c.slug} to="/catalog/$category" params={{ category: c.slug }} className="block">
+            <Frame tone={c.tone} rounded="rounded-[24px]" className="aspect-[5/4] w-full">
+              <div className="absolute inset-x-0 bottom-0 p-3">
+                <p className="font-display text-base font-semibold text-white drop-shadow">{c.name}</p>
+                <p className="text-[10px] font-medium text-white/85">{c.countLabel}</p>
+              </div>
+            </Frame>
+          </Link>
+        ))}
+      </div>
+
       {/* Realisations */}
       <SectionTitle title="Nos réalisations" action={<Link to="/gallery" className="text-xs font-medium text-[var(--gold-deep)]">Galerie</Link>} />
       <div className="grid grid-cols-3 gap-2">
         {works.map((g) => (
-          <Link key={g.id} to="/gallery" className={`relative aspect-square overflow-hidden rounded-2xl bg-gradient-to-br ${g.tone} grid place-items-center text-3xl shadow-soft`}>
-            <span>{g.emoji}</span>
-            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-1.5 text-[9px] font-medium text-white">{g.cat}</span>
+          <Link key={g.id} to="/gallery" className="block aspect-square">
+            <Frame tone={g.tone} rounded="rounded-2xl" className="h-full w-full">
+              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent p-1.5 text-[9px] font-medium text-white">{g.cat}</span>
+            </Frame>
           </Link>
         ))}
       </div>
 
       {/* Popular wigs */}
-      <SectionTitle title="Perruques populaires" action={<Link to="/products" className="text-xs font-medium text-[var(--gold-deep)]">Tout voir</Link>} />
+      <SectionTitle title="Perruques populaires" action={<Link to="/catalog/$category" params={{ category: "perruques" }} className="text-xs font-medium text-[var(--gold-deep)]">Tout voir</Link>} />
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory">
         {popularWigs.map((p) => (
-          <Link key={p.id} to="/products" className="snap-start">
+          <Link key={p.id} to="/catalog/$category" params={{ category: "perruques" }} className="snap-start">
             <div className="glass w-40 shrink-0 rounded-[24px] p-3">
-              <div className="grid h-28 w-full place-items-center rounded-2xl bg-gradient-to-br from-amber-200/60 to-rose-200/40 text-5xl">{p.emoji}</div>
+              <Frame tone="from-amber-300/70 via-yellow-200/60 to-rose-200/40" rounded="rounded-2xl" className="h-28 w-full" />
               <p className="mt-2 text-xs font-semibold leading-tight line-clamp-2">{p.name}</p>
-              <p className="mt-1 text-[11px] font-semibold text-gold">{formatFCFA(p.price)}</p>
+              <p className="mt-1 text-[11px] font-semibold text-gold">{formatFCFA(p.price ?? 0)}</p>
             </div>
           </Link>
         ))}
       </div>
 
-      {/* Popular meches */}
-      <SectionTitle title="Mèches populaires" action={<Link to="/products" className="text-xs font-medium text-[var(--gold-deep)]">Tout voir</Link>} />
+      {/* Popular braids */}
+      <SectionTitle title="Coiffures populaires" action={<Link to="/catalog/$category" params={{ category: "coiffure" }} className="text-xs font-medium text-[var(--gold-deep)]">Tout voir</Link>} />
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory">
-        {popularMeches.map((p) => (
-          <Link key={p.id} to="/products" className="snap-start">
+        {popularBraids.map((p) => (
+          <Link key={p.id} to="/catalog/$category" params={{ category: "coiffure" }} className="snap-start">
             <div className="glass w-40 shrink-0 rounded-[24px] p-3">
-              <div className="grid h-28 w-full place-items-center rounded-2xl bg-gradient-to-br from-rose-200/60 to-amber-100/40 text-5xl">{p.emoji}</div>
+              <Frame tone="from-rose-300/70 via-amber-200/60 to-yellow-100/40" rounded="rounded-2xl" className="h-28 w-full" />
               <p className="mt-2 text-xs font-semibold leading-tight line-clamp-2">{p.name}</p>
-              <p className="mt-1 text-[11px] font-semibold text-gold">{formatFCFA(p.price)}</p>
+              <p className="mt-1 text-[11px] font-semibold text-gold">{formatFCFA(p.price ?? 0)}</p>
             </div>
           </Link>
         ))}
@@ -152,16 +169,18 @@ function Index() {
       </div>
 
       {/* Promo */}
-      <SectionTitle title="Promotions" />
-      <div className="glass-strong relative overflow-hidden rounded-[28px] p-5">
-        <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-gold opacity-30 blur-3xl" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--gold-deep)]">Offre du mois</span>
-        <p className="font-display mt-1 text-xl font-semibold leading-tight">-20% sur la pose<br/>+ entretien offert</p>
-        <p className="mt-1 text-xs text-muted-foreground">Valable jusqu'au 30/06</p>
-        <a href={waLink("Bonjour, je souhaite profiter de la promo -20% sur la pose.")} target="_blank" rel="noreferrer" className="bg-gold mt-4 inline-flex items-center gap-1 rounded-full px-4 py-2 text-xs font-semibold text-[oklch(0.15_0.01_60)] shadow-luxe">
-          Réserver maintenant <ChevronRight className="h-3 w-3" />
-        </a>
-      </div>
+      <SectionTitle title="Offres du mois" action={<Link to="/catalog/$category" params={{ category: "promotion" }} className="text-xs font-medium text-[var(--gold-deep)]">Voir tout</Link>} />
+      <Link to="/catalog/$category" params={{ category: "promotion" }} className="block">
+        <div className="glass-strong relative overflow-hidden rounded-[28px] p-5 active:scale-[0.99] transition">
+          <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-gold opacity-30 blur-3xl" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--gold-deep)]">Offre du mois</span>
+          <p className="font-display mt-1 text-xl font-semibold leading-tight">-20% sur la pose<br/>+ entretien offert</p>
+          <p className="mt-1 text-xs text-muted-foreground">11 promos disponibles ce mois</p>
+          <span className="bg-gold mt-4 inline-flex items-center gap-1 rounded-full px-4 py-2 text-xs font-semibold text-[oklch(0.15_0.01_60)] shadow-luxe">
+            Découvrir les promos <ChevronRight className="h-3 w-3" />
+          </span>
+        </div>
+      </Link>
 
       {/* About teaser */}
       <SectionTitle title="À propos" action={<Link to="/about" className="text-xs font-medium text-[var(--gold-deep)]">Découvrir</Link>} />

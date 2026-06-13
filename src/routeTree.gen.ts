@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SplashRouteImport } from './routes/splash'
 import { Route as ServicesRouteImport } from './routes/services'
-import { Route as ProductsRouteImport } from './routes/products'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
@@ -25,11 +24,6 @@ const SplashRoute = SplashRouteImport.update({
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
   path: '/services',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductsRoute = ProductsRouteImport.update({
-  id: '/products',
-  path: '/products',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalleryRoute = GalleryRouteImport.update({
@@ -58,7 +52,6 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
-  '/products': typeof ProductsRoute
   '/services': typeof ServicesRoute
   '/splash': typeof SplashRoute
 }
@@ -67,7 +60,6 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
-  '/products': typeof ProductsRoute
   '/services': typeof ServicesRoute
   '/splash': typeof SplashRoute
 }
@@ -77,36 +69,20 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
-  '/products': typeof ProductsRoute
   '/services': typeof ServicesRoute
   '/splash': typeof SplashRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/about'
-    | '/contact'
-    | '/gallery'
-    | '/products'
-    | '/services'
-    | '/splash'
+  fullPaths: '/' | '/about' | '/contact' | '/gallery' | '/services' | '/splash'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/about'
-    | '/contact'
-    | '/gallery'
-    | '/products'
-    | '/services'
-    | '/splash'
+  to: '/' | '/about' | '/contact' | '/gallery' | '/services' | '/splash'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/contact'
     | '/gallery'
-    | '/products'
     | '/services'
     | '/splash'
   fileRoutesById: FileRoutesById
@@ -116,7 +92,6 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
   GalleryRoute: typeof GalleryRoute
-  ProductsRoute: typeof ProductsRoute
   ServicesRoute: typeof ServicesRoute
   SplashRoute: typeof SplashRoute
 }
@@ -135,13 +110,6 @@ declare module '@tanstack/react-router' {
       path: '/services'
       fullPath: '/services'
       preLoaderRoute: typeof ServicesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/products': {
-      id: '/products'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof ProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gallery': {
@@ -180,10 +148,19 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
   GalleryRoute: GalleryRoute,
-  ProductsRoute: ProductsRoute,
   ServicesRoute: ServicesRoute,
   SplashRoute: SplashRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

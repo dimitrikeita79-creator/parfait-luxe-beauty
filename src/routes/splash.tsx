@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import logoAsset from "@/assets/logo.asset.json";
 
 export const Route = createFileRoute("/splash")({
   component: Splash,
@@ -19,8 +20,8 @@ function Splash() {
         <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[var(--rose)] opacity-50 blur-3xl" />
       </div>
       <div className="relative text-center animate-fade-up">
-        <div className="glass-strong mx-auto grid h-28 w-28 place-items-center rounded-[32px] shadow-luxe">
-          <span className="bg-gold rounded-2xl px-4 py-2 font-display text-2xl font-bold text-[oklch(0.15_0.01_60)]">PD</span>
+        <div className="glass-strong mx-auto grid h-36 w-36 place-items-center rounded-[40px] shadow-luxe overflow-hidden p-3">
+          <img src={logoAsset.url} alt="Parfait Design" className="h-full w-full object-contain animate-float" />
         </div>
         <h1 className="font-display mt-6 text-3xl font-semibold leading-tight">
           Parfait Design<br/><span className="text-gold">Des Mohair</span>

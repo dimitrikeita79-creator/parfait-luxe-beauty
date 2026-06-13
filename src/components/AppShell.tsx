@@ -1,14 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Sparkles, Image as ImageIcon, ShoppingBag, Phone, Moon, Sun, MessageCircle } from "lucide-react";
+import { Home, Sparkles, Image as ImageIcon, LayoutGrid, Phone, Moon, Sun, MessageCircle } from "lucide-react";
 import { type ReactNode } from "react";
 import { useTheme } from "@/lib/theme";
 import { waLink } from "@/lib/salon-data";
+import logoAsset from "@/assets/logo.asset.json";
 
 const NAV = [
   { to: "/", label: "Accueil", icon: Home },
   { to: "/services", label: "Services", icon: Sparkles },
   { to: "/gallery", label: "Galerie", icon: ImageIcon },
-  { to: "/products", label: "Produits", icon: ShoppingBag },
+  { to: "/catalog", label: "Catalogue", icon: LayoutGrid },
   { to: "/contact", label: "Contact", icon: Phone },
 ] as const;
 
@@ -28,8 +29,10 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
       {/* Top bar */}
       <header className="sticky top-0 z-30 px-5 pt-5 pb-3">
         <div className="glass flex items-center justify-between rounded-full px-4 py-2.5">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="bg-gold grid h-9 w-9 place-items-center rounded-full text-sm font-bold text-[oklch(0.15_0.01_60)] shadow-luxe">PD</span>
+          <Link to="/" className="flex items-center gap-2.5">
+            <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-white shadow-luxe ring-1 ring-[var(--gold)]/40">
+              <img src={logoAsset.url} alt="Parfait Design" className="h-full w-full object-contain p-0.5" />
+            </span>
             <div className="leading-tight">
               <p className="font-display text-[13px] font-semibold">Parfait Design</p>
               <p className="text-[10px] tracking-[0.18em] text-muted-foreground uppercase">Des Mohair</p>

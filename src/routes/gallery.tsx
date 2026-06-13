@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { Frame } from "@/components/Frame";
 import { GALLERY, GALLERY_CATEGORIES } from "@/lib/salon-data";
 import { useState } from "react";
 
@@ -46,13 +47,14 @@ function GalleryPage() {
               <button
                 key={g.id}
                 onClick={() => setOpen(g)}
-                className={`relative w-full overflow-hidden rounded-3xl bg-gradient-to-br ${g.tone} grid place-items-center text-6xl shadow-soft active:scale-[0.98] transition animate-fade-up`}
+                className="relative block w-full active:scale-[0.98] transition animate-fade-up"
                 style={{ height: g.h, animationDelay: `${i * 60}ms` }}
               >
-                <span>{g.emoji}</span>
-                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-3 text-left text-xs font-semibold text-white">
-                  {g.cat}
-                </span>
+                <Frame tone={g.tone} rounded="rounded-3xl" className="h-full w-full">
+                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3 text-left text-xs font-semibold text-white">
+                    {g.cat}
+                  </span>
+                </Frame>
               </button>
             ))}
           </div>
@@ -64,9 +66,7 @@ function GalleryPage() {
           <button className="glass absolute top-6 right-6 grid h-10 w-10 place-items-center rounded-full text-white" onClick={() => setOpen(null)}>
             <X className="h-4 w-4" />
           </button>
-          <div className={`grid aspect-[3/4] w-full max-w-xs place-items-center rounded-[32px] bg-gradient-to-br ${open.tone} text-9xl shadow-luxe`}>
-            {open.emoji}
-          </div>
+          <Frame tone={open.tone} rounded="rounded-[32px]" className="aspect-[3/4] w-full max-w-xs" />
           <p className="mt-4 font-display text-xl font-semibold text-white">{open.cat}</p>
         </div>
       )}

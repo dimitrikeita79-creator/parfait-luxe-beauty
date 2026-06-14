@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Clock, MessageCircle, ChevronRight } from "lucide-react";
-import { AppShell } from "@/components/AppShell";
+import { Clock, ChevronRight } from "lucide-react";
+import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
 import { SERVICES, formatFCFA, waLink } from "@/lib/salon-data";
 import { useState } from "react";
@@ -8,9 +8,9 @@ import { useState } from "react";
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Services — Parfait Design Des Mohair" },
+      { title: "Services — Parfait.Design/Desmohair" },
       { name: "description", content: "Tresses, mariage, perruques, coloration, lissage, extensions et conseils beauté." },
-      { property: "og:title", content: "Services — Parfait Design Des Mohair" },
+      { property: "og:title", content: "Services — Parfait.Design/Desmohair" },
       { property: "og:description", content: "Découvrez tous nos services de beauté et coiffure." },
     ],
   }),
@@ -28,7 +28,7 @@ function ServicesPage() {
             onClick={() => setActive(t === "Tout" ? null : t)}
             className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition ${
               (t === "Tout" && !active) || active === t
-                ? "bg-gold text-[oklch(0.15_0.01_60)] shadow-luxe"
+                ? "bg-black text-white shadow-soft"
                 : "glass text-muted-foreground"
             }`}
           >
@@ -39,7 +39,7 @@ function ServicesPage() {
 
       <div className="mt-5 grid grid-cols-1 gap-4">
         {SERVICES.filter((s) => !active || s.title === active).map((s, i) => (
-          <div key={s.id} className="glass animate-fade-up rounded-[28px] p-4" style={{ animationDelay: `${i * 40}ms` }}>
+          <div key={s.id} className="liquid-glass animate-fade-up rounded-[28px] p-4" style={{ animationDelay: `${i * 40}ms` }}>
             <div className="flex gap-4">
               <Frame tone={s.tone} rounded="rounded-2xl" className="h-24 w-24 shrink-0" />
               <div className="flex-1 min-w-0">
@@ -60,7 +60,7 @@ function ServicesPage() {
                 rel="noreferrer"
                 className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-[#25D366] py-2.5 text-xs font-semibold text-white shadow-soft active:scale-[0.98] transition"
               >
-                <MessageCircle className="h-3.5 w-3.5" /> Réserver via WhatsApp
+                <WhatsAppIcon className="h-3.5 w-3.5" /> Réserver via WhatsApp
               </a>
               <Link to="/contact" className="glass inline-flex items-center justify-center gap-1 rounded-full px-4 py-2.5 text-xs font-semibold active:scale-[0.98] transition">
                 Détails <ChevronRight className="h-3 w-3" />

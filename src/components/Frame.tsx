@@ -1,11 +1,12 @@
 import { type ReactNode } from "react";
 
 /**
- * Premium photo frame — luxe gradient + gold ring + glossy sheen.
- * Use instead of emoji-on-gradient blocks. Optional `image` for real photos.
+ * Liquid-glass photo frame — white glass + subtle black ring + glossy highlight.
+ * `tone` provides a soft tinted gradient base (kept restrained, no gold).
+ * `image` overlays a real photo when available.
  */
 export function Frame({
-  tone = "from-amber-300/70 via-yellow-200/50 to-rose-200/40",
+  tone = "from-white via-white/80 to-neutral-100",
   image,
   alt,
   className = "",
@@ -20,23 +21,24 @@ export function Frame({
   children?: ReactNode;
 }) {
   return (
-    <div className={`relative overflow-hidden ${rounded} ring-1 ring-[var(--gold)]/30 shadow-luxe ${className}`}>
-      {/* Base luxe gradient */}
+    <div className={`relative overflow-hidden ${rounded} ring-1 ring-black/10 shadow-soft ${className}`}>
+      {/* Tinted base */}
       <div className={`absolute inset-0 bg-gradient-to-br ${tone}`} />
-      {/* Soft radial highlight (top-left) */}
+      {/* Liquid-glass white veil + soft highlight */}
       <div
-        className="absolute inset-0 opacity-80"
+        className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(120% 80% at 15% 10%, oklch(1 0 0 / 0.55), transparent 55%), radial-gradient(80% 60% at 90% 100%, oklch(0.6 0.13 75 / 0.35), transparent 60%)",
+            "linear-gradient(180deg, oklch(1 0 0 / 0.45), oklch(1 0 0 / 0.15)), radial-gradient(120% 80% at 15% 10%, oklch(1 0 0 / 0.7), transparent 60%)",
+          backdropFilter: "blur(8px) saturate(160%)",
         }}
       />
-      {/* Gold mesh sheen */}
+      {/* Subtle dark vignette bottom-right for depth */}
       <div
-        className="absolute inset-0 mix-blend-overlay opacity-50"
+        className="absolute inset-0 opacity-60"
         style={{
           background:
-            "linear-gradient(135deg, oklch(0.95 0.08 85 / 0.6) 0%, transparent 35%, transparent 65%, oklch(0.6 0.12 75 / 0.5) 100%)",
+            "radial-gradient(80% 60% at 90% 100%, oklch(0.2 0 0 / 0.18), transparent 60%)",
         }}
       />
       {/* Optional real photo on top */}
@@ -48,8 +50,8 @@ export function Frame({
           loading="lazy"
         />
       )}
-      {/* Inner gold border */}
-      <div className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-white/30" />
+      {/* Inner highlight border */}
+      <div className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-white/60" />
       {/* Slot for badges / overlays */}
       {children}
     </div>

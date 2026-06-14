@@ -1,8 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Sparkles, Image as ImageIcon, LayoutGrid, Phone, Moon, Sun, MessageCircle } from "lucide-react";
+import { Home, Sparkles, Image as ImageIcon, LayoutGrid, Phone } from "lucide-react";
 import { type ReactNode } from "react";
-import { useTheme } from "@/lib/theme";
-import { waLink } from "@/lib/salon-data";
+import { waLink, BRAND } from "@/lib/salon-data";
 import logoAsset from "@/assets/logo.asset.json";
 
 const NAV = [
@@ -13,38 +12,47 @@ const NAV = [
   { to: "/contact", label: "Contact", icon: Phone },
 ] as const;
 
+export function WhatsAppIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} fill="currentColor" aria-hidden="true">
+      <path d="M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.115-.746.315-.688.645-1.032 1.318-1.06 2.264v.114c-.015.99.472 1.977 1.017 2.78 1.23 1.82 2.506 3.41 4.554 4.34.616.287 2.035.888 2.722.888.817 0 2.15-.515 2.4-1.318.07-.245.27-1.318.27-1.477 0-.36-.158-.474-.443-.616-.317-.157-2.063-.946-2.213-.946zM16.272 25.6c-1.692 0-3.354-.46-4.81-1.318l-.345-.205-3.555.934.95-3.473-.223-.36a9.41 9.41 0 0 1-1.435-5.04c0-5.225 4.245-9.47 9.47-9.47s9.47 4.245 9.47 9.47-4.244 9.47-9.47 9.47zm0-20.804C9.984 4.796 4.88 9.9 4.88 16.188c0 2.022.53 4.022 1.535 5.78L4.8 27.764l5.96-1.55a11.353 11.353 0 0 0 5.512 1.394h.005c6.288 0 11.4-5.105 11.4-11.393 0-3.046-1.185-5.91-3.337-8.063a11.42 11.42 0 0 0-8.067-3.346z"/>
+    </svg>
+  );
+}
+
 export function AppShell({ children, title, subtitle }: { children: ReactNode; title?: string; subtitle?: string }) {
-  const { resolved, toggle } = useTheme();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
     <div className="relative mx-auto min-h-screen max-w-md overflow-hidden">
-      {/* Decorative blobs */}
+      {/* Subtle blobs */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 mx-auto max-w-md">
-        <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-[var(--gold-soft)] opacity-30 blur-3xl" />
-        <div className="absolute top-1/3 -right-20 h-80 w-80 rounded-full bg-[var(--rose)] opacity-40 blur-3xl" />
-        <div className="absolute bottom-10 left-1/4 h-60 w-60 rounded-full bg-[var(--gold)] opacity-20 blur-3xl" />
+        <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-[var(--gold-soft)] opacity-25 blur-3xl" />
+        <div className="absolute bottom-10 left-1/4 h-60 w-60 rounded-full bg-[var(--gold-soft)] opacity-20 blur-3xl" />
       </div>
 
       {/* Top bar */}
       <header className="sticky top-0 z-30 px-5 pt-5 pb-3">
-        <div className="glass flex items-center justify-between rounded-full px-4 py-2.5">
+        <div className="glass-strong flex items-center justify-between rounded-full px-4 py-2.5">
           <Link to="/" className="flex items-center gap-2.5">
-            <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-white shadow-luxe ring-1 ring-[var(--gold)]/40">
-              <img src={logoAsset.url} alt="Parfait Design" className="h-full w-full object-contain p-0.5" />
+            <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-white shadow-soft ring-1 ring-black/5">
+              <img src={logoAsset.url} alt={BRAND} className="h-full w-full object-contain p-0.5" />
             </span>
             <div className="leading-tight">
-              <p className="font-display text-[13px] font-semibold">Parfait Design</p>
-              <p className="text-[10px] tracking-[0.18em] text-muted-foreground uppercase">Des Mohair</p>
+              <p className="font-display text-[13px] font-semibold">Parfait.Design</p>
+              <p className="text-[10px] tracking-[0.18em] text-muted-foreground uppercase">Desmohair</p>
             </div>
           </Link>
-          <button
-            onClick={toggle}
-            aria-label="Changer de thème"
-            className="glass grid h-10 w-10 place-items-center rounded-full transition active:scale-95"
+          <a
+            href={waLink()}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="WhatsApp"
+            className="grid h-10 w-10 place-items-center rounded-full text-white shadow-soft transition active:scale-95"
+            style={{ background: "#25D366" }}
           >
-            {resolved === "dark" ? <Sun className="h-4 w-4 text-[var(--gold-soft)]" /> : <Moon className="h-4 w-4 text-foreground" />}
-          </button>
+            <WhatsAppIcon className="h-5 w-5" />
+          </a>
         </div>
         {title && (
           <div className="mt-5 px-1 animate-fade-up">
@@ -57,43 +65,52 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
       {/* Content */}
       <main className="px-5 pb-36">{children}</main>
 
-      {/* Floating WhatsApp */}
-      <a
-        href={waLink()}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="WhatsApp"
-        className="fixed bottom-28 right-5 z-40 grid h-14 w-14 place-items-center rounded-full text-white shadow-luxe transition active:scale-95 animate-float"
-        style={{ background: "linear-gradient(135deg, #25D366, #128C7E)" }}
-      >
-        <MessageCircle className="h-6 w-6" />
-        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-white">
-          <span className="absolute inset-0 animate-ping rounded-full bg-[#25D366] opacity-75" />
-        </span>
-      </a>
-
-      {/* Bottom nav */}
+      {/* Bottom nav with WhatsApp raised */}
       <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-4 pb-4 pt-2">
-        <div className="glass-strong flex items-center justify-between rounded-full px-2 py-2">
-          {NAV.map(({ to, label, icon: Icon }) => {
-            const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
-            return (
-              <Link
-                key={to}
-                to={to}
-                className="relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-2 py-2 transition"
-              >
-                {active && (
-                  <span className="bg-gold absolute inset-0 rounded-full opacity-100 shadow-luxe" />
-                )}
-                <Icon className={`relative h-5 w-5 ${active ? "text-[oklch(0.15_0.01_60)]" : "text-muted-foreground"}`} strokeWidth={active ? 2.4 : 1.8} />
-                <span className={`relative text-[10px] font-medium ${active ? "text-[oklch(0.15_0.01_60)]" : "text-muted-foreground"}`}>{label}</span>
-              </Link>
-            );
-          })}
+        <div className="glass-strong relative flex items-end justify-between rounded-full px-2 py-2">
+          {NAV.slice(0, 2).map(({ to, label, icon: Icon }) => (
+            <NavItem key={to} to={to} label={label} Icon={Icon} pathname={pathname} />
+          ))}
+
+          {/* WhatsApp center raised */}
+          <a
+            href={waLink()}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="WhatsApp"
+            className="-mt-7 grid h-14 w-14 shrink-0 place-items-center rounded-full text-white shadow-luxe ring-4 ring-white transition active:scale-95"
+            style={{ background: "#25D366" }}
+          >
+            <WhatsAppIcon className="h-6 w-6" />
+          </a>
+
+          {NAV.slice(2).map(({ to, label, icon: Icon }) => (
+            <NavItem key={to} to={to} label={label} Icon={Icon} pathname={pathname} />
+          ))}
         </div>
       </nav>
     </div>
+  );
+}
+
+function NavItem({
+  to,
+  label,
+  Icon,
+  pathname,
+}: {
+  to: (typeof NAV)[number]["to"];
+  label: string;
+  Icon: typeof Home;
+  pathname: string;
+}) {
+  const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+  return (
+    <Link to={to} className="relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 transition">
+      {active && <span className="absolute inset-0 rounded-full bg-black/90 shadow-soft" />}
+      <Icon className={`relative h-5 w-5 ${active ? "text-white" : "text-foreground/70"}`} strokeWidth={active ? 2.2 : 1.8} />
+      <span className={`relative text-[10px] font-medium ${active ? "text-white" : "text-foreground/70"}`}>{label}</span>
+    </Link>
   );
 }
 

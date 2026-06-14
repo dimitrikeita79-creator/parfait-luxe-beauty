@@ -8,9 +8,9 @@ import { useState } from "react";
 export const Route = createFileRoute("/gallery")({
   head: () => ({
     meta: [
-      { title: "Galerie — Parfait Design Des Mohair" },
+      { title: "Galerie — Parfait.Design/Desmohair" },
       { name: "description", content: "Nos réalisations : mariages, perruques, tresses, coloration." },
-      { property: "og:title", content: "Galerie — Parfait Design Des Mohair" },
+      { property: "og:title", content: "Galerie — Parfait.Design/Desmohair" },
       { property: "og:description", content: "Inspirations et créations de notre salon." },
     ],
   }),
@@ -32,7 +32,7 @@ function GalleryPage() {
             key={c}
             onClick={() => setCat(c)}
             className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition ${
-              cat === c ? "bg-gold text-[oklch(0.15_0.01_60)] shadow-luxe" : "glass text-muted-foreground"
+              cat === c ? "bg-black text-white shadow-soft" : "glass text-muted-foreground"
             }`}
           >
             {c}

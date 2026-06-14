@@ -1,67 +1,86 @@
-
 ## Objectif
-Restructurer les services et le catalogue de Parfait Design Des Mohair, intégrer le logo officiel, et améliorer la qualité visuelle des cadres (sans icônes/emojis superposés sur les photos).
 
-## 1. Logo officiel
-- Uploader `Parfait design.jpg` via `lovable-assets` → `src/assets/logo.jpg.asset.json`.
-- Afficher le logo dans :
-  - Le header de `AppShell` (remplace l'initiale/texte actuel).
-  - L'écran `splash.tsx` (logo animé central).
-  - Le footer/section "À propos".
+Refondre Parfait.Design/Desmohair en thème **blanc profond + liquid glass + touches de doré discrètes**, supprimer le mode sombre, intégrer le WhatsApp officiel dans la barre de navigation, ajouter un carrousel d'accueil, nettoyer les bugs et préparer l'export Android.
 
-## 2. Services (mise à jour `src/lib/salon-data.ts`)
-Remplacer les 8 services actuels par les 6 officiels :
-1. **Pose Perruque** — Lace frontale, glueless, HD lace
-2. **Coiffure & Tresses** — Box braids, locks, twists
-3. **Coiffure Mariage** — Mariée, demoiselles, essais à domicile
-4. **Tissage Premium** — Brésilien, péruvien, body/deep wave
-5. **Perruques & Mèches** — 100% naturel, lace HD, 18″–30″
-6. **Produits & Équipements** — Soins, fers, miroirs, chaises pro
+---
 
-Chacun garde prix indicatif, durée, et tonalité dorée.
+## 1. Identité & nommage
 
-## 3. Catalogue par catégories (nouvelle page `/catalog`)
-Refonte du catalogue avec 7 cases (cards) — chacune affiche image visuelle + nom + compteur :
+- Renommer partout « Parfait Design Des Mohair » → **« Parfait.Design/Desmohair »** (header, splash, footer, contact, meta SEO, `__root.tsx`).
+- Le logo officiel reste affiché (déjà uploadé).
 
-| Catégorie | Compteur |
-|---|---|
-| Coiffure | 23 Créations |
-| Perruques | 43 Créations |
-| Mèche | Bientôt disponible |
-| Mariage | 18 Créations |
-| Produits | 23 Produits |
-| Équipement | 21 Équipements |
-| Promotion | 11 Promo |
+## 2. Thème : blanc profond + liquid glass + doré réduit
 
-- Chaque case ouvre une vue détaillée (route `/catalog/$category`) listant les éléments.
-- La case **Mèche** est désactivée (badge "Bientôt disponible", non cliquable).
-- Mettre à jour la bottom-nav : remplacer "Products" par "Catalogue".
+- `src/styles.css` : 
+  - Fond `--background` → blanc pur (oklch 1 0 0) avec subtil dégradé ivoire.
+  - Réduire la saturation/présence du doré : `--gold` plus pâle, utilisé uniquement en accents fins (filets, texte de titre, badges), plus en aplats.
+  - Renforcer le **liquid glass** : `glass` et `glass-strong` avec `backdrop-filter: blur(40px) saturate(180%)`, bordure blanche translucide, reflets internes.
+  - Nouveau utilitaire `.liquid-glass` (multi-couches : blanc translucide + highlight radial + bordure intérieure blanche).
+- **Supprimer le mode sombre** : retirer `.dark { … }`, retirer `ThemeProvider`, retirer le bouton lune/soleil, supprimer `src/lib/theme.tsx`. Forcer light côté `<html>`.
 
-## 4. Section "Offres du mois" (accueil)
-Le CTA de la promo sur `index.tsx` redirige désormais vers `/catalog/promotion` au lieu de WhatsApp direct.
+## 3. WhatsApp officiel dans la barre de navigation
 
-## 5. Amélioration visuelle des cadres
-- **Retirer tous les emojis** superposés/centrés dans les cadres photo (services, produits, galerie, accueil).
-- Remplacer par de vrais visuels :
-  - Utiliser des dégradés sophistiqués multi-stops (ambre/or/rosé) + grain doux + reflets brillants (`bg-gradient-to-br` + overlay `bg-[radial-gradient(...)]`).
-  - Ajouter un cadre doré fin (`ring-1 ring-[var(--gold)]/30`), coins plus arrondis (`rounded-[28px]`), ombres `shadow-luxe` renforcées.
-  - Ratio uniformisé (4/5 pour produits, 1/1 pour galerie, 16/10 pour services).
-  - Léger effet glass au survol + bordure dorée animée.
-- Le nom/catégorie reste en overlay bas (sans emoji).
-- Préparer la structure pour de vraies images (champ `image?` dans `Product`/`Service`/`Gallery`) — fallback sur dégradé pur si absent.
+- Retirer le FAB flottant WhatsApp.
+- Ajouter une **6e entrée WhatsApp** dans la bottom-nav (`AppShell.tsx`) avec l'**icône SVG officielle WhatsApp** (téléphone + bulle) et **fond vert officiel `#25D366`** (cercle saillant au-dessus de la barre).
+- Ouvre `waLink()` en target=_blank.
 
-## 6. Fichiers impactés
-- `src/lib/salon-data.ts` — services, catégories catalogue, compteurs, types enrichis
-- `src/components/AppShell.tsx` — logo en header, nav "Catalogue"
-- `src/routes/splash.tsx` — logo centré animé
-- `src/routes/index.tsx` — CTA promo → /catalog/promotion, cadres sans emoji
-- `src/routes/services.tsx` — cadres premium sans emoji
-- `src/routes/products.tsx` — supprimé OU redirige vers /catalog
-- **Nouveau** `src/routes/catalog.tsx` — grille 7 catégories
-- **Nouveau** `src/routes/catalog.$category.tsx` — détail par catégorie
-- `src/routes/gallery.tsx` — cadres sans emoji
-- `src/assets/logo.jpg.asset.json` — pointeur CDN du logo
+## 4. Cadres & icônes en liquid glass (plus de doré)
 
-## Notes
-- Les compteurs sont affichés tels quels (pas de génération de 43 vraies fiches perruques) — les listes de détail reprendront les éléments existants enrichis pour atteindre une présentation crédible.
-- Aucune logique métier/backend modifiée (WhatsApp reste le canal de commande).
+- `Frame.tsx` : remplacer le ring doré + dégradé ambré par **glass blanc + accent noir subtil** (ring `ring-black/10`, fond `bg-white/40 backdrop-blur-xl`, highlight blanc en haut-gauche, ombre douce).
+- Toutes les icônes (services, catégories, contact) : enveloppe `liquid-glass` blanche avec icône Lucide en **noir**, plus de pastilles dorées.
+- Améliorer les cadres du **catalogue** (`catalog.tsx`) : ratio 4/5, glass blanc, voile sombre bas pour lisibilité du titre, badge "Bientôt" en noir/blanc, accent doré fin uniquement sur le compteur.
+
+## 5. Accueil : carrousel de couvertures
+
+- Dans `index.tsx`, ajouter en haut une **section carrousel** (10 cadres) au-dessus de la grille de services :
+  - Carrousel horizontal snap (`overflow-x-auto snap-x snap-mandatory`), auto-play léger (interval 4s, pause au touch).
+  - Chaque slide = `Frame` glass blanc 16/10 avec titre + sous-titre (ex: « Mariage », « Pose Perruque », « Tissage Premium »…).
+  - Indicateurs (dots) discrets en bas.
+  - Aucune image binaire ajoutée : on utilise des dégradés liquid glass + libellés (préparé pour brancher de vraies images plus tard via `image` prop de `Frame`).
+
+## 6. Retirer la section « À propos »
+
+- Supprimer `src/routes/about.tsx`.
+- Retirer tout lien `/about` (footer accueil, etc.).
+- Laisser la route-tree régénérer.
+
+## 7. Fluidité & bugs
+
+- Nettoyer imports inutilisés (`Moon`, `Sun`, `MessageCircle` du shell après retrait FAB/theme).
+- S'assurer que `routeTree.gen.ts` se régénère après suppression `about.tsx` (restart dev).
+- Vérifier toutes les `<Link>` (params typés) et retirer les `<a href>` internes.
+- Animations : transitions plus courtes (200ms), `will-change` sur éléments animés, `prefers-reduced-motion` respecté.
+- Vérifier qu'aucun composant ne référence `useTheme` après suppression.
+
+## 8. Export Android (PWA → APK/AAB via Capacitor)
+
+Préparer la structure pour exporter en application Android :
+
+- Créer `public/manifest.webmanifest` (nom « Parfait.Design/Desmohair », icônes, theme_color blanc, background blanc, display standalone, start_url `/`).
+- Référencer manifest + icônes dans `__root.tsx` (`<link rel="manifest">`, apple-touch-icon, theme-color blanc).
+- Créer `capacitor.config.ts` (appId `bf.parfaitdesign.desmohair`, appName, webDir `dist`).
+- Créer `android/README.md` avec les commandes d'export :
+  ```
+  bun run build
+  npx cap add android
+  npx cap sync android
+  npx cap open android   # build APK / AAB depuis Android Studio
+  ```
+- Ajouter `EXPORT_ANDROID.md` à la racine expliquant la procédure pas-à-pas pour l'utilisateur (prérequis Android Studio, signature, génération AAB Play Store).
+- Ne **pas** installer Capacitor dans cette itération (lourd, fait par l'utilisateur en local) — fournir uniquement la config et la doc.
+
+---
+
+## Fichiers touchés
+
+**Modifiés** : `src/styles.css`, `src/components/AppShell.tsx`, `src/components/Frame.tsx`, `src/routes/__root.tsx`, `src/routes/index.tsx`, `src/routes/splash.tsx`, `src/routes/services.tsx`, `src/routes/gallery.tsx`, `src/routes/contact.tsx`, `src/routes/catalog.tsx`, `src/routes/catalog.$category.tsx`, `src/lib/salon-data.ts` (nom marque).
+
+**Créés** : `src/components/CoverCarousel.tsx`, `public/manifest.webmanifest`, `capacitor.config.ts`, `EXPORT_ANDROID.md`, `android/README.md`.
+
+**Supprimés** : `src/routes/about.tsx`, `src/lib/theme.tsx`.
+
+## Hors scope
+
+- Pas de génération d'images réelles (gardé pour quand vous fournirez vos photos).
+- Pas d'installation Capacitor (commandes fournies pour exécution locale).
+- Pas de changement backend (WhatsApp reste le canal de commande).

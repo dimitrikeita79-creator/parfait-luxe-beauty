@@ -1,15 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Calendar, MessageCircle, MapPin, BookOpen, Star, ChevronRight, Sparkles } from "lucide-react";
-import { AppShell, GlassCard, SectionTitle } from "@/components/AppShell";
+import { Search, Calendar, MapPin, BookOpen, Star, ChevronRight, Sparkles } from "lucide-react";
+import { AppShell, SectionTitle, WhatsAppIcon } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
+import { CoverCarousel } from "@/components/CoverCarousel";
 import { SERVICES, CATALOG, CATALOG_ITEMS, GALLERY, TESTIMONIALS, formatFCFA, waLink, LOCATION } from "@/lib/salon-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Parfait Design Des Mohair — Accueil" },
+      { title: "Parfait.Design/Desmohair — Accueil" },
       { name: "description", content: "Salon de beauté luxe à Ouagadougou : perruques, mèches, tresses, mariage." },
-      { property: "og:title", content: "Parfait Design Des Mohair" },
+      { property: "og:title", content: "Parfait.Design/Desmohair" },
       { property: "og:description", content: "Votre beauté, notre passion." },
     ],
   }),
@@ -25,29 +26,29 @@ function Index() {
 
   return (
     <AppShell>
-      {/* Hero */}
+      {/* Cover carousel */}
       <section className="mt-3 animate-fade-up">
-        <div className="glass-strong relative overflow-hidden rounded-[32px] p-6">
-          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-gold opacity-40 blur-2xl" />
-          <div className="relative">
-            <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--gold-deep)]">
-              <Sparkles className="h-3 w-3" /> Beauté premium
-            </span>
-            <h1 className="font-display mt-3 text-3xl leading-[1.1] font-semibold">
-              Révélez votre <span className="text-gold">élégance</span> naturelle
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Perruques • Mèches • Coiffures • Mariage • Beauté
-            </p>
-            <div className="mt-5 flex gap-2">
-              <Link to="/contact" className="bg-gold flex-1 rounded-full py-3 text-center text-sm font-semibold text-[oklch(0.15_0.01_60)] shadow-luxe active:scale-[0.98] transition">
-                Réserver
-              </Link>
-              <Link to="/services" className="glass flex-1 rounded-full py-3 text-center text-sm font-semibold active:scale-[0.98] transition">
-                Catalogue
-              </Link>
-            </div>
-          </div>
+        <CoverCarousel />
+      </section>
+
+      {/* Hero text */}
+      <section className="mt-4 animate-fade-up">
+        <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--gold-deep)]">
+          <Sparkles className="h-3 w-3" /> Beauté premium
+        </span>
+        <h1 className="font-display mt-3 text-3xl leading-[1.1] font-semibold">
+          Révélez votre <span className="text-gold">élégance</span> naturelle
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Perruques • Mèches • Coiffures • Mariage • Beauté
+        </p>
+        <div className="mt-4 flex gap-2">
+          <Link to="/contact" className="flex-1 rounded-full bg-black py-3 text-center text-sm font-semibold text-white shadow-soft active:scale-[0.98] transition">
+            Réserver
+          </Link>
+          <Link to="/catalog" className="glass flex-1 rounded-full py-3 text-center text-sm font-semibold active:scale-[0.98] transition">
+            Catalogue
+          </Link>
         </div>
       </section>
 
@@ -63,15 +64,18 @@ function Index() {
       {/* Quick actions */}
       <div className="mt-5 grid grid-cols-4 gap-2">
         {[
-          { label: "Réserver", icon: Calendar, to: "/contact" as const, href: undefined },
-          { label: "WhatsApp", icon: MessageCircle, to: undefined, href: waLink() },
-          { label: "Itinéraire", icon: MapPin, to: undefined, href: LOCATION.mapsLink },
-          { label: "Catalogue", icon: BookOpen, to: "/catalog" as const, href: undefined },
-        ].map(({ label, icon: Icon, to, href }) => {
+          { label: "Réserver", icon: Calendar, to: "/contact" as const, href: undefined, green: false },
+          { label: "WhatsApp", icon: null, to: undefined, href: waLink(), green: true },
+          { label: "Itinéraire", icon: MapPin, to: undefined, href: LOCATION.mapsLink, green: false },
+          { label: "Catalogue", icon: BookOpen, to: "/catalog" as const, href: undefined, green: false },
+        ].map(({ label, icon: Icon, to, href, green }) => {
           const inner = (
-            <div className="glass flex flex-col items-center gap-1.5 rounded-2xl p-3 transition active:scale-95">
-              <span className="bg-gold grid h-10 w-10 place-items-center rounded-full text-[oklch(0.15_0.01_60)] shadow-soft">
-                <Icon className="h-4 w-4" />
+            <div className="liquid-glass flex flex-col items-center gap-1.5 rounded-2xl p-3 transition active:scale-95">
+              <span
+                className="grid h-10 w-10 place-items-center rounded-full shadow-soft"
+                style={green ? { background: "#25D366", color: "white" } : { background: "oklch(0.15 0 0)", color: "white" }}
+              >
+                {green ? <WhatsAppIcon className="h-4 w-4" /> : Icon ? <Icon className="h-4 w-4" /> : null}
               </span>
               <span className="text-[11px] font-medium">{label}</span>
             </div>
@@ -89,7 +93,7 @@ function Index() {
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory">
         {popularServices.map((s) => (
           <Link key={s.id} to="/services" className="snap-start">
-            <div className="glass w-44 shrink-0 rounded-[24px] p-4">
+            <div className="liquid-glass w-44 shrink-0 rounded-[24px] p-4">
               <Frame tone={s.tone} rounded="rounded-2xl" className="h-24 w-full" />
               <p className="mt-3 font-semibold text-sm leading-tight">{s.title}</p>
               <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2">{s.desc}</p>
@@ -105,6 +109,7 @@ function Index() {
         {topCategories.map((c) => (
           <Link key={c.slug} to="/catalog/$category" params={{ category: c.slug }} className="block">
             <Frame tone={c.tone} rounded="rounded-[24px]" className="aspect-[5/4] w-full">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-3">
                 <p className="font-display text-base font-semibold text-white drop-shadow">{c.name}</p>
                 <p className="text-[10px] font-medium text-white/85">{c.countLabel}</p>
@@ -131,8 +136,8 @@ function Index() {
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory">
         {popularWigs.map((p) => (
           <Link key={p.id} to="/catalog/$category" params={{ category: "perruques" }} className="snap-start">
-            <div className="glass w-40 shrink-0 rounded-[24px] p-3">
-              <Frame tone="from-amber-300/70 via-yellow-200/60 to-rose-200/40" rounded="rounded-2xl" className="h-28 w-full" />
+            <div className="liquid-glass w-40 shrink-0 rounded-[24px] p-3">
+              <Frame tone="from-neutral-100 via-white to-amber-50" rounded="rounded-2xl" className="h-28 w-full" />
               <p className="mt-2 text-xs font-semibold leading-tight line-clamp-2">{p.name}</p>
               <p className="mt-1 text-[11px] font-semibold text-gold">{formatFCFA(p.price ?? 0)}</p>
             </div>
@@ -145,8 +150,8 @@ function Index() {
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory">
         {popularBraids.map((p) => (
           <Link key={p.id} to="/catalog/$category" params={{ category: "coiffure" }} className="snap-start">
-            <div className="glass w-40 shrink-0 rounded-[24px] p-3">
-              <Frame tone="from-rose-300/70 via-amber-200/60 to-yellow-100/40" rounded="rounded-2xl" className="h-28 w-full" />
+            <div className="liquid-glass w-40 shrink-0 rounded-[24px] p-3">
+              <Frame tone="from-rose-50 via-white to-amber-50" rounded="rounded-2xl" className="h-28 w-full" />
               <p className="mt-2 text-xs font-semibold leading-tight line-clamp-2">{p.name}</p>
               <p className="mt-1 text-[11px] font-semibold text-gold">{formatFCFA(p.price ?? 0)}</p>
             </div>
@@ -158,7 +163,7 @@ function Index() {
       <SectionTitle title="Avis clientes" />
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory">
         {TESTIMONIALS.map((t, i) => (
-          <div key={i} className="glass w-72 shrink-0 snap-start rounded-[24px] p-4">
+          <div key={i} className="liquid-glass w-72 shrink-0 snap-start rounded-[24px] p-4">
             <div className="flex items-center gap-1 text-[var(--gold)]">
               {Array.from({ length: t.rating }).map((_, k) => <Star key={k} className="h-3.5 w-3.5 fill-current" />)}
             </div>
@@ -172,23 +177,15 @@ function Index() {
       <SectionTitle title="Offres du mois" action={<Link to="/catalog/$category" params={{ category: "promotion" }} className="text-xs font-medium text-[var(--gold-deep)]">Voir tout</Link>} />
       <Link to="/catalog/$category" params={{ category: "promotion" }} className="block">
         <div className="glass-strong relative overflow-hidden rounded-[28px] p-5 active:scale-[0.99] transition">
-          <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-gold opacity-30 blur-3xl" />
+          <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-gold opacity-20 blur-3xl" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--gold-deep)]">Offre du mois</span>
           <p className="font-display mt-1 text-xl font-semibold leading-tight">-20% sur la pose<br/>+ entretien offert</p>
           <p className="mt-1 text-xs text-muted-foreground">11 promos disponibles ce mois</p>
-          <span className="bg-gold mt-4 inline-flex items-center gap-1 rounded-full px-4 py-2 text-xs font-semibold text-[oklch(0.15_0.01_60)] shadow-luxe">
+          <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-soft">
             Découvrir les promos <ChevronRight className="h-3 w-3" />
           </span>
         </div>
       </Link>
-
-      {/* About teaser */}
-      <SectionTitle title="À propos" action={<Link to="/about" className="text-xs font-medium text-[var(--gold-deep)]">Découvrir</Link>} />
-      <GlassCard className="p-5">
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          Un salon haut de gamme au cœur de Ouagadougou — dédié à la beauté, l'élégance et la confiance de chaque femme.
-        </p>
-      </GlassCard>
     </AppShell>
   );
 }

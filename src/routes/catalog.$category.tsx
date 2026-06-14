@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ChevronLeft, MessageCircle } from "lucide-react";
-import { AppShell } from "@/components/AppShell";
+import { ChevronLeft } from "lucide-react";
+import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
 import { CATALOG, CATALOG_ITEMS, formatFCFA, waLink } from "@/lib/salon-data";
 
@@ -10,9 +10,9 @@ export const Route = createFileRoute("/catalog/$category")({
     const name = cat?.name ?? "Catégorie";
     return {
       meta: [
-        { title: `${name} — Catalogue Parfait Design` },
+        { title: `${name} — Catalogue Parfait.Design/Desmohair` },
         { name: "description", content: `Découvrez nos ${name.toLowerCase()} — ${cat?.countLabel ?? ""}.` },
-        { property: "og:title", content: `${name} — Parfait Design Des Mohair` },
+        { property: "og:title", content: `${name} — Parfait.Design/Desmohair` },
         { property: "og:description", content: `${cat?.countLabel ?? ""} dans la collection ${name}.` },
       ],
     };
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/catalog/$category")({
   notFoundComponent: () => (
     <AppShell title="Introuvable">
       <p className="mt-6 text-sm text-muted-foreground">Cette catégorie n'existe pas.</p>
-      <Link to="/catalog" className="bg-gold mt-4 inline-flex rounded-full px-4 py-2 text-xs font-semibold text-[oklch(0.15_0.01_60)]">
+      <Link to="/catalog" className="mt-4 inline-flex rounded-full bg-black px-4 py-2 text-xs font-semibold text-white">
         Retour au catalogue
       </Link>
     </AppShell>
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/catalog/$category")({
   errorComponent: ({ reset }) => (
     <AppShell title="Erreur">
       <p className="mt-6 text-sm text-muted-foreground">Une erreur est survenue.</p>
-      <button onClick={reset} className="bg-gold mt-4 rounded-full px-4 py-2 text-xs font-semibold">Réessayer</button>
+      <button onClick={reset} className="mt-4 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white">Réessayer</button>
     </AppShell>
   ),
   component: CategoryPage,
@@ -61,20 +61,20 @@ function CategoryPage() {
             rel="noreferrer"
             className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-[#25D366] px-5 py-2.5 text-xs font-semibold text-white shadow-soft"
           >
-            <MessageCircle className="h-3.5 w-3.5" /> M'avertir via WhatsApp
+            <WhatsAppIcon className="h-3.5 w-3.5" /> M'avertir via WhatsApp
           </a>
         </div>
       ) : (
         <div className="mt-5 grid grid-cols-2 gap-3">
           {items.map((p, i) => (
-            <div key={p.id} className="glass animate-fade-up rounded-[24px] p-3" style={{ animationDelay: `${i * 25}ms` }}>
+            <div key={p.id} className="liquid-glass animate-fade-up rounded-[24px] p-3" style={{ animationDelay: `${i * 25}ms` }}>
               <Frame
                 tone={cat.tone}
                 rounded="rounded-2xl"
                 className="aspect-[4/5] w-full"
               >
                 {p.badge && (
-                  <span className="absolute left-2 top-2 z-10 rounded-full bg-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[oklch(0.15_0.01_60)]">
+                  <span className="absolute left-2 top-2 z-10 rounded-full bg-black px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                     {p.badge}
                   </span>
                 )}
@@ -90,7 +90,7 @@ function CategoryPage() {
                 rel="noreferrer"
                 className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-full bg-[#25D366] py-2 text-[11px] font-semibold text-white shadow-soft active:scale-[0.98] transition"
               >
-                <MessageCircle className="h-3 w-3" /> {cat.slug === "promotion" ? "J'en profite" : "Commander"}
+                <WhatsAppIcon className="h-3 w-3" /> {cat.slug === "promotion" ? "J'en profite" : "Commander"}
               </a>
             </div>
           ))}

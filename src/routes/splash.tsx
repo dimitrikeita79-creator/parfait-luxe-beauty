@@ -21,10 +21,10 @@ function Splash() {
       </div>
       <div className="relative text-center animate-fade-up">
         <div className="glass-strong mx-auto grid h-36 w-36 place-items-center rounded-[40px] shadow-luxe overflow-hidden p-3">
-          <img src={logoAsset.url} alt="Parfait Design" className="h-full w-full object-contain animate-float" />
+          <img src={logoAsset.url} alt="Parfait.Design/Desmohair" className="h-full w-full object-contain animate-float" />
         </div>
         <h1 className="font-display mt-6 text-3xl font-semibold leading-tight">
-          Parfait Design<br/><span className="text-gold">Des Mohair</span>
+          Parfait.Design<br/><span className="text-gold">/Desmohair</span>
         </h1>
         <p className="mt-3 text-sm italic text-muted-foreground">"Votre beauté, notre passion"</p>
         <div className="mx-auto mt-8 h-1 w-32 overflow-hidden rounded-full bg-[var(--muted)]">

@@ -1,15 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, GlassCard } from "@/components/AppShell";
-import { MessageCircle, MapPin, Phone, Facebook, Instagram, Globe } from "lucide-react";
+import { AppShell, GlassCard, WhatsAppIcon } from "@/components/AppShell";
+import { MapPin, Phone, Facebook, Instagram, Globe } from "lucide-react";
 import { SERVICES, SOCIALS, LOCATION, WHATSAPP_DISPLAY, waLink } from "@/lib/salon-data";
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact & Réservation — Parfait Design Des Mohair" },
+      { title: "Contact & Réservation — Parfait.Design/Desmohair" },
       { name: "description", content: "Réservez votre rendez-vous. WhatsApp +226 70 02 83 36, Ouagadougou." },
-      { property: "og:title", content: "Contact — Parfait Design Des Mohair" },
+      { property: "og:title", content: "Contact — Parfait.Design/Desmohair" },
       { property: "og:description", content: "Contactez notre salon de beauté à Ouagadougou." },
     ],
   }),
@@ -23,7 +23,7 @@ function ContactPage() {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const msg = `Bonjour Parfait Design Des Mohair,\n\nJe souhaite réserver :\n• Nom : ${form.nom}\n• Téléphone : ${form.tel}\n• Service : ${form.service}\n• Date souhaitée : ${form.date}\n\n${form.message}`;
+    const msg = `Bonjour Parfait.Design/Desmohair,\n\nJe souhaite réserver :\n• Nom : ${form.nom}\n• Téléphone : ${form.tel}\n• Service : ${form.service}\n• Date souhaitée : ${form.date}\n\n${form.message}`;
     window.open(waLink(msg), "_blank");
   };
 
@@ -48,18 +48,18 @@ function ContactPage() {
           <textarea value={form.message} onChange={set("message")} rows={3} className="input resize-none" placeholder="Précisez votre demande…" />
         </Field>
         <button type="submit" className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] py-3.5 text-sm font-semibold text-white shadow-luxe active:scale-[0.98] transition">
-          <MessageCircle className="h-4 w-4" /> Envoyer via WhatsApp
+          <WhatsAppIcon className="h-4 w-4" /> Envoyer via WhatsApp
         </button>
       </form>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
-        <a href={`tel:+${WHATSAPP_DISPLAY.replace(/[^0-9]/g, "")}`} className="glass rounded-2xl p-4">
-          <Phone className="h-5 w-5 text-[var(--gold-deep)]" />
+        <a href={`tel:+${WHATSAPP_DISPLAY.replace(/[^0-9]/g, "")}`} className="liquid-glass rounded-2xl p-4">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-black text-white"><Phone className="h-4 w-4" /></span>
           <p className="mt-2 text-xs font-semibold">Téléphone</p>
           <p className="text-[11px] text-muted-foreground">{WHATSAPP_DISPLAY}</p>
         </a>
-        <a href={LOCATION.mapsLink} target="_blank" rel="noreferrer" className="glass rounded-2xl p-4">
-          <MapPin className="h-5 w-5 text-[var(--gold-deep)]" />
+        <a href={LOCATION.mapsLink} target="_blank" rel="noreferrer" className="liquid-glass rounded-2xl p-4">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-black text-white"><MapPin className="h-4 w-4" /></span>
           <p className="mt-2 text-xs font-semibold">Adresse</p>
           <p className="text-[11px] text-muted-foreground">{LOCATION.city}</p>
         </a>
@@ -86,8 +86,8 @@ function ContactPage() {
           { icon: TikTokIcon, label: "TikTok", href: SOCIALS.tiktok },
           { icon: Globe, label: "Site web", href: SOCIALS.website },
         ].map(({ icon: Icon, label, href }) => (
-          <a key={label} href={href} target="_blank" rel="noreferrer" className="glass flex flex-col items-center gap-1 rounded-2xl p-3 active:scale-95 transition">
-            <Icon className="h-5 w-5 text-[var(--gold-deep)]" />
+          <a key={label} href={href} target="_blank" rel="noreferrer" className="liquid-glass flex flex-col items-center gap-1 rounded-2xl p-3 active:scale-95 transition">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-black text-white"><Icon className="h-4 w-4" /></span>
             <span className="text-[10px] font-medium">{label}</span>
           </a>
         ))}

@@ -1,8 +1,9 @@
+export const BRAND = "Parfait.Design/Desmohair";
 export const WHATSAPP_NUMBER = "22670028336";
 export const WHATSAPP_DISPLAY = "+226 70 02 83 36";
 
 export function waLink(message?: string) {
-  const text = message ?? "Bonjour Parfait Design Des Mohair,\n\nJe souhaite obtenir plus d'informations concernant vos services.";
+  const text = message ?? `Bonjour ${BRAND},\n\nJe souhaite obtenir plus d'informations concernant vos services.`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
 

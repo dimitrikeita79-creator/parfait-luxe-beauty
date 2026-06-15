@@ -82,11 +82,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Salon de beauté premium à Ouagadougou : perruques, mèches, tresses, mariage, lissage et soins capillaires." },
       { name: "author", content: "Parfait.Design/Desmohair" },
       { name: "theme-color", content: "#ffffff" },
-      { property: "og:title", content: "Parfait.Design/Desmohair" },
-      { property: "og:description", content: "Votre beauté, notre passion — Ouagadougou, Burkina Faso." },
+      { property: "og:title", content: "Parfait.Design/Desmohair — Salon Beauté Luxe Ouagadougou" },
+      { property: "og:description", content: "Salon de beauté premium à Ouagadougou : perruques, mèches, tresses, mariage, lissage et soins capillaires." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Parfait.Design/Desmohair — Salon Beauté Luxe Ouagadougou" },
+      { name: "twitter:description", content: "Salon de beauté premium à Ouagadougou : perruques, mèches, tresses, mariage, lissage et soins capillaires." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ff8fae22-db07-4bb9-bb26-615856da7f1a/id-preview-4134b9d1--478a0d4f-6199-4829-908b-4deecbe41996.lovable.app-1781518277219.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ff8fae22-db07-4bb9-bb26-615856da7f1a/id-preview-4134b9d1--478a0d4f-6199-4829-908b-4deecbe41996.lovable.app-1781518277219.png" },
     ],
     links: [
       {

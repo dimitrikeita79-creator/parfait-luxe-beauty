@@ -191,12 +191,3 @@ function TikTokIcon({ className = "" }: { className?: string }) {
     </svg>
   );
 }
-
-// (icon node above already covers TikTok)
-function _TikTokIconLegacy({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-      <path d="M16.5 3a5.5 5.5 0 0 0 4.5 4.5v3a8.5 8.5 0 0 1-4.5-1.3v6.3a6 6 0 1 1-6-6c.3 0 .6 0 .9.1v3.2a3 3 0 1 0 2.1 2.9V3h3z"/>
-    </svg>
-  );
-}

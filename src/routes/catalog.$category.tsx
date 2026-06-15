@@ -25,7 +25,7 @@ export const Route = createFileRoute("/catalog/$category")({
   notFoundComponent: () => (
     <AppShell title="Introuvable">
       <p className="mt-6 text-sm text-muted-foreground">Cette catégorie n'existe pas.</p>
-      <Link to="/catalog" className="mt-4 inline-flex rounded-full bg-black px-4 py-2 text-xs font-semibold text-white">
+      <Link to="/catalog" className="liquid-glass mt-4 inline-flex rounded-full px-4 py-2 text-xs font-semibold">
         Retour au catalogue
       </Link>
     </AppShell>
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/catalog/$category")({
   errorComponent: ({ reset }) => (
     <AppShell title="Erreur">
       <p className="mt-6 text-sm text-muted-foreground">Une erreur est survenue.</p>
-      <button onClick={reset} className="mt-4 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white">Réessayer</button>
+      <button onClick={reset} className="liquid-glass mt-4 rounded-full px-4 py-2 text-xs font-semibold">Réessayer</button>
     </AppShell>
   ),
   component: CategoryPage,
@@ -74,7 +74,10 @@ function CategoryPage() {
                 className="aspect-[4/5] w-full"
               >
                 {p.badge && (
-                  <span className="absolute left-2 top-2 z-10 rounded-full bg-black px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                  <span
+                    className="absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white"
+                    style={{ background: "linear-gradient(180deg, oklch(0.32 0.01 60 / 0.9), oklch(0.2 0.005 60 / 0.9))", backdropFilter: "blur(10px)" }}
+                  >
                     {p.badge}
                   </span>
                 )}

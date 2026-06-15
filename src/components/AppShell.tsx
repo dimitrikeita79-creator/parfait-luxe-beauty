@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Sparkles, Image as ImageIcon, LayoutGrid, Phone } from "lucide-react";
-import { type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 import { waLink, BRAND } from "@/lib/salon-data";
 import logoAsset from "@/assets/logo.asset.json";
 
@@ -12,9 +12,9 @@ const NAV = [
   { to: "/contact", label: "Contact", icon: Phone },
 ] as const;
 
-export function WhatsAppIcon({ className = "" }: { className?: string }) {
+export function WhatsAppIcon({ className = "", style }: { className?: string; style?: CSSProperties }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} fill="currentColor" aria-hidden="true">
+    <svg viewBox="0 0 32 32" className={className} style={style} fill="currentColor" aria-hidden="true">
       <path d="M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.115-.746.315-.688.645-1.032 1.318-1.06 2.264v.114c-.015.99.472 1.977 1.017 2.78 1.23 1.82 2.506 3.41 4.554 4.34.616.287 2.035.888 2.722.888.817 0 2.15-.515 2.4-1.318.07-.245.27-1.318.27-1.477 0-.36-.158-.474-.443-.616-.317-.157-2.063-.946-2.213-.946zM16.272 25.6c-1.692 0-3.354-.46-4.81-1.318l-.345-.205-3.555.934.95-3.473-.223-.36a9.41 9.41 0 0 1-1.435-5.04c0-5.225 4.245-9.47 9.47-9.47s9.47 4.245 9.47 9.47-4.244 9.47-9.47 9.47zm0-20.804C9.984 4.796 4.88 9.9 4.88 16.188c0 2.022.53 4.022 1.535 5.78L4.8 27.764l5.96-1.55a11.353 11.353 0 0 0 5.512 1.394h.005c6.288 0 11.4-5.105 11.4-11.393 0-3.046-1.185-5.91-3.337-8.063a11.42 11.42 0 0 0-8.067-3.346z"/>
     </svg>
   );
@@ -48,10 +48,15 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
             target="_blank"
             rel="noreferrer"
             aria-label="WhatsApp"
-            className="grid h-10 w-10 place-items-center rounded-full text-white shadow-soft transition active:scale-95"
-            style={{ background: "#25D366" }}
+            className="relative grid h-10 w-10 place-items-center rounded-full transition-transform duration-200 hover:scale-110 active:scale-95"
+            style={{
+              background: "linear-gradient(180deg, oklch(1 0 0 / 0.85), oklch(1 0 0 / 0.55))",
+              backdropFilter: "blur(18px) saturate(180%)",
+              border: "1px solid oklch(1 0 0 / 0.85)",
+              boxShadow: "0 8px 20px -10px rgba(37,211,102,0.55), inset 0 1px 0 oklch(1 0 0 / 0.8)",
+            }}
           >
-            <WhatsAppIcon className="h-5 w-5" />
+            <WhatsAppIcon className="h-5 w-5" style={{ color: "#25D366" }} />
           </a>
         </div>
         {title && (
@@ -65,26 +70,10 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
       {/* Content */}
       <main className="px-5 pb-36">{children}</main>
 
-      {/* Bottom nav with WhatsApp raised */}
+      {/* Bottom nav — 5 onglets équilibrés */}
       <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-4 pb-4 pt-2">
-        <div className="glass-strong relative flex items-end justify-between rounded-full px-2 py-2">
-          {NAV.slice(0, 2).map(({ to, label, icon: Icon }) => (
-            <NavItem key={to} to={to} label={label} Icon={Icon} pathname={pathname} />
-          ))}
-
-          {/* WhatsApp center raised */}
-          <a
-            href={waLink()}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="WhatsApp"
-            className="-mt-7 grid h-14 w-14 shrink-0 place-items-center rounded-full text-white shadow-luxe ring-4 ring-white transition active:scale-95"
-            style={{ background: "#25D366" }}
-          >
-            <WhatsAppIcon className="h-6 w-6" />
-          </a>
-
-          {NAV.slice(2).map(({ to, label, icon: Icon }) => (
+        <div className="glass-strong flex items-center justify-between rounded-full px-2 py-2">
+          {NAV.map(({ to, label, icon: Icon }) => (
             <NavItem key={to} to={to} label={label} Icon={Icon} pathname={pathname} />
           ))}
         </div>
@@ -106,10 +95,29 @@ function NavItem({
 }) {
   const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
   return (
-    <Link to={to} className="relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 transition">
-      {active && <span className="absolute inset-0 rounded-full bg-black/90 shadow-soft" />}
-      <Icon className={`relative h-5 w-5 ${active ? "text-white" : "text-foreground/70"}`} strokeWidth={active ? 2.2 : 1.8} />
-      <span className={`relative text-[10px] font-medium ${active ? "text-white" : "text-foreground/70"}`}>{label}</span>
+    <Link to={to} className="relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 transition-transform duration-200 hover:scale-105">
+      {active && (
+        <span
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: "linear-gradient(180deg, oklch(0.32 0.01 60 / 0.92), oklch(0.22 0.01 60 / 0.92))",
+            backdropFilter: "blur(16px) saturate(180%)",
+            border: "1px solid oklch(1 0 0 / 0.18)",
+            boxShadow: "0 8px 22px -10px oklch(0.2 0 0 / 0.4), inset 0 1px 0 oklch(1 0 0 / 0.15)",
+          }}
+        />
+      )}
+      <Icon
+        className={`relative h-5 w-5 ${active ? "text-white" : ""}`}
+        style={active ? undefined : { color: "oklch(0.42 0.015 60)" }}
+        strokeWidth={active ? 2.2 : 1.8}
+      />
+      <span
+        className={`relative text-[10px] font-medium tracking-wide ${active ? "text-white" : ""}`}
+        style={active ? undefined : { color: "oklch(0.42 0.015 60)" }}
+      >
+        {label}
+      </span>
     </Link>
   );
 }

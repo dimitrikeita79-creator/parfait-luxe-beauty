@@ -43,7 +43,11 @@ function Index() {
           Perruques • Mèches • Coiffures • Mariage • Beauté
         </p>
         <div className="mt-4 flex gap-2">
-          <Link to="/contact" className="flex-1 rounded-full bg-black py-3 text-center text-sm font-semibold text-white shadow-soft active:scale-[0.98] transition">
+          <Link
+            to="/contact"
+            className="flex-1 rounded-full py-3 text-center text-sm font-semibold text-white shadow-soft transition hover:scale-[1.01] active:scale-[0.98]"
+            style={{ background: "linear-gradient(180deg, oklch(0.32 0.01 60), oklch(0.18 0.005 60))" }}
+          >
             Réserver
           </Link>
           <Link to="/catalog" className="glass flex-1 rounded-full py-3 text-center text-sm font-semibold active:scale-[0.98] transition">
@@ -176,12 +180,15 @@ function Index() {
       {/* Promo */}
       <SectionTitle title="Offres du mois" action={<Link to="/catalog/$category" params={{ category: "promotion" }} className="text-xs font-medium text-[var(--gold-deep)]">Voir tout</Link>} />
       <Link to="/catalog/$category" params={{ category: "promotion" }} className="block">
-        <div className="glass-strong relative overflow-hidden rounded-[28px] p-5 active:scale-[0.99] transition">
+        <div className="glass-strong relative overflow-hidden rounded-[28px] p-5 transition hover:scale-[1.01] active:scale-[0.99]">
           <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-gold opacity-20 blur-3xl" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--gold-deep)]">Offre du mois</span>
           <p className="font-display mt-1 text-xl font-semibold leading-tight">-20% sur la pose<br/>+ entretien offert</p>
           <p className="mt-1 text-xs text-muted-foreground">11 promos disponibles ce mois</p>
-          <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-soft">
+          <span
+            className="mt-4 inline-flex items-center gap-1 rounded-full px-4 py-2 text-xs font-semibold text-white shadow-soft"
+            style={{ background: "linear-gradient(180deg, oklch(0.32 0.01 60), oklch(0.18 0.005 60))" }}
+          >
             Découvrir les promos <ChevronRight className="h-3 w-3" />
           </span>
         </div>

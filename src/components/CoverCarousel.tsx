@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Frame } from "@/components/Frame";
 
 export type Cover = { id: string; title: string; subtitle: string; tone: string };
@@ -19,28 +19,6 @@ export const DEFAULT_COVERS: Cover[] = [
 export function CoverCarousel({ covers = DEFAULT_COVERS }: { covers?: Cover[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
-
-  // Auto-play
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let paused = false;
-    const onTouch = () => {
-      paused = true;
-      window.setTimeout(() => (paused = false), 4000);
-    };
-    el.addEventListener("pointerdown", onTouch);
-    const id = window.setInterval(() => {
-      if (paused || !el) return;
-      const next = (active + 1) % covers.length;
-      const slide = el.children[next] as HTMLElement | undefined;
-      slide?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
-    }, 4500);
-    return () => {
-      el.removeEventListener("pointerdown", onTouch);
-      window.clearInterval(id);
-    };
-  }, [active, covers.length]);
 
   // Track active via scroll
   const onScroll = () => {
@@ -71,8 +49,15 @@ export function CoverCarousel({ covers = DEFAULT_COVERS }: { covers?: Cover[] })
       </div>
       <div className="mt-2 flex justify-center gap-1.5">
         {covers.map((_, i) => (
-          <span
+          <button
             key={i}
+            type="button"
+            aria-label={`Aller au cadre ${i + 1}`}
+            onClick={() => {
+              const el = ref.current;
+              const slide = el?.children[i] as HTMLElement | undefined;
+              slide?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+            }}
             className={`h-1.5 rounded-full transition-all ${i === active ? "w-5 bg-foreground" : "w-1.5 bg-foreground/25"}`}
           />
         ))}

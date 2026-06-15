@@ -1,86 +1,73 @@
-## Objectif
+## Objectifs
 
-Refondre Parfait.Design/Desmohair en thème **blanc profond + liquid glass + touches de doré discrètes**, supprimer le mode sombre, intégrer le WhatsApp officiel dans la barre de navigation, ajouter un carrousel d'accueil, nettoyer les bugs et préparer l'export Android.
+Améliorations visuelles et UX sur l'accueil, la navigation, les icônes, les cadres, et la page Contact. Aucune modification backend.
 
----
+## 1. Accueil — Carrousel
 
-## 1. Identité & nommage
+- Supprimer l'auto-play du `CoverCarousel` (la fonction qui appelle `scrollIntoView` faisait remonter la page entière sur certains navigateurs).
+- Garder le défilement manuel (swipe) + indicateurs cliquables pour naviguer.
+- Conserver les 10 cadres de couverture.
 
-- Renommer partout « Parfait Design Des Mohair » → **« Parfait.Design/Desmohair »** (header, splash, footer, contact, meta SEO, `__root.tsx`).
-- Le logo officiel reste affiché (déjà uploadé).
+## 2. Barre de navigation
 
-## 2. Thème : blanc profond + liquid glass + doré réduit
+- Retirer le bouton WhatsApp central surélevé du bottom-nav.
+- Revenir à 5 onglets équilibrés : Accueil · Services · Galerie · Catalogue · Contact.
+- Garder le bouton WhatsApp uniquement dans la top-bar (header), avec effet liquid-glass + icône officielle verte.
 
-- `src/styles.css` : 
-  - Fond `--background` → blanc pur (oklch 1 0 0) avec subtil dégradé ivoire.
-  - Réduire la saturation/présence du doré : `--gold` plus pâle, utilisé uniquement en accents fins (filets, texte de titre, badges), plus en aplats.
-  - Renforcer le **liquid glass** : `glass` et `glass-strong` avec `backdrop-filter: blur(40px) saturate(180%)`, bordure blanche translucide, reflets internes.
-  - Nouveau utilitaire `.liquid-glass` (multi-couches : blanc translucide + highlight radial + bordure intérieure blanche).
-- **Supprimer le mode sombre** : retirer `.dark { … }`, retirer `ThemeProvider`, retirer le bouton lune/soleil, supprimer `src/lib/theme.tsx`. Forcer light côté `<html>`.
+## 3. Système d'icônes (liquid glass + couleurs douces)
 
-## 3. WhatsApp officiel dans la barre de navigation
+- Créer un composant `IconBadge` réutilisable : pastille en liquid-glass (blanc translucide, blur, légère bordure dorée), icône `lucide` en gris-anthracite (`text-neutral-700`) au lieu de noir pur.
+- Ajouter une micro-animation au survol/tap : `transition-transform`, `active:scale-95`, `hover:scale-105`, léger halo doré.
+- Remplacer toutes les pastilles `bg-black text-white` (Contact, Services, Catalogue, Frame) par `IconBadge`.
+- Adoucir les couleurs : nav active passe de `bg-black/90` à un glass sombre translucide (`bg-neutral-900/85` + blur).
 
-- Retirer le FAB flottant WhatsApp.
-- Ajouter une **6e entrée WhatsApp** dans la bottom-nav (`AppShell.tsx`) avec l'**icône SVG officielle WhatsApp** (téléphone + bulle) et **fond vert officiel `#25D366`** (cercle saillant au-dessus de la barre).
-- Ouvre `waLink()` en target=_blank.
+## 4. Cadres d'images (Frame)
 
-## 4. Cadres & icônes en liquid glass (plus de doré)
+- Fond systématiquement blanc pur derrière les visuels.
+- Bordure : `ring-1 ring-black/5` + `shadow-soft` + coin intérieur liquid-glass.
+- Ajouter un léger reflet en haut du cadre (gradient blanc translucide) pour l'effet verre.
+- Retirer définitivement tout résidu doré sur le contour, garder uniquement un mince filet ivoire optionnel.
 
-- `Frame.tsx` : remplacer le ring doré + dégradé ambré par **glass blanc + accent noir subtil** (ring `ring-black/10`, fond `bg-white/40 backdrop-blur-xl`, highlight blanc en haut-gauche, ombre douce).
-- Toutes les icônes (services, catégories, contact) : enveloppe `liquid-glass` blanche avec icône Lucide en **noir**, plus de pastilles dorées.
-- Améliorer les cadres du **catalogue** (`catalog.tsx`) : ratio 4/5, glass blanc, voile sombre bas pour lisibilité du titre, badge "Bientôt" en noir/blanc, accent doré fin uniquement sur le compteur.
+## 5. Design global & palette
 
-## 5. Accueil : carrousel de couvertures
+- Palette : blanc dominant, gris très clair (`oklch(0.97 …)`) pour les surfaces, accents doré pâle (`--gold-soft`) uniquement sur titres/diviseurs.
+- Boutons primaires : liquid-glass blanc + texte anthracite, accent doré en hover.
+- Boutons WhatsApp et réseaux sociaux : fond liquid-glass blanc + icône colorée officielle (au lieu du fond plein vert/noir).
+- Typographie : conserver la pile actuelle, augmenter légèrement le `letter-spacing` des labels d'onglet.
 
-- Dans `index.tsx`, ajouter en haut une **section carrousel** (10 cadres) au-dessus de la grille de services :
-  - Carrousel horizontal snap (`overflow-x-auto snap-x snap-mandatory`), auto-play léger (interval 4s, pause au touch).
-  - Chaque slide = `Frame` glass blanc 16/10 avec titre + sous-titre (ex: « Mariage », « Pose Perruque », « Tissage Premium »…).
-  - Indicateurs (dots) discrets en bas.
-  - Aucune image binaire ajoutée : on utilise des dégradés liquid glass + libellés (préparé pour brancher de vraies images plus tard via `image` prop de `Frame`).
+## 6. Icônes sociales colorées (Contact)
 
-## 6. Retirer la section « À propos »
+- Facebook : bleu `#1877F2`
+- Instagram : dégradé rose/orange `#E1306C → #F77737`
+- TikTok : noir + cyan/rose officiels (`#000` base, accents `#25F4EE` / `#FE2C55`)
+- WhatsApp : vert `#25D366`
+- Site web : doré pâle
+- Chaque icône posée sur une pastille `IconBadge` liquid-glass + animation `hover:scale-110` + halo coloré subtil.
 
-- Supprimer `src/routes/about.tsx`.
-- Retirer tout lien `/about` (footer accueil, etc.).
-- Laisser la route-tree régénérer.
+## 7. Page Contact — refonte du formulaire
 
-## 7. Fluidité & bugs
+- Réorganiser : carte unique liquid-glass avec sections claires (Coordonnées · Demande · Date).
+- Ajouter un champ **Produit** (select alimenté par `CATALOG_PRODUCTS` de `salon-data.ts`) en plus du champ Service existant. Option « Aucun ».
+- Pré-remplir le message WhatsApp avec service + produit choisi.
+- Améliorer les inputs : fond blanc translucide, focus ring doré, padding plus aéré, icônes lucide en début de champ.
+- Bloc CTA WhatsApp : grand bouton liquid-glass avec icône officielle verte, sous-titre « Réponse rapide ».
+- Cartes Téléphone/Adresse : passer en liquid-glass avec `IconBadge` colorés (téléphone = doré, carte = vert sapin).
+- Carte Maps : conserver, mais cadre arrondi liquid-glass et bouton « Itinéraire » blanc + texte doré.
 
-- Nettoyer imports inutilisés (`Moon`, `Sun`, `MessageCircle` du shell après retrait FAB/theme).
-- S'assurer que `routeTree.gen.ts` se régénère après suppression `about.tsx` (restart dev).
-- Vérifier toutes les `<Link>` (params typés) et retirer les `<a href>` internes.
-- Animations : transitions plus courtes (200ms), `will-change` sur éléments animés, `prefers-reduced-motion` respecté.
-- Vérifier qu'aucun composant ne référence `useTheme` après suppression.
+## 8. Animations & fluidité
 
-## 8. Export Android (PWA → APK/AAB via Capacitor)
+- Ajouter `transition-all duration-200` aux IconBadge.
+- `hover:scale-105 active:scale-95` sur tous les boutons d'action.
+- Respect `prefers-reduced-motion`.
 
-Préparer la structure pour exporter en application Android :
+## Fichiers modifiés
 
-- Créer `public/manifest.webmanifest` (nom « Parfait.Design/Desmohair », icônes, theme_color blanc, background blanc, display standalone, start_url `/`).
-- Référencer manifest + icônes dans `__root.tsx` (`<link rel="manifest">`, apple-touch-icon, theme-color blanc).
-- Créer `capacitor.config.ts` (appId `bf.parfaitdesign.desmohair`, appName, webDir `dist`).
-- Créer `android/README.md` avec les commandes d'export :
-  ```
-  bun run build
-  npx cap add android
-  npx cap sync android
-  npx cap open android   # build APK / AAB depuis Android Studio
-  ```
-- Ajouter `EXPORT_ANDROID.md` à la racine expliquant la procédure pas-à-pas pour l'utilisateur (prérequis Android Studio, signature, génération AAB Play Store).
-- Ne **pas** installer Capacitor dans cette itération (lourd, fait par l'utilisateur en local) — fournir uniquement la config et la doc.
+- `src/components/CoverCarousel.tsx` — retire auto-play.
+- `src/components/AppShell.tsx` — retire bouton WhatsApp central, 5 onglets équilibrés, nav active en glass.
+- `src/components/IconBadge.tsx` *(nouveau)* — pastille liquid-glass réutilisable.
+- `src/components/Frame.tsx` — fond blanc + reflet glass.
+- `src/styles.css` — affine tokens (glass, gold-soft, ombres).
+- `src/routes/contact.tsx` — formulaire enrichi (Produit), icônes sociales colorées, boutons liquid-glass.
+- `src/routes/index.tsx`, `services.tsx`, `catalog.tsx`, `catalog.$category.tsx` — remplacent les pastilles noires par `IconBadge`.
 
----
-
-## Fichiers touchés
-
-**Modifiés** : `src/styles.css`, `src/components/AppShell.tsx`, `src/components/Frame.tsx`, `src/routes/__root.tsx`, `src/routes/index.tsx`, `src/routes/splash.tsx`, `src/routes/services.tsx`, `src/routes/gallery.tsx`, `src/routes/contact.tsx`, `src/routes/catalog.tsx`, `src/routes/catalog.$category.tsx`, `src/lib/salon-data.ts` (nom marque).
-
-**Créés** : `src/components/CoverCarousel.tsx`, `public/manifest.webmanifest`, `capacitor.config.ts`, `EXPORT_ANDROID.md`, `android/README.md`.
-
-**Supprimés** : `src/routes/about.tsx`, `src/lib/theme.tsx`.
-
-## Hors scope
-
-- Pas de génération d'images réelles (gardé pour quand vous fournirez vos photos).
-- Pas d'installation Capacitor (commandes fournies pour exécution locale).
-- Pas de changement backend (WhatsApp reste le canal de commande).
+Aucune dépendance ajoutée, aucun changement de routes ni de logique métier.

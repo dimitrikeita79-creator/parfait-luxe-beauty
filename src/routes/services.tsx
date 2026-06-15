@@ -26,11 +26,16 @@ function ServicesPage() {
           <button
             key={t}
             onClick={() => setActive(t === "Tout" ? null : t)}
-            className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition ${
+            className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition hover:scale-105 ${
               (t === "Tout" && !active) || active === t
-                ? "bg-black text-white shadow-soft"
+                ? "text-white shadow-soft"
                 : "glass text-muted-foreground"
             }`}
+            style={
+              (t === "Tout" && !active) || active === t
+                ? { background: "linear-gradient(180deg, oklch(0.32 0.01 60), oklch(0.2 0.005 60))" }
+                : undefined
+            }
           >
             {t}
           </button>

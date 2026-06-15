@@ -48,10 +48,15 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
             target="_blank"
             rel="noreferrer"
             aria-label="WhatsApp"
-            className="grid h-10 w-10 place-items-center rounded-full text-white shadow-soft transition active:scale-95"
-            style={{ background: "#25D366" }}
+            className="relative grid h-10 w-10 place-items-center rounded-full transition-transform duration-200 hover:scale-110 active:scale-95"
+            style={{
+              background: "linear-gradient(180deg, oklch(1 0 0 / 0.85), oklch(1 0 0 / 0.55))",
+              backdropFilter: "blur(18px) saturate(180%)",
+              border: "1px solid oklch(1 0 0 / 0.85)",
+              boxShadow: "0 8px 20px -10px rgba(37,211,102,0.55), inset 0 1px 0 oklch(1 0 0 / 0.8)",
+            }}
           >
-            <WhatsAppIcon className="h-5 w-5" />
+            <WhatsAppIcon className="h-5 w-5" style={{ color: "#25D366" }} />
           </a>
         </div>
         {title && (
@@ -65,26 +70,10 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
       {/* Content */}
       <main className="px-5 pb-36">{children}</main>
 
-      {/* Bottom nav with WhatsApp raised */}
+      {/* Bottom nav — 5 onglets équilibrés */}
       <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-4 pb-4 pt-2">
-        <div className="glass-strong relative flex items-end justify-between rounded-full px-2 py-2">
-          {NAV.slice(0, 2).map(({ to, label, icon: Icon }) => (
-            <NavItem key={to} to={to} label={label} Icon={Icon} pathname={pathname} />
-          ))}
-
-          {/* WhatsApp center raised */}
-          <a
-            href={waLink()}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="WhatsApp"
-            className="-mt-7 grid h-14 w-14 shrink-0 place-items-center rounded-full text-white shadow-luxe ring-4 ring-white transition active:scale-95"
-            style={{ background: "#25D366" }}
-          >
-            <WhatsAppIcon className="h-6 w-6" />
-          </a>
-
-          {NAV.slice(2).map(({ to, label, icon: Icon }) => (
+        <div className="glass-strong flex items-center justify-between rounded-full px-2 py-2">
+          {NAV.map(({ to, label, icon: Icon }) => (
             <NavItem key={to} to={to} label={label} Icon={Icon} pathname={pathname} />
           ))}
         </div>
@@ -106,10 +95,29 @@ function NavItem({
 }) {
   const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
   return (
-    <Link to={to} className="relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 transition">
-      {active && <span className="absolute inset-0 rounded-full bg-black/90 shadow-soft" />}
-      <Icon className={`relative h-5 w-5 ${active ? "text-white" : "text-foreground/70"}`} strokeWidth={active ? 2.2 : 1.8} />
-      <span className={`relative text-[10px] font-medium ${active ? "text-white" : "text-foreground/70"}`}>{label}</span>
+    <Link to={to} className="relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 transition-transform duration-200 hover:scale-105">
+      {active && (
+        <span
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: "linear-gradient(180deg, oklch(0.32 0.01 60 / 0.92), oklch(0.22 0.01 60 / 0.92))",
+            backdropFilter: "blur(16px) saturate(180%)",
+            border: "1px solid oklch(1 0 0 / 0.18)",
+            boxShadow: "0 8px 22px -10px oklch(0.2 0 0 / 0.4), inset 0 1px 0 oklch(1 0 0 / 0.15)",
+          }}
+        />
+      )}
+      <Icon
+        className={`relative h-5 w-5 ${active ? "text-white" : ""}`}
+        style={active ? undefined : { color: "oklch(0.42 0.015 60)" }}
+        strokeWidth={active ? 2.2 : 1.8}
+      />
+      <span
+        className={`relative text-[10px] font-medium tracking-wide ${active ? "text-white" : ""}`}
+        style={active ? undefined : { color: "oklch(0.42 0.015 60)" }}
+      >
+        {label}
+      </span>
     </Link>
   );
 }

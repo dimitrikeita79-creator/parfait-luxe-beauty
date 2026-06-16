@@ -23,23 +23,28 @@ function CatalogLayout() {
       <div className="mt-5 grid grid-cols-2 gap-3">
         {CATALOG.map((c, i) => {
           const inner = (
-            <Frame tone={c.tone} rounded="rounded-[28px]" className="aspect-[4/5] w-full">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+            <Frame variant="plain" rounded="rounded-[28px]" className="aspect-[4/5] w-full">
               {c.comingSoon && (
-                <span className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-black backdrop-blur">
+                <span
+                  className="absolute right-2 top-2 z-10 rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md"
+                  style={{ background: "oklch(1 0 0 / 0.85)", color: "oklch(0.5 0.11 80)", border: "1px solid oklch(1 0 0 / 0.95)" }}
+                >
                   Bientôt
                 </span>
               )}
-              <div className="absolute inset-x-0 bottom-0 p-4">
-                <p className="font-display text-xl font-semibold text-white drop-shadow-lg">{c.name}</p>
-                <p className="mt-0.5 text-[11px] font-medium text-[var(--gold-soft)] drop-shadow">{c.countLabel}</p>
+              <div
+                className="absolute inset-x-2 bottom-2 rounded-2xl p-3 backdrop-blur-md"
+                style={{ background: "oklch(1 0 0 / 0.78)", border: "1px solid oklch(1 0 0 / 0.95)" }}
+              >
+                <p className="font-display text-lg font-semibold leading-tight text-neutral-900">{c.name}</p>
+                <p className="mt-0.5 text-[11px] font-medium" style={{ color: "var(--gold-deep)" }}>{c.countLabel}</p>
               </div>
             </Frame>
           );
           return c.comingSoon ? (
             <div key={c.slug} className="opacity-90 animate-fade-up" style={{ animationDelay: `${i * 40}ms` }}>{inner}</div>
           ) : (
-            <Link key={c.slug} to="/catalog/$category" params={{ category: c.slug }} className="block animate-fade-up active:scale-[0.98] transition" style={{ animationDelay: `${i * 40}ms` }}>
+            <Link key={c.slug} to="/catalog/$category" params={{ category: c.slug }} preload="intent" className="block animate-fade-up active:scale-[0.98] transition" style={{ animationDelay: `${i * 40}ms` }}>
               {inner}
             </Link>
           );

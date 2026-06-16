@@ -5,11 +5,11 @@ import { waLink, BRAND } from "@/lib/salon-data";
 import logoAsset from "@/assets/logo.asset.json";
 
 const NAV = [
-  { to: "/", label: "Accueil", icon: Home },
-  { to: "/services", label: "Services", icon: Sparkles },
-  { to: "/gallery", label: "Galerie", icon: ImageIcon },
-  { to: "/catalog", label: "Catalogue", icon: LayoutGrid },
-  { to: "/contact", label: "Contact", icon: Phone },
+  { to: "/",        label: "Accueil",   icon: Home,       color: "oklch(0.62 0.11 80)" }, // gold
+  { to: "/services", label: "Services", icon: Sparkles,   color: "#E1306C" },             // rose
+  { to: "/gallery",  label: "Galerie",  icon: ImageIcon,  color: "#1877F2" },             // blue
+  { to: "/catalog",  label: "Catalogue",icon: LayoutGrid, color: "oklch(0.45 0.02 60)" },
+  { to: "/contact",  label: "Contact",  icon: Phone,      color: "#25D366" },             // green
 ] as const;
 
 export function WhatsAppIcon({ className = "", style }: { className?: string; style?: CSSProperties }) {
@@ -72,9 +72,9 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
 
       {/* Bottom nav — 5 onglets équilibrés */}
       <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-4 pb-4 pt-2">
-        <div className="glass-strong flex items-center justify-between rounded-full px-2 py-2">
-          {NAV.map(({ to, label, icon: Icon }) => (
-            <NavItem key={to} to={to} label={label} Icon={Icon} pathname={pathname} />
+        <div className="glass-nav flex items-center justify-between rounded-full px-2 py-2">
+          {NAV.map(({ to, label, icon: Icon, color }) => (
+            <NavItem key={to} to={to} label={label} Icon={Icon} color={color} pathname={pathname} />
           ))}
         </div>
       </nav>
@@ -86,35 +86,45 @@ function NavItem({
   to,
   label,
   Icon,
+  color,
   pathname,
 }: {
   to: (typeof NAV)[number]["to"];
   label: string;
   Icon: typeof Home;
+  color: string;
   pathname: string;
 }) {
   const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
   return (
-    <Link to={to} className="relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-2 transition-transform duration-200 hover:scale-105">
+    <Link
+      to={to}
+      preload="intent"
+      className="group relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-1.5 transition-transform duration-200 hover:-translate-y-0.5 active:scale-95"
+    >
       {active && (
         <span
           className="absolute inset-0 rounded-full"
           style={{
-            background: "linear-gradient(180deg, oklch(0.32 0.01 60 / 0.92), oklch(0.22 0.01 60 / 0.92))",
-            backdropFilter: "blur(16px) saturate(180%)",
-            border: "1px solid oklch(1 0 0 / 0.18)",
-            boxShadow: "0 8px 22px -10px oklch(0.2 0 0 / 0.4), inset 0 1px 0 oklch(1 0 0 / 0.15)",
+            background: "linear-gradient(180deg, oklch(1 0 0 / 0.9), oklch(1 0 0 / 0.6))",
+            backdropFilter: "blur(18px) saturate(200%)",
+            border: "1px solid oklch(1 0 0 / 0.95)",
+            boxShadow: `0 10px 22px -10px ${color === "oklch(0.45 0.02 60)" ? "oklch(0.78 0.1 85 / 0.5)" : color + "70"}, inset 0 1px 0 oklch(1 0 0 / 0.85)`,
           }}
         />
       )}
-      <Icon
-        className={`relative h-5 w-5 ${active ? "text-white" : ""}`}
-        style={active ? undefined : { color: "oklch(0.42 0.015 60)" }}
-        strokeWidth={active ? 2.2 : 1.8}
-      />
       <span
-        className={`relative text-[10px] font-medium tracking-wide ${active ? "text-white" : ""}`}
-        style={active ? undefined : { color: "oklch(0.42 0.015 60)" }}
+        className={`relative grid h-7 w-7 place-items-center rounded-full transition-transform duration-300 ${active ? "animate-nav-pop" : "group-hover:scale-110"}`}
+      >
+        <Icon
+          className="h-[18px] w-[18px]"
+          style={{ color: active ? color : "oklch(0.5 0.015 60)" }}
+          strokeWidth={active ? 2.4 : 1.9}
+        />
+      </span>
+      <span
+        className="relative text-[9.5px] font-semibold uppercase tracking-[0.08em]"
+        style={{ color: active ? color : "oklch(0.5 0.015 60)" }}
       >
         {label}
       </span>

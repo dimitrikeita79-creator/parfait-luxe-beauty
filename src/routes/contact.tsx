@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, GlassCard, WhatsAppIcon } from "@/components/AppShell";
 import { IconBadge } from "@/components/IconBadge";
+import { GlassButton } from "@/components/GlassButton";
 import { MapPin, Phone, Facebook, Instagram, Globe, User, Calendar, MessageSquare, Sparkles, ShoppingBag } from "lucide-react";
 import { SERVICES, SOCIALS, LOCATION, WHATSAPP_DISPLAY, waLink, CATALOG_ITEMS, formatFCFA } from "@/lib/salon-data";
 import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
@@ -76,15 +77,11 @@ function ContactPage() {
         <Field label="Message" icon={MessageSquare}>
           <textarea value={form.message} onChange={set("message")} rows={3} className="input resize-none" placeholder="Précisez votre demande…" />
         </Field>
-        <button
-          type="submit"
-          className="liquid-glass mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-sm font-semibold transition hover:scale-[1.01] active:scale-[0.98]"
-          style={{ color: "#0f8a3f", boxShadow: "0 12px 28px -14px rgba(37,211,102,0.55), inset 0 1px 0 oklch(1 0 0 / 0.8)" }}
-        >
+        <GlassButton type="submit" variant="whatsapp" size="lg" full className="mt-2">
           <WhatsAppIcon className="h-5 w-5" style={{ color: "#25D366" }} />
           <span>Envoyer via WhatsApp</span>
           <span className="text-[10px] font-normal opacity-70">· réponse rapide</span>
-        </button>
+        </GlassButton>
       </form>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
@@ -108,9 +105,9 @@ function ContactPage() {
           loading="lazy"
           title="Carte du salon"
         />
-        <a href={LOCATION.mapsLink} target="_blank" rel="noreferrer" className="liquid-glass block py-3 text-center text-xs font-semibold" style={{ color: "var(--gold-deep)" }}>
+        <GlassButton as="a" href={LOCATION.mapsLink} target="_blank" rel="noreferrer" variant="gold" size="md" full className="rounded-none rounded-b-[28px]">
           Obtenir l'itinéraire
-        </a>
+        </GlassButton>
       </GlassCard>
 
       <h2 className="font-display mt-7 mb-3 text-xl font-semibold">Suivez-nous</h2>

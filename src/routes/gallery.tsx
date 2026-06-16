@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
+import { GlassButton } from "@/components/GlassButton";
 import { GALLERY, GALLERY_CATEGORIES } from "@/lib/salon-data";
 import { useState } from "react";
 
@@ -28,15 +29,15 @@ function GalleryPage() {
     <AppShell title="Galerie" subtitle="Nos plus belles réalisations">
       <div className="mt-4 flex gap-2 overflow-x-auto pb-2 -mx-5 px-5">
         {GALLERY_CATEGORIES.map((c) => (
-          <button
+          <GlassButton
             key={c}
             onClick={() => setCat(c)}
-            className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition ${
-              cat === c ? "bg-black text-white shadow-soft" : "glass text-muted-foreground"
-            }`}
+            variant={cat === c ? "primary" : "light"}
+            size="sm"
+            className="whitespace-nowrap"
           >
             {c}
-          </button>
+          </GlassButton>
         ))}
       </div>
 
@@ -50,8 +51,11 @@ function GalleryPage() {
                 className="relative block w-full active:scale-[0.98] transition animate-fade-up"
                 style={{ height: g.h, animationDelay: `${i * 60}ms` }}
               >
-                <Frame tone={g.tone} rounded="rounded-3xl" className="h-full w-full">
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3 text-left text-xs font-semibold text-white">
+                <Frame variant="plain" rounded="rounded-3xl" className="h-full w-full">
+                  <span
+                    className="absolute left-2 bottom-2 rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md"
+                    style={{ background: "oklch(1 0 0 / 0.85)", color: "oklch(0.5 0.11 80)", border: "1px solid oklch(1 0 0 / 0.95)" }}
+                  >
                     {g.cat}
                   </span>
                 </Frame>
@@ -66,7 +70,7 @@ function GalleryPage() {
           <button className="glass absolute top-6 right-6 grid h-10 w-10 place-items-center rounded-full text-white" onClick={() => setOpen(null)}>
             <X className="h-4 w-4" />
           </button>
-          <Frame tone={open.tone} rounded="rounded-[32px]" className="aspect-[3/4] w-full max-w-xs" />
+          <Frame variant="plain" rounded="rounded-[32px]" className="aspect-[3/4] w-full max-w-xs" />
           <p className="mt-4 font-display text-xl font-semibold text-white">{open.cat}</p>
         </div>
       )}

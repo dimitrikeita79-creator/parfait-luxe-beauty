@@ -1,10 +1,15 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useSearch } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
+import { GlassButton } from "@/components/GlassButton";
 import { CATALOG, CATALOG_ITEMS, formatFCFA, waLink } from "@/lib/salon-data";
 
 export const Route = createFileRoute("/catalog/$category")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    highlight: typeof s.highlight === "string" ? s.highlight : undefined,
+  }),
   head: ({ params }) => {
     const cat = CATALOG.find((c) => c.slug === params.category);
     const name = cat?.name ?? "Catégorie";
@@ -41,7 +46,16 @@ export const Route = createFileRoute("/catalog/$category")({
 
 function CategoryPage() {
   const { cat } = Route.useLoaderData();
+  const { highlight } = useSearch({ from: "/catalog/$category" });
   const items = CATALOG_ITEMS[cat.slug] ?? [];
+  const refs = useRef<Record<string, HTMLDivElement | null>>({});
+  useEffect(() => {
+    if (!highlight) return;
+    const el = refs.current[highlight];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlight]);
 
   return (
     <AppShell title={cat.name} subtitle={cat.countLabel}>
@@ -55,28 +69,32 @@ function CategoryPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Nos {cat.name.toLowerCase()} arrivent très prochainement. Contactez-nous pour être averti(e).
           </p>
-          <a
+          <GlassButton
+            as="a"
             href={waLink(`Bonjour, je souhaite être informé(e) dès l'arrivée des ${cat.name.toLowerCase()}.`)}
             target="_blank"
             rel="noreferrer"
-            className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-[#25D366] px-5 py-2.5 text-xs font-semibold text-white shadow-soft"
+            variant="whatsapp"
+            size="md"
+            className="mt-5"
           >
-            <WhatsAppIcon className="h-3.5 w-3.5" /> M'avertir via WhatsApp
-          </a>
+            <WhatsAppIcon className="h-3.5 w-3.5" style={{ color: "#25D366" }} /> M'avertir via WhatsApp
+          </GlassButton>
         </div>
       ) : (
         <div className="mt-5 grid grid-cols-2 gap-3">
           {items.map((p, i) => (
-            <div key={p.id} className="liquid-glass animate-fade-up rounded-[24px] p-3" style={{ animationDelay: `${i * 25}ms` }}>
-              <Frame
-                tone={cat.tone}
-                rounded="rounded-2xl"
-                className="aspect-[4/5] w-full"
-              >
+            <div
+              key={p.id}
+              ref={(el) => { refs.current[p.id] = el; }}
+              className={`liquid-glass animate-fade-up rounded-[24px] p-3 transition-all duration-300 ${highlight === p.id ? "ring-2 ring-[var(--gold)] scale-[1.02]" : ""}`}
+              style={{ animationDelay: `${i * 25}ms` }}
+            >
+              <Frame variant="plain" rounded="rounded-2xl" className="aspect-[4/5] w-full">
                 {p.badge && (
                   <span
-                    className="absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white"
-                    style={{ background: "linear-gradient(180deg, oklch(0.32 0.01 60 / 0.9), oklch(0.2 0.005 60 / 0.9))", backdropFilter: "blur(10px)" }}
+                    className="absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md"
+                    style={{ background: "oklch(1 0 0 / 0.9)", color: "oklch(0.5 0.11 80)", border: "1px solid oklch(1 0 0 / 0.95)" }}
                   >
                     {p.badge}
                   </span>
@@ -87,14 +105,18 @@ function CategoryPage() {
               {p.price !== undefined && p.price > 0 && (
                 <p className="mt-1.5 text-sm font-bold text-gold">{formatFCFA(p.price)}</p>
               )}
-              <a
+              <GlassButton
+                as="a"
                 href={waLink(`Bonjour, je souhaite plus d'infos sur: ${p.name}${p.price ? ` (${formatFCFA(p.price)})` : ""}.`)}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-2 inline-flex w-full items-center justify-center gap-1 rounded-full bg-[#25D366] py-2 text-[11px] font-semibold text-white shadow-soft active:scale-[0.98] transition"
+                variant="whatsapp"
+                size="sm"
+                full
+                className="mt-2"
               >
-                <WhatsAppIcon className="h-3 w-3" /> {cat.slug === "promotion" ? "J'en profite" : "Commander"}
-              </a>
+                <WhatsAppIcon className="h-3 w-3" style={{ color: "#25D366" }} /> {cat.slug === "promotion" ? "J'en profite" : "Commander"}
+              </GlassButton>
             </div>
           ))}
         </div>

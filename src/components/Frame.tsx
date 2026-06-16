@@ -11,6 +11,7 @@ export function Frame({
   alt,
   className = "",
   rounded = "rounded-[28px]",
+  variant = "tinted",
   children,
 }: {
   tone?: string;
@@ -18,32 +19,38 @@ export function Frame({
   alt?: string;
   className?: string;
   rounded?: string;
+  variant?: "tinted" | "plain";
   children?: ReactNode;
 }) {
+  const plain = variant === "plain";
   return (
     <div
-      className={`relative overflow-hidden bg-white ${rounded} ring-1 ring-black/5 shadow-soft ${className}`}
-      style={{ boxShadow: "0 10px 30px -16px oklch(0.2 0 0 / 0.18), 0 2px 6px -2px oklch(0.2 0 0 / 0.06)" }}
+      className={`relative overflow-hidden bg-white ${rounded} ${plain ? "ring-1 ring-black/8" : "ring-1 ring-black/5"} ${className}`}
+      style={{ boxShadow: plain
+        ? "0 6px 18px -12px oklch(0.2 0 0 / 0.14), 0 1px 3px -1px oklch(0.2 0 0 / 0.05)"
+        : "0 10px 30px -16px oklch(0.2 0 0 / 0.18), 0 2px 6px -2px oklch(0.2 0 0 / 0.06)" }}
     >
-      {/* Soft tinted base over white */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${tone} opacity-80`} />
+      {!plain && <div className={`absolute inset-0 bg-gradient-to-br ${tone} opacity-80`} />}
       {/* Liquid-glass top highlight */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, oklch(1 0 0 / 0.55), oklch(1 0 0 / 0.08) 55%, transparent), radial-gradient(120% 70% at 12% 8%, oklch(1 0 0 / 0.85), transparent 60%)",
+            plain
+              ? "linear-gradient(180deg, oklch(1 0 0 / 0.7), oklch(1 0 0 / 0.2) 60%, transparent), radial-gradient(120% 60% at 15% 10%, oklch(1 0 0 / 0.9), transparent 65%)"
+              : "linear-gradient(180deg, oklch(1 0 0 / 0.55), oklch(1 0 0 / 0.08) 55%, transparent), radial-gradient(120% 70% at 12% 8%, oklch(1 0 0 / 0.85), transparent 60%)",
           backdropFilter: "blur(10px) saturate(170%)",
         }}
       />
-      {/* Very subtle depth bottom-right */}
-      <div
-        className="absolute inset-0 opacity-40"
-        style={{
-          background:
-            "radial-gradient(70% 50% at 92% 100%, oklch(0.2 0 0 / 0.12), transparent 65%)",
-        }}
-      />
+      {!plain && (
+        <div
+          className="absolute inset-0 opacity-40"
+          style={{
+            background:
+              "radial-gradient(70% 50% at 92% 100%, oklch(0.2 0 0 / 0.12), transparent 65%)",
+          }}
+        />
+      )}
       {/* Optional real photo on top */}
       {image && (
         <img
@@ -51,6 +58,7 @@ export function Frame({
           alt={alt ?? ""}
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
+          decoding="async"
         />
       )}
       {/* Inner glass highlight border */}

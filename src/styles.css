@@ -195,3 +195,28 @@
   background-size: 200% 100%;
   animation: shimmer 2s linear infinite;
 }
+
+@utility glass-nav {
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.78), oklch(1 0 0 / 0.55));
+  backdrop-filter: blur(34px) saturate(200%);
+  border: 1px solid oklch(1 0 0 / 0.9);
+  box-shadow:
+    0 18px 40px -18px oklch(0.78 0.1 85 / 0.25),
+    0 8px 22px -10px oklch(0.2 0 0 / 0.12),
+    inset 0 1px 0 oklch(1 0 0 / 0.9),
+    inset 0 -1px 0 oklch(0.85 0.06 85 / 0.18);
+}
+
+@keyframes nav-pop {
+  0% { transform: scale(0.85); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.animate-nav-pop { animation: nav-pop .28s cubic-bezier(.2,.7,.2,1); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}

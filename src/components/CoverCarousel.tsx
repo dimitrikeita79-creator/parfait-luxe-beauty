@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Frame } from "@/components/Frame";
 
 export type Cover = { id: string; title: string; subtitle: string; tone: string };
@@ -19,6 +19,7 @@ export const DEFAULT_COVERS: Cover[] = [
 export function CoverCarousel({ covers = DEFAULT_COVERS }: { covers?: Cover[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   // Track active via scroll
   const onScroll = () => {
@@ -28,8 +29,29 @@ export function CoverCarousel({ covers = DEFAULT_COVERS }: { covers?: Cover[] })
     if (idx !== active) setActive(idx);
   };
 
+  // Auto-advance — scrolls the carousel container only (no page jump)
+  useEffect(() => {
+    if (paused) return;
+    const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+    const id = window.setInterval(() => {
+      const el = ref.current;
+      if (!el) return;
+      const next = Math.round(el.scrollLeft / el.clientWidth) + 1;
+      const maxIdx = covers.length - 1;
+      const target = next > maxIdx ? 0 : next;
+      el.scrollTo({ left: target * el.clientWidth, behavior: "smooth" });
+    }, 4000);
+    return () => window.clearInterval(id);
+  }, [paused, covers.length]);
+
   return (
-    <div className="-mx-5">
+    <div
+      className="-mx-5"
+      onPointerDown={() => setPaused(true)}
+      onPointerUp={() => setPaused(false)}
+      onPointerLeave={() => setPaused(false)}
+    >
       <div
         ref={ref}
         onScroll={onScroll}
@@ -55,8 +77,8 @@ export function CoverCarousel({ covers = DEFAULT_COVERS }: { covers?: Cover[] })
             aria-label={`Aller au cadre ${i + 1}`}
             onClick={() => {
               const el = ref.current;
-              const slide = el?.children[i] as HTMLElement | undefined;
-              slide?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+              if (!el) return;
+              el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
             }}
             className={`h-1.5 rounded-full transition-all ${i === active ? "w-5 bg-foreground" : "w-1.5 bg-foreground/25"}`}
           />

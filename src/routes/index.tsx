@@ -1,6 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Search, Calendar, MapPin, BookOpen, Star, ChevronRight, Sparkles } from "lucide-react";
 import { AppShell, SectionTitle, WhatsAppIcon } from "@/components/AppShell";
+import { IconBadge } from "@/components/IconBadge";
 import { Frame } from "@/components/Frame";
 import { CoverCarousel } from "@/components/CoverCarousel";
 import { SERVICES, CATALOG, CATALOG_ITEMS, GALLERY, TESTIMONIALS, formatFCFA, waLink, LOCATION } from "@/lib/salon-data";
@@ -23,6 +25,40 @@ function Index() {
   const popularBraids = CATALOG_ITEMS.coiffure.slice(0, 4);
   const works = GALLERY.slice(0, 6);
   const topCategories = CATALOG.slice(0, 4);
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const q = query.trim().toLowerCase();
+    if (!q) return;
+    // Catégories du catalogue
+    const catMap: Record<string, string> = {
+      promo: "promotion", promotion: "promotion", solde: "promotion",
+      perruque: "perruques", perruques: "perruques", lace: "perruques",
+      meche: "meche", mèche: "meche", tissage: "perruques",
+      coiffure: "coiffure", tresse: "coiffure", tresses: "coiffure", braids: "coiffure",
+      mariage: "mariage", mariée: "mariage",
+      produit: "produits", produits: "produits", soin: "produits", soins: "produits",
+      equipement: "equipement", équipement: "equipement", materiel: "equipement",
+    };
+    for (const key of Object.keys(catMap)) {
+      if (q.includes(key)) {
+        navigate({ to: "/catalog/$category", params: { category: catMap[key] } });
+        return;
+      }
+    }
+    if (q.includes("service") || q.includes("prestation") || q.includes("pose")) {
+      navigate({ to: "/services" }); return;
+    }
+    if (q.includes("galerie") || q.includes("photo") || q.includes("realisation") || q.includes("réalisation")) {
+      navigate({ to: "/gallery" }); return;
+    }
+    if (q.includes("contact") || q.includes("rendez") || q.includes("rdv") || q.includes("reserv")) {
+      navigate({ to: "/contact" }); return;
+    }
+    navigate({ to: "/catalog" });
+  };
 
   return (
     <AppShell>
@@ -57,30 +93,39 @@ function Index() {
       </section>
 
       {/* Search */}
-      <div className="mt-5 glass flex items-center gap-2 rounded-full px-4 py-3">
+      <form onSubmit={handleSearch} className="mt-5 glass flex items-center gap-2 rounded-full px-4 py-2.5 transition focus-within:ring-2 focus-within:ring-[var(--gold-soft,oklch(0.85_0.08_85))]">
         <Search className="h-4 w-4 text-muted-foreground" />
         <input
-          placeholder="Rechercher un service, perruque…"
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Rechercher : service, promo, perruque, mariage…"
+          className="flex-1 bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground"
+          aria-label="Recherche"
         />
-      </div>
+        <button
+          type="submit"
+          className="rounded-full px-3 py-1.5 text-[11px] font-semibold text-white shadow-soft transition hover:scale-105 active:scale-95"
+          style={{ background: "linear-gradient(180deg, oklch(0.32 0.01 60), oklch(0.18 0.005 60))" }}
+        >
+          OK
+        </button>
+      </form>
 
       {/* Quick actions */}
       <div className="mt-5 grid grid-cols-4 gap-2">
-        {[
-          { label: "Réserver", icon: Calendar, to: "/contact" as const, href: undefined, green: false },
-          { label: "WhatsApp", icon: null, to: undefined, href: waLink(), green: true },
-          { label: "Itinéraire", icon: MapPin, to: undefined, href: LOCATION.mapsLink, green: false },
-          { label: "Catalogue", icon: BookOpen, to: "/catalog" as const, href: undefined, green: false },
-        ].map(({ label, icon: Icon, to, href, green }) => {
+        {([
+          { label: "Réserver", icon: Calendar, tone: "gold" as const, to: "/contact" as const, href: undefined, wa: false },
+          { label: "WhatsApp", icon: null,     tone: "green" as const, to: undefined, href: waLink(), wa: true },
+          { label: "Itinéraire", icon: MapPin, tone: "rose" as const, to: undefined, href: LOCATION.mapsLink, wa: false },
+          { label: "Catalogue", icon: BookOpen, tone: "blue" as const, to: "/catalog" as const, href: undefined, wa: false },
+        ]).map(({ label, icon: Icon, tone, to, href, wa }) => {
           const inner = (
-            <div className="liquid-glass flex flex-col items-center gap-1.5 rounded-2xl p-3 transition active:scale-95">
-              <span
-                className="grid h-10 w-10 place-items-center rounded-full shadow-soft"
-                style={green ? { background: "#25D366", color: "white" } : { background: "oklch(0.15 0 0)", color: "white" }}
-              >
-                {green ? <WhatsAppIcon className="h-4 w-4" /> : Icon ? <Icon className="h-4 w-4" /> : null}
-              </span>
+            <div className="liquid-glass group flex flex-col items-center gap-1.5 rounded-2xl p-3 transition-transform duration-200 hover:-translate-y-0.5 active:scale-95">
+              {wa ? (
+                <IconBadge icon={WhatsAppIcon as any} tone="green" size="md" className="group-hover:rotate-[-6deg]" />
+              ) : Icon ? (
+                <IconBadge icon={Icon} tone={tone} size="md" className="group-hover:rotate-[-6deg]" />
+              ) : null}
               <span className="text-[11px] font-medium">{label}</span>
             </div>
           );

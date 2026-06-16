@@ -1,73 +1,75 @@
 ## Objectifs
 
-Améliorations visuelles et UX sur l'accueil, la navigation, les icônes, les cadres, et la page Contact. Aucune modification backend.
+Refonte visuelle et fonctionnelle ciblée, sans toucher au backend ni aux routes.
 
-## 1. Accueil — Carrousel
+## 1. Services — version texte uniquement (`src/routes/services.tsx`)
 
-- Supprimer l'auto-play du `CoverCarousel` (la fonction qui appelle `scrollIntoView` faisait remonter la page entière sur certains navigateurs).
-- Garder le défilement manuel (swipe) + indicateurs cliquables pour naviguer.
-- Conserver les 10 cadres de couverture.
+- Retirer le composant `Frame` de chaque carte service (plus aucune image / vignette colorée).
+- Nouvelle carte liquid-glass plein largeur : titre en gros, description, badge durée + prix, boutons d'action en bas.
+- Ajouter une petite pastille `IconBadge` (icône lucide spécifique au service : `Scissors`, `Sparkles`, `Heart`, `Gem`, `Crown`, `Package`) à gauche du titre — pas de photo.
+- Idem dans la section "Services populaires" de l'accueil : carte texte uniquement (retirer le `Frame` dans `src/routes/index.tsx`).
 
-## 2. Barre de navigation
+## 2. Recherche ultra-performante (accueil)
 
-- Retirer le bouton WhatsApp central surélevé du bottom-nav.
-- Revenir à 5 onglets équilibrés : Accueil · Services · Galerie · Catalogue · Contact.
-- Garder le bouton WhatsApp uniquement dans la top-bar (header), avec effet liquid-glass + icône officielle verte.
+Refondre `handleSearch` dans `src/routes/index.tsx` :
 
-## 3. Système d'icônes (liquid glass + couleurs douces)
+1. Construire un index plat à partir de `SERVICES` (titre/desc) et `CATALOG_ITEMS` (tous les produits de toutes les catégories, avec leur `category` slug).
+2. Algorithme : normaliser la requête (lowercase, sans accents), tokeniser, scorer chaque entrée (match exact > préfixe > sous-chaîne sur n'importe quel mot).
+3. Routage :
+   - Si un **item catalogue** matche (ex. "huile argan") → `/catalog/$category` de l'item, puis scroller/mettre en évidence (hash `#item-id`).
+   - Si un **service** matche → `/services` (filtre activé via search param `?s=<title>` lu par services.tsx).
+   - Si un mot-clé matche une **catégorie** (perruque, promo, mariage…) → catégorie correspondante.
+   - Sinon → page dédiée `/catalog` avec message "Aucun résultat pour …" via search param `?q=…` + bandeau d'info.
+4. Ajouter un menu déroulant de suggestions sous la barre (top 5 résultats) en temps réel : clic = navigation directe. Fermeture sur blur/escape.
+5. Debounce léger (100 ms) pour l'index — l'index lui-même est mémoïsé (`useMemo`) car les données sont statiques.
 
-- Créer un composant `IconBadge` réutilisable : pastille en liquid-glass (blanc translucide, blur, légère bordure dorée), icône `lucide` en gris-anthracite (`text-neutral-700`) au lieu de noir pur.
-- Ajouter une micro-animation au survol/tap : `transition-transform`, `active:scale-95`, `hover:scale-105`, léger halo doré.
-- Remplacer toutes les pastilles `bg-black text-white` (Contact, Services, Catalogue, Frame) par `IconBadge`.
-- Adoucir les couleurs : nav active passe de `bg-black/90` à un glass sombre translucide (`bg-neutral-900/85` + blur).
+`src/routes/catalog.$category.tsx` : lire `?highlight=<id>` et appliquer un anneau doré + scrollIntoView sur la carte ciblée.
+`src/routes/catalog.tsx` : afficher le bandeau "Aucun résultat trouvé pour <q>" quand `?q=` est présent sans match.
+`src/routes/services.tsx` : pré-sélectionner le filtre si `?s=` présent.
 
-## 4. Cadres d'images (Frame)
+## 3. Barre de navigation inférieure (`src/components/AppShell.tsx`)
 
-- Fond systématiquement blanc pur derrière les visuels.
-- Bordure : `ring-1 ring-black/5` + `shadow-soft` + coin intérieur liquid-glass.
-- Ajouter un léger reflet en haut du cadre (gradient blanc translucide) pour l'effet verre.
-- Retirer définitivement tout résidu doré sur le contour, garder uniquement un mince filet ivoire optionnel.
+- Renforcer le liquid-glass : conteneur translucide blanc avec blur fort (`blur(24px) saturate(180%)`), bordure intérieure blanche, ombre douce dorée.
+- Icônes : supprimer le noir, utiliser `oklch(0.42 0.015 60)` au repos, accent doré au survol.
+- État actif : pastille glass blanche **claire** (non noire) avec halo doré subtil + icône colorée selon onglet (Accueil = doré, Services = rose, Galerie = bleu, Catalogue = neutre foncé glass, Contact = vert). Indicateur arrondi animé qui glisse sous l'onglet sélectionné (`transition-transform`).
+- Micro-animations : `hover:-translate-y-0.5`, `active:scale-95`, icône `transition-transform` (légère rotation/scale au tap).
+- Label en petites capitales avec `tracking-wider`.
 
-## 5. Design global & palette
+## 4. Liquid glass partout sur les boutons
 
-- Palette : blanc dominant, gris très clair (`oklch(0.97 …)`) pour les surfaces, accents doré pâle (`--gold-soft`) uniquement sur titres/diviseurs.
-- Boutons primaires : liquid-glass blanc + texte anthracite, accent doré en hover.
-- Boutons WhatsApp et réseaux sociaux : fond liquid-glass blanc + icône colorée officielle (au lieu du fond plein vert/noir).
-- Typographie : conserver la pile actuelle, augmenter légèrement le `letter-spacing` des labels d'onglet.
+Créer un composant utilitaire **`src/components/GlassButton.tsx`** (variantes : `primary` (dark glass), `light` (white glass), `whatsapp` (white glass + icône verte), `gold` (white glass + accent doré)). Forme : `rounded-full`, padding généreux, bordure intérieure blanche, ombre colorée selon variante, micro-anim `hover:scale-[1.02] active:scale-95`.
 
-## 6. Icônes sociales colorées (Contact)
+Remplacer les boutons actuellement en aplat dans :
+- `services.tsx` → boutons "Réserver via WhatsApp" (variante `whatsapp`) et "Détails" (variante `light`).
+- `catalog.$category.tsx` → bouton "Commander / J'en profite" (variante `whatsapp`) ; badge "Best-seller/Nouveau" en glass clair (retirer le fond noir actuel).
+- `index.tsx` → "Réserver" (primary glass), "Catalogue" (light glass), bouton OK de la recherche (gold glass), "Découvrir les promos" (whatsapp/gold).
+- `contact.tsx` → CTA WhatsApp en `whatsapp`, bouton "Itinéraire" en `gold`.
+- `gallery.tsx` → pills de catégories en variante glass.
 
-- Facebook : bleu `#1877F2`
-- Instagram : dégradé rose/orange `#E1306C → #F77737`
-- TikTok : noir + cyan/rose officiels (`#000` base, accents `#25F4EE` / `#FE2C55`)
-- WhatsApp : vert `#25D366`
-- Site web : doré pâle
-- Chaque icône posée sur une pastille `IconBadge` liquid-glass + animation `hover:scale-110` + halo coloré subtil.
+## 5. Grilles blanches — Galerie & Catalogue
 
-## 7. Page Contact — refonte du formulaire
+- `Frame.tsx` : ajouter prop `variant?: "tinted" | "plain"`. En `plain`, on retire le gradient teinté (`tone`) et la radial sombre — il reste blanc pur + fin ring + léger reflet glass haut. Le ring devient `ring-black/8` pour mieux délimiter.
+- `src/routes/gallery.tsx` : passer toutes les vignettes en `variant="plain"` (grille blanche uniforme) ; conserver uniquement le label de catégorie dans une pill glass en bas.
+- `src/routes/catalog.tsx` : pareil pour les cartes de catégories — fond blanc, contour fin, titre + countLabel en bas dans une bande glass blanche (au lieu du dégradé sombre actuel). Le nom et le compteur passent en `text-neutral-900` / `text-[var(--gold-deep)]`.
+- `src/routes/catalog.$category.tsx` : items en `variant="plain"`, l'image future sera posée par-dessus. Cadre blanc épuré.
 
-- Réorganiser : carte unique liquid-glass avec sections claires (Coordonnées · Demande · Date).
-- Ajouter un champ **Produit** (select alimenté par `CATALOG_PRODUCTS` de `salon-data.ts`) en plus du champ Service existant. Option « Aucun ».
-- Pré-remplir le message WhatsApp avec service + produit choisi.
-- Améliorer les inputs : fond blanc translucide, focus ring doré, padding plus aéré, icônes lucide en début de champ.
-- Bloc CTA WhatsApp : grand bouton liquid-glass avec icône officielle verte, sous-titre « Réponse rapide ».
-- Cartes Téléphone/Adresse : passer en liquid-glass avec `IconBadge` colorés (téléphone = doré, carte = vert sapin).
-- Carte Maps : conserver, mais cadre arrondi liquid-glass et bouton « Itinéraire » blanc + texte doré.
+## 6. Animations & fluidité globale
 
-## 8. Animations & fluidité
+- Ajouter dans `src/styles.css` :
+  - utilitaire `.glass-nav` (blur 24, saturate 180, bordures blanches).
+  - keyframes `nav-pop` (scale + ease-out 180 ms) appliquée à l'icône active.
+  - `transition: transform .18s cubic-bezier(.2,.7,.2,1)` sur boutons.
+- Respect `prefers-reduced-motion` : désactiver les translate/scale.
+- Préchargement de routes : `defaultPreload: "intent"` dans `src/router.tsx` (déjà ou ajouter) + `<Link preload="intent">` implicite. Pour les liens critiques (nav inférieure, CTA accueil), forcer `preload="render"`.
+- Mémoïser les listes lourdes (`CATALOG_ITEMS`) avec `useMemo` côté accueil/recherche.
+- Lazy-loading `loading="lazy"` déjà présent sur `Frame` — vérifier aussi `decoding="async"`.
 
-- Ajouter `transition-all duration-200` aux IconBadge.
-- `hover:scale-105 active:scale-95` sur tous les boutons d'action.
-- Respect `prefers-reduced-motion`.
+## 7. Détails techniques
 
-## Fichiers modifiés
+- **Pas de nouvelle dépendance.**
+- Nouveaux fichiers : `src/components/GlassButton.tsx`.
+- Modifiés : `AppShell.tsx`, `Frame.tsx`, `styles.css`, `router.tsx`, `routes/index.tsx`, `routes/services.tsx`, `routes/catalog.tsx`, `routes/catalog.$category.tsx`, `routes/gallery.tsx`, `routes/contact.tsx`.
+- Normalisation accents : `str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")`.
+- Search params via `validateSearch` de TanStack si nécessaire, sinon lecture simple via `useSearch({ strict: false })`.
 
-- `src/components/CoverCarousel.tsx` — retire auto-play.
-- `src/components/AppShell.tsx` — retire bouton WhatsApp central, 5 onglets équilibrés, nav active en glass.
-- `src/components/IconBadge.tsx` *(nouveau)* — pastille liquid-glass réutilisable.
-- `src/components/Frame.tsx` — fond blanc + reflet glass.
-- `src/styles.css` — affine tokens (glass, gold-soft, ombres).
-- `src/routes/contact.tsx` — formulaire enrichi (Produit), icônes sociales colorées, boutons liquid-glass.
-- `src/routes/index.tsx`, `services.tsx`, `catalog.tsx`, `catalog.$category.tsx` — remplacent les pastilles noires par `IconBadge`.
-
-Aucune dépendance ajoutée, aucun changement de routes ni de logique métier.
+Aucun changement de routes ni de logique métier — uniquement présentation, recherche et fluidité.

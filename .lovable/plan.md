@@ -1,75 +1,73 @@
-## Objectifs
+## Objectif
 
-Refonte visuelle et fonctionnelle ciblée, sans toucher au backend ni aux routes.
+Intégrer les vraies données des trois établissements, les nouveaux catalogues (coiffures CF + perruques PB/PCC/PEM/PLL/PC), les vrais témoignages et les logos. Sans casser la structure actuelle. Ajout d'effets liquid glass + dorés et d'animations sur les CTA d'accueil.
 
-## 1. Services — version texte uniquement (`src/routes/services.tsx`)
+## 1. Données — `src/lib/salon-data.ts`
 
-- Retirer le composant `Frame` de chaque carte service (plus aucune image / vignette colorée).
-- Nouvelle carte liquid-glass plein largeur : titre en gros, description, badge durée + prix, boutons d'action en bas.
-- Ajouter une petite pastille `IconBadge` (icône lucide spécifique au service : `Scissors`, `Sparkles`, `Heart`, `Gem`, `Crown`, `Package`) à gauche du titre — pas de photo.
-- Idem dans la section "Services populaires" de l'accueil : carte texte uniquement (retirer le `Frame` dans `src/routes/index.tsx`).
+- Nouveau export `SALONS` (tableau de 3) :
+  - **Parfait Design** — Ouaga centre, +226 70 02 83 36, Maps `?q=12.3664879,-1.4695977`, tags `["services","perruques","meche","mariage","coiffure","promo"]`.
+  - **Desmo Hair** — Ouaga 2000, +226 71 71 64 11, Maps `https://maps.app.goo.gl/AQnbR4cyVPYH3PmW7`, mêmes tags.
+  - **Beauté Essentielle** — Dassasgo, +226 71 11 57 84, Maps `https://maps.app.goo.gl/TqSPQGnvZsVpRcK6A`, tags `["produits","equipement"]`.
+- Helper `waLinkFor(salonId, message?)` : choisit le numéro WhatsApp selon le salon. Helper `pickSalonFor(category)` qui retourne le salon adapté (produits/equipement → Beauté Essentielle, sinon → Parfait Design par défaut, avec possibilité de choisir Desmo Hair dans l'UI). Les exports existants `WHATSAPP_NUMBER`/`waLink`/`LOCATION` sont conservés pour compat (pointent sur Parfait Design).
+- Remplacer `CATALOG_ITEMS.coiffure` par les **23 coupes CF1–CF23** avec nom, code, description et prix exacts fournis.
+- Remplacer `CATALOG_ITEMS.perruques` par toutes les perruques fournies : **PB1–PB16** (Bouncy), **PCC1–PCC9** (Coupe Carré), **PEM1–PEM7** (Effet Mouillé), **PLL1–PLL9** (Lisse Long), **PC1–PC2** (Cut). Ajouter un champ optionnel `subCategory`, `texture`, `oldPrice` (pour les promos "★ Limité"), `fromPrice` (booléen "À partir de"). Les entrées marquées "★ Limité" sont aussi dupliquées/référencées dans `CATALOG_ITEMS.promotion`.
+- Recalculer les `count` / `countLabel` des catégories à partir des données réelles.
+- Remplacer `TESTIMONIALS` par les 6 vrais avis fournis (Laitifa Segda, Venance Koffi, Sampawende Maelyse, Nana Yasmine Zoure, Adèle Sawadogo, Eliane Koutiebou Silga).
+- Note : mèche, mariage, produits, equipement, promotion restent inchangés pour l'instant — l'utilisateur enverra les vraies données plus tard. Garder les listes actuelles comme placeholders pour ne pas casser l'UI.
 
-## 2. Recherche ultra-performante (accueil)
+## 2. Logos — assets
 
-Refondre `handleSearch` dans `src/routes/index.tsx` :
+Extraire `LOGO.zip` puis créer 3 pointeurs Lovable Assets :
+- `src/assets/logo-parfait.asset.json`
+- `src/assets/logo-desmohair.asset.json`
+- `src/assets/logo-beaute.asset.json`
 
-1. Construire un index plat à partir de `SERVICES` (titre/desc) et `CATALOG_ITEMS` (tous les produits de toutes les catégories, avec leur `category` slug).
-2. Algorithme : normaliser la requête (lowercase, sans accents), tokeniser, scorer chaque entrée (match exact > préfixe > sous-chaîne sur n'importe quel mot).
-3. Routage :
-   - Si un **item catalogue** matche (ex. "huile argan") → `/catalog/$category` de l'item, puis scroller/mettre en évidence (hash `#item-id`).
-   - Si un **service** matche → `/services` (filtre activé via search param `?s=<title>` lu par services.tsx).
-   - Si un mot-clé matche une **catégorie** (perruque, promo, mariage…) → catégorie correspondante.
-   - Sinon → page dédiée `/catalog` avec message "Aucun résultat pour …" via search param `?q=…` + bandeau d'info.
-4. Ajouter un menu déroulant de suggestions sous la barre (top 5 résultats) en temps réel : clic = navigation directe. Fermeture sur blur/escape.
-5. Debounce léger (100 ms) pour l'index — l'index lui-même est mémoïsé (`useMemo`) car les données sont statiques.
+Référencés dans `SALONS[*].logo` (import du `.asset.json`).
 
-`src/routes/catalog.$category.tsx` : lire `?highlight=<id>` et appliquer un anneau doré + scrollIntoView sur la carte ciblée.
-`src/routes/catalog.tsx` : afficher le bandeau "Aucun résultat trouvé pour <q>" quand `?q=` est présent sans match.
-`src/routes/services.tsx` : pré-sélectionner le filtre si `?s=` présent.
+## 3. Page Contact — `src/routes/contact.tsx`
 
-## 3. Barre de navigation inférieure (`src/components/AppShell.tsx`)
+- Nouvelle section "Nos établissements" en haut : 3 cartes liquid-glass empilées, chacune avec logo (rond blanc), nom, quartier, bouton "Appeler" (tel:) + bouton "WhatsApp" + bouton "Itinéraire". Les boutons utilisent `GlassButton`.
+- Le sélecteur de service dans le formulaire ajoute un champ "Établissement" :
+  - auto-sélectionné via `pickSalonFor(service|produit)`, modifiable par l'utilisateur.
+  - le submit utilise `waLinkFor(salonId, message)`.
+- Iframe Google Maps : remplacé par 3 onglets glass (un par établissement) qui changent l'iframe affichée.
 
-- Renforcer le liquid-glass : conteneur translucide blanc avec blur fort (`blur(24px) saturate(180%)`), bordure intérieure blanche, ombre douce dorée.
-- Icônes : supprimer le noir, utiliser `oklch(0.42 0.015 60)` au repos, accent doré au survol.
-- État actif : pastille glass blanche **claire** (non noire) avec halo doré subtil + icône colorée selon onglet (Accueil = doré, Services = rose, Galerie = bleu, Catalogue = neutre foncé glass, Contact = vert). Indicateur arrondi animé qui glisse sous l'onglet sélectionné (`transition-transform`).
-- Micro-animations : `hover:-translate-y-0.5`, `active:scale-95`, icône `transition-transform` (légère rotation/scale au tap).
-- Label en petites capitales avec `tracking-wider`.
+## 4. Redirection commandes par salon
 
-## 4. Liquid glass partout sur les boutons
+- `services.tsx` : bouton "Réserver via WhatsApp" → `waLinkFor("parfait", …)` (services par défaut, Parfait Design ; option visible "Desmo Hair" via petit sélecteur glass au-dessus du bouton).
+- `catalog.$category.tsx` : bouton "Commander" route via `pickSalonFor(category)` — `produits`/`equipement` → Beauté Essentielle (+226 71 11 57 84), tout le reste → Parfait Design. Le message WhatsApp inclut le code (CF/PB/…) et le prix.
 
-Créer un composant utilitaire **`src/components/GlassButton.tsx`** (variantes : `primary` (dark glass), `light` (white glass), `whatsapp` (white glass + icône verte), `gold` (white glass + accent doré)). Forme : `rounded-full`, padding généreux, bordure intérieure blanche, ombre colorée selon variante, micro-anim `hover:scale-[1.02] active:scale-95`.
+## 5. Accueil — effet doré sur "Réserver" & "Catalogue" — `src/routes/index.tsx`
 
-Remplacer les boutons actuellement en aplat dans :
-- `services.tsx` → boutons "Réserver via WhatsApp" (variante `whatsapp`) et "Détails" (variante `light`).
-- `catalog.$category.tsx` → bouton "Commander / J'en profite" (variante `whatsapp`) ; badge "Best-seller/Nouveau" en glass clair (retirer le fond noir actuel).
-- `index.tsx` → "Réserver" (primary glass), "Catalogue" (light glass), bouton OK de la recherche (gold glass), "Découvrir les promos" (whatsapp/gold).
-- `contact.tsx` → CTA WhatsApp en `whatsapp`, bouton "Itinéraire" en `gold`.
-- `gallery.tsx` → pills de catégories en variante glass.
+- Réduire la taille et l'opacité du bouton **Réserver** (passer en `size="md"` + `opacity-90`, padding plus serré) tout en gardant la prééminence visuelle via l'effet de texte.
+- Texte des deux CTA enveloppé dans un span `.gold-shimmer` :
+  - dégradé doré liquid-glass : `background: linear-gradient(110deg, #f5d77a 0%, #fff8e1 35%, #c9962b 50%, #fff8e1 65%, #f5d77a 100%)`
+  - `background-size: 250% 100%`, `-webkit-background-clip: text; color: transparent`
+  - animation `@keyframes goldShimmer { to { background-position: -250% 0; } }` sur 3.5s, infinite, linear.
+  - subtile lueur dorée derrière le texte via `text-shadow: 0 0 12px oklch(0.85 0.1 85 / 0.35)`.
+- Respect `prefers-reduced-motion` (animation désactivée).
 
-## 5. Grilles blanches — Galerie & Catalogue
+## 6. Liquid glass étendu — `src/styles.css` + composants
 
-- `Frame.tsx` : ajouter prop `variant?: "tinted" | "plain"`. En `plain`, on retire le gradient teinté (`tone`) et la radial sombre — il reste blanc pur + fin ring + léger reflet glass haut. Le ring devient `ring-black/8` pour mieux délimiter.
-- `src/routes/gallery.tsx` : passer toutes les vignettes en `variant="plain"` (grille blanche uniforme) ; conserver uniquement le label de catégorie dans une pill glass en bas.
-- `src/routes/catalog.tsx` : pareil pour les cartes de catégories — fond blanc, contour fin, titre + countLabel en bas dans une bande glass blanche (au lieu du dégradé sombre actuel). Le nom et le compteur passent en `text-neutral-900` / `text-[var(--gold-deep)]`.
-- `src/routes/catalog.$category.tsx` : items en `variant="plain"`, l'image future sera posée par-dessus. Cadre blanc épuré.
+- Renforcer la classe `.liquid-glass` existante (s'assurer du `backdrop-filter: blur(22px) saturate(180%)`, bordure intérieure blanche, reflet haut subtil).
+- Tous les `IconBadge` reçoivent le traitement liquid glass (déjà partiellement) : harmoniser pour que **toutes les icônes du site** (header, nav inférieure, sociaux, contact, services, catalog) soient sur fond glass blanc translucide avec teinte colorée selon le contexte.
+- Boutons restants encore en aplat → conversion en `GlassButton` (audit rapide de `index.tsx`, `gallery.tsx`, `catalog.tsx`, `splash.tsx`).
+- Ajouter transitions globales fluides : `transition: transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s` sur `.liquid-glass`, micro hover `translateY(-1px)`.
 
-## 6. Animations & fluidité globale
+## 7. Animations & fluidité
 
-- Ajouter dans `src/styles.css` :
-  - utilitaire `.glass-nav` (blur 24, saturate 180, bordures blanches).
-  - keyframes `nav-pop` (scale + ease-out 180 ms) appliquée à l'icône active.
-  - `transition: transform .18s cubic-bezier(.2,.7,.2,1)` sur boutons.
-- Respect `prefers-reduced-motion` : désactiver les translate/scale.
-- Préchargement de routes : `defaultPreload: "intent"` dans `src/router.tsx` (déjà ou ajouter) + `<Link preload="intent">` implicite. Pour les liens critiques (nav inférieure, CTA accueil), forcer `preload="render"`.
-- Mémoïser les listes lourdes (`CATALOG_ITEMS`) avec `useMemo` côté accueil/recherche.
-- Lazy-loading `loading="lazy"` déjà présent sur `Frame` — vérifier aussi `decoding="async"`.
+- Vérifier `defaultPreload: "intent"` (déjà fait) et ajouter `defaultPreloadDelay: 50` pour réactivité.
+- Mémoïser les transformations lourdes dans `index.tsx` (index de recherche déjà mémo — étendre à la nouvelle taille de catalogue).
+- Ajouter `content-visibility: auto` sur les grilles longues (gallery, catalog) pour accélérer le scroll.
+- Lazy-load systématique : `loading="lazy" decoding="async"` partout.
 
-## 7. Détails techniques
+## 8. Fichiers touchés
 
-- **Pas de nouvelle dépendance.**
-- Nouveaux fichiers : `src/components/GlassButton.tsx`.
-- Modifiés : `AppShell.tsx`, `Frame.tsx`, `styles.css`, `router.tsx`, `routes/index.tsx`, `routes/services.tsx`, `routes/catalog.tsx`, `routes/catalog.$category.tsx`, `routes/gallery.tsx`, `routes/contact.tsx`.
-- Normalisation accents : `str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")`.
-- Search params via `validateSearch` de TanStack si nécessaire, sinon lecture simple via `useSearch({ strict: false })`.
+- **Modifiés** : `src/lib/salon-data.ts`, `src/routes/contact.tsx`, `src/routes/services.tsx`, `src/routes/catalog.$category.tsx`, `src/routes/index.tsx`, `src/styles.css`, `src/components/AppShell.tsx` (mineur — header peut afficher logo actif), `src/router.tsx`.
+- **Créés** : `src/assets/logo-parfait.asset.json`, `src/assets/logo-desmohair.asset.json`, `src/assets/logo-beaute.asset.json`.
+- **Aucune nouvelle dépendance.** Aucun changement de routes ni backend.
 
-Aucun changement de routes ni de logique métier — uniquement présentation, recherche et fluidité.
+## Notes
+
+- Les données mèche, mariage, produits, équipement et promotion gardent leurs placeholders actuels — j'attends tes prochains envois pour les remplacer.
+- L'effet doré shimmer respecte `prefers-reduced-motion` et n'affecte pas le contraste (le doré reste lisible sur fond glass).

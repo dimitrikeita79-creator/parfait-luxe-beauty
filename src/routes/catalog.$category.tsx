@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
 import { GlassButton } from "@/components/GlassButton";
-import { CATALOG, CATALOG_ITEMS, formatFCFA, waLink } from "@/lib/salon-data";
+import { CATALOG, CATALOG_ITEMS, formatFCFA, pickSalonFor, waLinkFor } from "@/lib/salon-data";
 
 export const Route = createFileRoute("/catalog/$category")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -48,6 +48,7 @@ function CategoryPage() {
   const { cat } = Route.useLoaderData();
   const { highlight } = useSearch({ from: "/catalog/$category" });
   const items = CATALOG_ITEMS[cat.slug] ?? [];
+  const salon = pickSalonFor(cat.slug);
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
   useEffect(() => {
     if (!highlight) return;
@@ -71,7 +72,7 @@ function CategoryPage() {
           </p>
           <GlassButton
             as="a"
-            href={waLink(`Bonjour, je souhaite être informé(e) dès l'arrivée des ${cat.name.toLowerCase()}.`)}
+            href={waLinkFor(salon.id, `Bonjour ${salon.name}, je souhaite être informé(e) dès l'arrivée des ${cat.name.toLowerCase()}.`)}
             target="_blank"
             rel="noreferrer"
             variant="whatsapp"
@@ -82,7 +83,11 @@ function CategoryPage() {
           </GlassButton>
         </div>
       ) : (
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <>
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Commandes traitées par <span className="font-semibold text-[var(--gold-deep)]">{salon.name}</span> · {salon.area}
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-3">
           {items.map((p, i) => (
             <div
               key={p.id}
@@ -99,15 +104,34 @@ function CategoryPage() {
                     {p.badge}
                   </span>
                 )}
+                {p.code && (
+                  <span
+                    className="absolute right-2 top-2 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold backdrop-blur-md"
+                    style={{ background: "oklch(1 0 0 / 0.85)", color: "oklch(0.3 0.01 60)", border: "1px solid oklch(1 0 0 / 0.9)" }}
+                  >
+                    {p.code}
+                  </span>
+                )}
               </Frame>
               <p className="mt-2 text-xs font-semibold leading-tight line-clamp-2">{p.name}</p>
+              {(p.subCategory || p.texture) && (
+                <p className="mt-0.5 text-[9px] uppercase tracking-wider text-[var(--gold-deep)]">
+                  {[p.subCategory, p.texture].filter(Boolean).join(" · ")}
+                </p>
+              )}
               <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-1">{p.desc}</p>
               {p.price !== undefined && p.price > 0 && (
-                <p className="mt-1.5 text-sm font-bold text-gold">{formatFCFA(p.price)}</p>
+                <p className="mt-1.5 flex items-baseline gap-1.5">
+                  {p.fromPrice && <span className="text-[9px] text-muted-foreground">Dès</span>}
+                  <span className="text-sm font-bold text-gold">{formatFCFA(p.price)}</span>
+                  {p.oldPrice && (
+                    <span className="text-[10px] text-muted-foreground line-through">{formatFCFA(p.oldPrice)}</span>
+                  )}
+                </p>
               )}
               <GlassButton
                 as="a"
-                href={waLink(`Bonjour, je souhaite plus d'infos sur: ${p.name}${p.price ? ` (${formatFCFA(p.price)})` : ""}.`)}
+                href={waLinkFor(salon.id, `Bonjour ${salon.name}, je souhaite commander : ${p.name}${p.code ? ` [${p.code}]` : ""}${p.price ? ` — ${formatFCFA(p.price)}` : ""}.`)}
                 target="_blank"
                 rel="noreferrer"
                 variant="whatsapp"
@@ -120,6 +144,7 @@ function CategoryPage() {
             </div>
           ))}
         </div>
+        </>
       )}
     </AppShell>
   );

@@ -2,17 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, GlassCard, WhatsAppIcon } from "@/components/AppShell";
 import { IconBadge } from "@/components/IconBadge";
 import { GlassButton } from "@/components/GlassButton";
-import { MapPin, Phone, Facebook, Instagram, Globe, User, Calendar, MessageSquare, Sparkles, ShoppingBag } from "lucide-react";
-import { SERVICES, SOCIALS, LOCATION, WHATSAPP_DISPLAY, waLink, CATALOG_ITEMS, formatFCFA } from "@/lib/salon-data";
+import { MapPin, Phone, Facebook, Instagram, Globe, User, Calendar, MessageSquare, Sparkles, ShoppingBag, Building2 } from "lucide-react";
+import {
+  SERVICES, SOCIALS, SALONS, CATALOG_ITEMS, formatFCFA,
+  waLinkFor, pickSalonFor, type SalonId,
+} from "@/lib/salon-data";
 import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact & Réservation — Parfait.Design/Desmohair" },
-      { name: "description", content: "Réservez votre rendez-vous. WhatsApp +226 70 02 83 36, Ouagadougou." },
-      { property: "og:title", content: "Contact — Parfait.Design/Desmohair" },
-      { property: "og:description", content: "Contactez notre salon de beauté à Ouagadougou." },
+      { title: "Contact & Réservation — Parfait.Design / Desmo Hair / Beauté Essentielle" },
+      { name: "description", content: "Réservez votre rendez-vous dans l'un de nos trois établissements à Ouagadougou." },
+      { property: "og:title", content: "Contact — Parfait.Design / Desmo Hair / Beauté Essentielle" },
+      { property: "og:description", content: "Trois adresses à Ouagadougou pour vos coiffures, perruques, produits et équipements." },
     ],
   }),
   component: ContactPage,
@@ -21,34 +24,88 @@ export const Route = createFileRoute("/contact")({
 function ContactPage() {
   const products = useMemo(
     () => [
-      ...CATALOG_ITEMS.produits.map((p) => ({ id: p.id, label: `Produit · ${p.name}`, price: p.price })),
-      ...CATALOG_ITEMS.equipement.map((p) => ({ id: p.id, label: `Équipement · ${p.name}`, price: p.price })),
-      ...CATALOG_ITEMS.perruques.slice(0, 12).map((p) => ({ id: p.id, label: `Perruque · ${p.name}`, price: p.price })),
+      ...CATALOG_ITEMS.produits.map((p) => ({ id: p.id, label: `Produit · ${p.name}`, price: p.price, cat: "produits" })),
+      ...CATALOG_ITEMS.equipement.map((p) => ({ id: p.id, label: `Équipement · ${p.name}`, price: p.price, cat: "equipement" })),
+      ...CATALOG_ITEMS.perruques.slice(0, 16).map((p) => ({ id: p.id, label: `Perruque · ${p.name}`, price: p.price, cat: "perruques" })),
     ],
     [],
   );
+  const [mapSalon, setMapSalon] = useState<SalonId>("parfait");
   const [form, setForm] = useState({
     nom: "",
     tel: "",
     service: SERVICES[0].title,
     produit: "aucun",
+    salonId: "parfait" as SalonId,
     date: "",
     message: "",
   });
-  const set = (k: keyof typeof form) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setForm({ ...form, [k]: e.target.value });
+  const set = (k: keyof typeof form) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const value = e.target.value;
+    setForm((f) => {
+      const next = { ...f, [k]: value } as typeof f;
+      // auto-pick salon if user changes produit
+      if (k === "produit" && value !== "aucun") {
+        const p = products.find((x) => x.id === value);
+        if (p) next.salonId = pickSalonFor(p.cat).id;
+      }
+      return next;
+    });
+  };
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     const prod = products.find((p) => p.id === form.produit);
     const prodLine = prod ? `• Produit : ${prod.label}${prod.price ? ` (${formatFCFA(prod.price)})` : ""}\n` : "";
-    const msg = `Bonjour Parfait.Design/Desmohair,\n\nJe souhaite réserver :\n• Nom : ${form.nom}\n• Téléphone : ${form.tel}\n• Service : ${form.service}\n${prodLine}• Date souhaitée : ${form.date}\n\n${form.message}`;
-    window.open(waLink(msg), "_blank");
+    const salon = SALONS.find((s) => s.id === form.salonId)!;
+    const msg = `Bonjour ${salon.name},\n\nJe souhaite réserver :\n• Nom : ${form.nom}\n• Téléphone : ${form.tel}\n• Service : ${form.service}\n${prodLine}• Date souhaitée : ${form.date}\n\n${form.message}`;
+    window.open(waLinkFor(form.salonId, msg), "_blank");
   };
 
   return (
-    <AppShell title="Contact" subtitle="Réservez votre moment beauté">
-      <form onSubmit={onSubmit} className="mt-5 liquid-glass rounded-[28px] p-5 space-y-4">
+    <AppShell title="Contact" subtitle="Trois adresses à votre service">
+      {/* Établissements */}
+      <section className="mt-5 space-y-3">
+        {SALONS.map((s, i) => (
+          <article
+            key={s.id}
+            className="liquid-glass animate-fade-up rounded-[24px] p-4"
+            style={{ animationDelay: `${i * 50}ms` }}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white ring-1 ring-black/5"
+                style={{ boxShadow: "0 6px 16px -8px oklch(0.78 0.1 85 / 0.4)" }}
+              >
+                <img src={s.logo} alt={s.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-base font-semibold leading-tight">{s.name}</p>
+                <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <MapPin className="h-3 w-3" style={{ color: "var(--gold-deep)" }} /> {s.area} · {s.phoneDisplay}
+                </p>
+                <p className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--gold-deep)]">
+                  {s.tags.includes("produits") ? "Produits & Équipements" : "Services · Perruques · Mariage · Promo"}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <GlassButton as="a" href={`tel:${s.phone}`} variant="light" size="sm">
+                <Phone className="h-3 w-3" /> Appeler
+              </GlassButton>
+              <GlassButton as="a" href={waLinkFor(s.id)} target="_blank" rel="noreferrer" variant="whatsapp" size="sm">
+                <WhatsAppIcon className="h-3 w-3" style={{ color: "#25D366" }} /> WhatsApp
+              </GlassButton>
+              <GlassButton as="a" href={s.mapsLink} target="_blank" rel="noreferrer" variant="gold" size="sm">
+                <MapPin className="h-3 w-3" /> Itinéraire
+              </GlassButton>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      {/* Formulaire */}
+      <form onSubmit={onSubmit} className="mt-6 liquid-glass rounded-[28px] p-5 space-y-4">
         <SectionLabel>Coordonnées</SectionLabel>
         <Field label="Nom complet" icon={User}>
           <input required value={form.nom} onChange={set("nom")} className="input" placeholder="Votre nom" />
@@ -58,6 +115,11 @@ function ContactPage() {
         </Field>
 
         <SectionLabel>Demande</SectionLabel>
+        <Field label="Établissement" icon={Building2}>
+          <select value={form.salonId} onChange={set("salonId")} className="input">
+            {SALONS.map((s) => <option key={s.id} value={s.id}>{s.name} — {s.area}</option>)}
+          </select>
+        </Field>
         <Field label="Service souhaité" icon={Sparkles}>
           <select value={form.service} onChange={set("service")} className="input">
             {SERVICES.map((s) => <option key={s.id}>{s.title}</option>)}
@@ -80,36 +142,45 @@ function ContactPage() {
         <GlassButton type="submit" variant="whatsapp" size="lg" full className="mt-2">
           <WhatsAppIcon className="h-5 w-5" style={{ color: "#25D366" }} />
           <span>Envoyer via WhatsApp</span>
-          <span className="text-[10px] font-normal opacity-70">· réponse rapide</span>
         </GlassButton>
       </form>
 
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <a href={`tel:+${WHATSAPP_DISPLAY.replace(/[^0-9]/g, "")}`} className="liquid-glass rounded-2xl p-4 transition hover:scale-[1.02] active:scale-95">
-          <IconBadge icon={Phone} tone="gold" />
-          <p className="mt-2 text-xs font-semibold">Téléphone</p>
-          <p className="text-[11px] text-muted-foreground">{WHATSAPP_DISPLAY}</p>
-        </a>
-        <a href={LOCATION.mapsLink} target="_blank" rel="noreferrer" className="liquid-glass rounded-2xl p-4 transition hover:scale-[1.02] active:scale-95">
-          <IconBadge icon={MapPin} tone="green" />
-          <p className="mt-2 text-xs font-semibold">Adresse</p>
-          <p className="text-[11px] text-muted-foreground">{LOCATION.city}</p>
-        </a>
-      </div>
-
+      {/* Carte */}
       <h2 className="font-display mt-7 mb-3 text-xl font-semibold">Nous trouver</h2>
-      <GlassCard className="overflow-hidden p-0">
+      <div className="liquid-glass rounded-full p-1 flex gap-1">
+        {SALONS.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setMapSalon(s.id)}
+            className={`flex-1 rounded-full px-2 py-1.5 text-[10px] font-semibold transition ${mapSalon === s.id ? "bg-white shadow-sm text-[var(--gold-deep)]" : "text-muted-foreground"}`}
+          >
+            {s.name}
+          </button>
+        ))}
+      </div>
+      <GlassCard className="mt-3 overflow-hidden p-0">
         <iframe
-          src={LOCATION.embed}
+          key={mapSalon}
+          src={SALONS.find((s) => s.id === mapSalon)!.embed}
           className="h-56 w-full border-0"
           loading="lazy"
-          title="Carte du salon"
+          title={`Carte ${mapSalon}`}
         />
-        <GlassButton as="a" href={LOCATION.mapsLink} target="_blank" rel="noreferrer" variant="gold" size="md" full className="rounded-none rounded-b-[28px]">
+        <GlassButton
+          as="a"
+          href={SALONS.find((s) => s.id === mapSalon)!.mapsLink}
+          target="_blank"
+          rel="noreferrer"
+          variant="gold"
+          size="md"
+          full
+          className="rounded-none rounded-b-[28px]"
+        >
           Obtenir l'itinéraire
         </GlassButton>
       </GlassCard>
 
+      {/* Réseaux */}
       <h2 className="font-display mt-7 mb-3 text-xl font-semibold">Suivez-nous</h2>
       <div className="grid grid-cols-4 gap-2">
         {[
@@ -161,15 +232,7 @@ function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
-function Field({
-  label,
-  icon: Icon,
-  children,
-}: {
-  label: string;
-  icon?: typeof Phone;
-  children: ReactNode;
-}) {
+function Field({ label, icon: Icon, children }: { label: string; icon?: typeof Phone; children: ReactNode }) {
   return (
     <label className="block">
       <span className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">

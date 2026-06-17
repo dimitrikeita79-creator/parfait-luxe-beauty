@@ -3,7 +3,7 @@ import { Clock, ChevronRight, Scissors, Sparkles, Heart, Crown, Gem, Package } f
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { GlassButton } from "@/components/GlassButton";
 import { IconBadge } from "@/components/IconBadge";
-import { SERVICES, formatFCFA, waLink } from "@/lib/salon-data";
+import { SERVICES, SALONS, formatFCFA, waLinkFor, type SalonId } from "@/lib/salon-data";
 import { useState } from "react";
 
 const SERVICE_ICONS: Record<string, typeof Sparkles> = {
@@ -29,8 +29,22 @@ export const Route = createFileRoute("/services")({
 
 function ServicesPage() {
   const [active, setActive] = useState<string | null>(null);
+  const [salonId, setSalonId] = useState<SalonId>("parfait");
   return (
     <AppShell title="Nos Services" subtitle="Une prestation pensée pour vous">
+      <div className="mt-4 liquid-glass rounded-full p-1 flex gap-1">
+        {SALONS.filter((s) => s.tags.includes("services")).map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setSalonId(s.id)}
+            className={`flex-1 rounded-full px-3 py-2 text-[11px] font-semibold transition ${salonId === s.id ? "bg-white shadow-sm text-[var(--gold-deep)]" : "text-muted-foreground"}`}
+          >
+            {s.name}
+            <span className="ml-1 text-[9px] opacity-70">· {s.area}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="mt-5 flex gap-2 overflow-x-auto pb-2 -mx-5 px-5">
         {["Tout", ...SERVICES.map((s) => s.title)].map((t) => (
           <GlassButton
@@ -68,7 +82,7 @@ function ServicesPage() {
               <div className="mt-4 flex gap-2">
                 <GlassButton
                   as="a"
-                  href={waLink(`Bonjour, je souhaite réserver: ${s.title}.`)}
+                  href={waLinkFor(salonId, `Bonjour, je souhaite réserver : ${s.title}.`)}
                   target="_blank"
                   rel="noreferrer"
                   variant="whatsapp"

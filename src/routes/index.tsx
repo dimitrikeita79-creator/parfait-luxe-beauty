@@ -109,8 +109,12 @@ function Index() {
           Perruques • Mèches • Coiffures • Mariage • Beauté
         </p>
         <div className="mt-4 flex gap-2">
-          <GlassButton as={Link} to="/contact" variant="primary" size="lg" full className="flex-1">Réserver</GlassButton>
-          <GlassButton as={Link} to="/catalog" variant="light" size="lg" full className="flex-1">Catalogue</GlassButton>
+          <GlassButton as={Link} to="/contact" variant="light" size="md" full className="flex-1 opacity-90">
+            <span className="gold-shimmer font-semibold">Réserver</span>
+          </GlassButton>
+          <GlassButton as={Link} to="/catalog" variant="light" size="md" full className="flex-1">
+            <span className="gold-shimmer font-semibold">Catalogue</span>
+          </GlassButton>
         </div>
       </section>
 

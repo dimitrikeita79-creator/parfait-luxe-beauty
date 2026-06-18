@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Sparkles, Image as ImageIcon, LayoutGrid, Phone } from "lucide-react";
 import { type CSSProperties, type ReactNode } from "react";
 import { waLink, BRAND } from "@/lib/salon-data";
-import logoAsset from "@/assets/logo.asset.json";
+import logoAsset from "@/assets/Parfait design.jpg";
 
 const NAV = [
   { to: "/",        label: "Accueil",   icon: Home,       color: "oklch(0.62 0.11 80)" }, // gold
@@ -36,7 +36,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
         <div className="glass-strong flex items-center justify-between rounded-full px-4 py-2.5">
           <Link to="/" className="flex items-center gap-2.5">
             <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-white shadow-soft ring-1 ring-black/5">
-              <img src={logoAsset.url} alt={BRAND} className="h-full w-full object-contain p-0.5" />
+              <img src={logoAsset} alt={BRAND} className="h-full w-full object-contain p-0.5" />
             </span>
             <div className="leading-tight">
               <p className="font-display text-[13px] font-semibold">Parfait.Design</p>
@@ -68,7 +68,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
       </header>
 
       {/* Content */}
-      <main className="px-5 pb-36">{children}</main>
+      <main className="px-4 pb-32">{children}</main>
 
       {/* Bottom nav — 5 onglets équilibrés */}
       <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-4 pb-4 pt-2">
@@ -138,8 +138,8 @@ export function GlassCard({ children, className = "" }: { children: ReactNode; c
 
 export function SectionTitle({ title, action }: { title: string; action?: ReactNode }) {
   return (
-    <div className="mt-7 mb-3 flex items-end justify-between px-1">
-      <h2 className="font-display text-xl font-semibold">{title}</h2>
+    <div className="mt-5 mb-2 flex items-end justify-between px-1">
+      <h2 className="font-display text-lg font-semibold">{title}</h2>
       {action}
     </div>
   );

@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
 import { GlassButton } from "@/components/GlassButton";
-import { CATALOG, CATALOG_ITEMS, formatFCFA, pickSalonFor, waLinkFor } from "@/lib/salon-data";
+import { CATALOG, CATALOG_ITEMS, formatFCFA, pickSalonFor, waLinkFor, getFirstImageForCategory } from "@/lib/salon-data";
 
 export const Route = createFileRoute("/catalog/$category")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -64,6 +64,13 @@ function CategoryPage() {
         <ChevronLeft className="h-3 w-3" /> Catalogue
       </Link>
 
+      {/* Cover image */}
+      {!cat.comingSoon && (
+        <div className="mt-3 rounded-[24px] overflow-hidden">
+          <Frame variant="plain" rounded="rounded-[24px]" className="aspect-video w-full" image={getFirstImageForCategory(cat.slug)} alt={cat.name} />
+        </div>
+      )}
+
       {cat.comingSoon ? (
         <div className="glass-strong mt-8 rounded-[28px] p-8 text-center">
           <p className="font-display text-2xl font-semibold text-gold">Bientôt disponible</p>
@@ -95,7 +102,7 @@ function CategoryPage() {
               className={`liquid-glass animate-fade-up rounded-[24px] p-3 transition-all duration-300 ${highlight === p.id ? "ring-2 ring-[var(--gold)] scale-[1.02]" : ""}`}
               style={{ animationDelay: `${i * 25}ms` }}
             >
-              <Frame variant="plain" rounded="rounded-2xl" className="aspect-[4/5] w-full">
+              <Frame variant="plain" rounded="rounded-2xl" className="aspect-[4/5] w-full" image={p.image} alt={p.name}>
                 {p.badge && (
                   <span
                     className="absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md"

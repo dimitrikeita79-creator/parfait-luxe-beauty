@@ -1,7 +1,15 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
-import { CATALOG } from "@/lib/salon-data";
+import { CATALOG, CATALOG_ITEMS } from "@/lib/salon-data";
+
+// Import preview images for each category
+import coupe1 from "@/assets/catalog/Coupe_1.webp";
+import m1_1 from "@/assets/catalog/new/M1-1.webp";
+import p1_1 from "@/assets/catalog/new/P_1-1.webp";
+import e1_1 from "@/assets/catalog/new/E_1-1.webp";
+import promo1 from "@/assets/catalog/promo/promo_1.webp";
+import pb1_1 from "@/assets/catalog/new/PB_1-1.webp";
 
 export const Route = createFileRoute("/catalog")({
   head: () => ({
@@ -18,12 +26,23 @@ export const Route = createFileRoute("/catalog")({
 function CatalogLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (pathname !== "/catalog") return <Outlet />;
+  
+  // Map categories to their preview images
+  const categoryImages: Record<string, string> = {
+    coiffure: coupe1,
+    perruques: pb1_1,
+    mariage: m1_1,
+    produits: p1_1,
+    equipement: e1_1,
+    promotion: promo1,
+  };
+  
   return (
     <AppShell title="Catalogue" subtitle="Explorez nos collections luxe">
       <div className="mt-5 grid grid-cols-2 gap-3">
         {CATALOG.map((c, i) => {
           const inner = (
-            <Frame variant="plain" rounded="rounded-[28px]" className="aspect-[4/5] w-full">
+            <Frame variant="plain" rounded="rounded-[28px]" className="aspect-[4/5] w-full" image={categoryImages[c.slug]} alt={c.name}>
               {c.comingSoon && (
                 <span
                   className="absolute right-2 top-2 z-10 rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md"

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Frame } from "@/components/Frame";
 
-export type Cover = { id: string; title: string; subtitle: string; tone: string };
+export type Cover = { id: string; title: string; subtitle: string; tone: string; image?: string };
 
 export const DEFAULT_COVERS: Cover[] = [
   { id: "c1", title: "Pose Perruque", subtitle: "Lace HD glueless", tone: "from-neutral-100 via-white to-amber-50" },
@@ -59,7 +59,7 @@ export function CoverCarousel({ covers = DEFAULT_COVERS }: { covers?: Cover[] })
       >
         {covers.map((c) => (
           <div key={c.id} className="w-[88%] shrink-0 snap-center">
-            <Frame tone={c.tone} rounded="rounded-[28px]" className="aspect-[16/10] w-full">
+            <Frame tone={c.tone} rounded="rounded-[28px]" className="aspect-[16/10] w-full" image={c.image} alt={c.title}>
               <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/85">{c.subtitle}</p>

@@ -51,7 +51,7 @@ function GalleryPage() {
                 className="relative block w-full active:scale-[0.98] transition animate-fade-up"
                 style={{ height: g.h, animationDelay: `${i * 60}ms` }}
               >
-                <Frame variant="plain" rounded="rounded-3xl" className="h-full w-full">
+                <Frame variant="plain" rounded="rounded-3xl" className="h-full w-full" image={g.image} alt={g.cat}>
                   <span
                     className="absolute left-2 bottom-2 rounded-full px-2.5 py-1 text-[10px] font-semibold backdrop-blur-md"
                     style={{ background: "oklch(1 0 0 / 0.85)", color: "oklch(0.5 0.11 80)", border: "1px solid oklch(1 0 0 / 0.95)" }}
@@ -70,7 +70,7 @@ function GalleryPage() {
           <button className="glass absolute top-6 right-6 grid h-10 w-10 place-items-center rounded-full text-white" onClick={() => setOpen(null)}>
             <X className="h-4 w-4" />
           </button>
-          <Frame variant="plain" rounded="rounded-[32px]" className="aspect-[3/4] w-full max-w-xs" />
+          <Frame variant="plain" rounded="rounded-[32px]" className="aspect-[3/4] w-full max-w-xs" image={open.image} alt={open.cat} />
           <p className="mt-4 font-display text-xl font-semibold text-white">{open.cat}</p>
         </div>
       )}

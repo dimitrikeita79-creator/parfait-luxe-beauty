@@ -131,6 +131,32 @@
     font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
     letter-spacing: -0.01em;
   }
+
+  /* Mobile performance optimizations */
+  @supports (scrollbar-gutter: stable) {
+    html {
+      scrollbar-gutter: stable;
+    }
+  }
+
+  /* Improve scrolling fluidity on mobile */
+  main, nav, [class*="overflow-x-auto"] {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Optimize animations for mobile */
+  @media (prefers-reduced-motion: no-preference) {
+    * {
+      --tw-transition-duration: 150ms;
+    }
+  }
+
+  @media (max-width: 480px) {
+    /* Reduce animation on small devices for better performance */
+    .animate-fade-up {
+      animation: fade-up 0.3s ease-out both;
+    }
+  }
 }
 
 @utility glass {

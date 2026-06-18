@@ -6,12 +6,17 @@ import { IconBadge } from "@/components/IconBadge";
 import { GlassButton } from "@/components/GlassButton";
 import { Frame } from "@/components/Frame";
 import { CoverCarousel } from "@/components/CoverCarousel";
-import { SERVICES, CATALOG, CATALOG_ITEMS, GALLERY, TESTIMONIALS, formatFCFA, waLink, LOCATION } from "@/lib/salon-data";
+import { SERVICES, CATALOG, CATALOG_ITEMS, GALLERY, TESTIMONIALS, waLink, LOCATION } from "@/lib/salon-data";
 // Import images for carousel and category previews
 import coupe1 from "@/assets/catalog/Coupe_1.webp";
+import coupe5 from "@/assets/catalog/Coupe_5.webp";
+import coupe10 from "@/assets/catalog/Coupe_10.webp";
 import m1_1 from "@/assets/catalog/new/M1-1.webp";
+import m8_1 from "@/assets/catalog/new/M8-1.webp";
 import promo1 from "@/assets/catalog/promo/promo_1.webp";
+import promo6 from "@/assets/catalog/promo/promo_6.webp";
 import p1_1 from "@/assets/catalog/new/P_1-1.webp";
+import p12_1 from "@/assets/catalog/new/P_12-1.webp";
 import e1_1 from "@/assets/catalog/new/E_1-1.webp";
 import pb1_1 from "@/assets/catalog/new/PB_34-1.webp";
 
@@ -39,15 +44,25 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const popularServices = SERVICES.slice(0, 4);
-  const popularWigs = CATALOG_ITEMS.perruques.slice(0, 4);
-  const popularBraids = CATALOG_ITEMS.coiffure.slice(0, 4);
+  const popularServices = SERVICES.slice(0, 6);
+  const popularWigs = CATALOG_ITEMS.perruques.slice(0, 8);
+  const popularBraids = CATALOG_ITEMS.coiffure.slice(0, 8);
   const works = GALLERY.slice(0, 6);
   const topCategories = CATALOG.slice(0, 4);
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const blurTimer = useRef<number | null>(null);
+
+  // Category preview images for catalog teaser
+  const categoryImages: Record<string, string> = {
+    coiffure: coupe1,
+    perruques: pb1_1,
+    mariage: m1_1,
+    produits: p1_1,
+    equipement: e1_1,
+    promotion: promo1,
+  };
 
   const searchIndex = useMemo<SearchHit[]>(() => {
     const out: SearchHit[] = [];
@@ -114,17 +129,11 @@ function Index() {
     { id: "c2", title: "Coiffure Mariage", subtitle: "Le jour J, sublimée", tone: "from-rose-50 via-white to-amber-50", image: m1_1 },
     { id: "c3", title: "Offres du mois", subtitle: "Jusqu'à -40%", tone: "from-amber-100 via-white to-rose-50", image: promo1 },
     { id: "c4", title: "Soins Capillaires", subtitle: "Routine d'exception", tone: "from-white via-neutral-50 to-amber-50", image: p1_1 },
+    { id: "c5", title: "Coiffures", subtitle: "Styles prisés", tone: "from-amber-50 via-white to-rose-50", image: coupe5 },
+    { id: "c6", title: "Mariage Prestige", subtitle: "Votre jour parfait", tone: "from-rose-100 via-white to-amber-50", image: m8_1 },
+    { id: "c7", title: "Promotions", subtitle: "Profitez vite", tone: "from-yellow-50 via-white to-rose-50", image: promo6 },
+    { id: "c8", title: "Équipements", subtitle: "Outils professionnels", tone: "from-white via-amber-50 to-yellow-50", image: e1_1 },
   ];
-
-  // Category preview images
-  const categoryImages: Record<string, string> = {
-    coiffure: coupe1,
-    perruques: pb1_1,
-    mariage: m1_1,
-    produits: p1_1,
-    equipement: e1_1,
-    promotion: promo1,
-  };
 
   return (
     <AppShell>
@@ -244,7 +253,6 @@ function Index() {
                 <IconBadge icon={Icon} tone="gold" size="md" />
                 <p className="mt-2 font-display text-sm font-semibold leading-tight">{s.title}</p>
                 <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">{s.desc}</p>
-                <p className="mt-1.5 text-[11px] font-semibold text-gold">Dès {formatFCFA(s.price)}</p>
               </div>
             </Link>
           );
@@ -294,7 +302,6 @@ function Index() {
             <div className="liquid-glass w-36 shrink-0 rounded-[24px] p-2.5">
               <Frame variant="plain" rounded="rounded-2xl" className="h-24 w-full" image={p.image} alt={p.name} />
               <p className="mt-1.5 text-[11px] font-semibold leading-tight line-clamp-2">{p.name}</p>
-              <p className="mt-0.5 text-[10px] font-semibold text-gold">{formatFCFA(p.price ?? 0)}</p>
             </div>
           </Link>
         ))}
@@ -308,7 +315,7 @@ function Index() {
             <div className="liquid-glass w-36 shrink-0 rounded-[24px] p-2.5">
               <Frame variant="plain" rounded="rounded-2xl" className="h-24 w-full" image={p.image} alt={p.name} />
               <p className="mt-1.5 text-[11px] font-semibold leading-tight line-clamp-2">{p.name}</p>
-              <p className="mt-0.5 text-[10px] font-semibold text-gold">{formatFCFA(p.price ?? 0)}</p>
+
             </div>
           </Link>
         ))}

@@ -3,7 +3,7 @@ import { Clock, ChevronRight, Scissors, Sparkles, Heart, Crown, Gem, Package } f
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { GlassButton } from "@/components/GlassButton";
 import { IconBadge } from "@/components/IconBadge";
-import { SERVICES, SALONS, formatFCFA, waLinkFor, type SalonId } from "@/lib/salon-data";
+import { SERVICES, SALONS, waLinkFor, type SalonId } from "@/lib/salon-data";
 import { useState } from "react";
 
 const SERVICE_ICONS: Record<string, typeof Sparkles> = {
@@ -74,9 +74,6 @@ function ServicesPage() {
               <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
                 <span className="glass inline-flex items-center gap-1 rounded-full px-2.5 py-1">
                   <Clock className="h-3 w-3" /> {s.duration}
-                </span>
-                <span className="glass inline-flex items-center rounded-full px-2.5 py-1 font-semibold" style={{ color: "var(--gold-deep)" }}>
-                  Dès {formatFCFA(s.price)}
                 </span>
               </div>
               <div className="mt-4 flex gap-2">

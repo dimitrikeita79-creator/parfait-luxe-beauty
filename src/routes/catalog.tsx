@@ -52,11 +52,11 @@ function CatalogLayout() {
                 </span>
               )}
               <div
-                className="absolute inset-x-2 bottom-2 rounded-2xl p-3 backdrop-blur-md"
+                className="absolute inset-x-2 bottom-2 rounded-2xl p-2 backdrop-blur-md"
                 style={{ background: "oklch(1 0 0 / 0.78)", border: "1px solid oklch(1 0 0 / 0.95)" }}
               >
-                <p className="font-display text-lg font-semibold leading-tight text-neutral-900">{c.name}</p>
-                <p className="mt-0.5 text-[11px] font-medium" style={{ color: "var(--gold-deep)" }}>{c.countLabel}</p>
+                <p className="font-display text-sm font-semibold leading-tight text-neutral-900">{c.name}</p>
+                <p className="mt-0.5 text-[9px] font-medium" style={{ color: "var(--gold-deep)" }}>{c.countLabel}</p>
               </div>
             </Frame>
           );

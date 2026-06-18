@@ -141,6 +141,10 @@ import pcc22_1 from "@/assets/catalog/new/PCC_22-1.webp";
 // Perruques - Effet Mouillé (PEM1-7)
 import pem13_1 from "@/assets/catalog/new/PEM_13-1.webp";
 import pem30_1 from "@/assets/catalog/new/PEM_30-1.webp";
+
+// Additional perruques images for expanded gallery
+import pll35_1 from "@/assets/catalog/new/PLL_25-1.webp";
+import pem40_1 from "@/assets/catalog/new/PEM_44-1.webp";
 import pem31_1 from "@/assets/catalog/new/PEM_31-1.webp";
 import pem32_1 from "@/assets/catalog/new/PEM_32-1.webp";
 import pem33_1 from "@/assets/catalog/new/PEM_33-1.webp";
@@ -529,9 +533,9 @@ export type GalleryItem = {
   image?: string;
 };
 
-export const GALLERY_CATEGORIES = ["Tout", "Mariage", "Perruques", "Tresses"];
+export const GALLERY_CATEGORIES = ["Tout", "Mariage", "Perruques"];
 export const GALLERY: GalleryItem[] = [
-  // Mariage items (8 items)
+  // Mariage items (12 items)
   { id: 1, cat: "Mariage", h: 280, tone: "from-rose-300/80 via-amber-200/70 to-yellow-200/60", image: m1_1 },
   { id: 2, cat: "Mariage", h: 300, tone: "from-rose-300/80 via-yellow-200/70 to-amber-200/60", image: m2_1 },
   { id: 3, cat: "Mariage", h: 260, tone: "from-yellow-200/80 via-rose-200/70 to-amber-200/60", image: m3_1 },
@@ -540,22 +544,24 @@ export const GALLERY: GalleryItem[] = [
   { id: 6, cat: "Mariage", h: 270, tone: "from-rose-200/80 via-yellow-200/70 to-amber-200/60", image: m6_1 },
   { id: 7, cat: "Mariage", h: 300, tone: "from-yellow-200/80 via-amber-200/70 to-rose-200/60", image: m8_1 },
   { id: 8, cat: "Mariage", h: 320, tone: "from-rose-300/80 via-amber-200/70 to-yellow-200/60", image: m18_1 },
+  { id: 24, cat: "Mariage", h: 280, tone: "from-amber-200/80 via-rose-300/70 to-yellow-200/60", image: m7_1 },
+  { id: 25, cat: "Mariage", h: 290, tone: "from-yellow-300/80 via-amber-200/70 to-rose-200/60", image: m12_1 },
+  { id: 26, cat: "Mariage", h: 310, tone: "from-rose-200/80 via-amber-300/70 to-yellow-200/60", image: m14_1 },
+  { id: 27, cat: "Mariage", h: 260, tone: "from-amber-300/80 via-yellow-200/70 to-rose-100/60", image: m15_1 },
   
-  // Perruques items (6 items)
+  // Perruques items (12 items)
   { id: 9, cat: "Perruques", h: 220, tone: "from-amber-300/80 via-yellow-200/70 to-rose-100/60", image: pb1_1 },
   { id: 10, cat: "Perruques", h: 240, tone: "from-amber-400/80 via-yellow-300/70 to-amber-100/60", image: pb4_1 },
   { id: 11, cat: "Perruques", h: 320, tone: "from-rose-200/80 via-amber-200/70 to-yellow-200/60", image: pb6_1 },
   { id: 12, cat: "Perruques", h: 280, tone: "from-amber-300/80 via-rose-200/70 to-yellow-100/60", image: pll23_1 },
   { id: 13, cat: "Perruques", h: 250, tone: "from-amber-200/80 via-yellow-200/70 to-rose-100/60", image: pll28_1 },
   { id: 14, cat: "Perruques", h: 310, tone: "from-rose-300/80 via-amber-200/70 to-yellow-200/60", image: pem30_1 },
-  
-  // Tresses (represented by promo items - 6 items)
-  { id: 15, cat: "Tresses", h: 320, tone: "from-amber-200/80 via-rose-300/70 to-yellow-200/60", image: promo1 },
-  { id: 16, cat: "Tresses", h: 220, tone: "from-amber-200/80 via-rose-200/70 to-yellow-100/60", image: promo2 },
-  { id: 17, cat: "Tresses", h: 280, tone: "from-amber-300/80 via-yellow-300/70 to-rose-100/60", image: promo3 },
-  { id: 18, cat: "Tresses", h: 260, tone: "from-rose-200/80 via-amber-200/70 to-yellow-200/60", image: promo6 },
-  { id: 19, cat: "Tresses", h: 300, tone: "from-yellow-200/80 via-rose-200/70 to-amber-200/60", image: promo7 },
-  { id: 20, cat: "Tresses", h: 290, tone: "from-amber-300/80 via-rose-300/70 to-yellow-200/60", image: promo11 },
+  { id: 28, cat: "Perruques", h: 290, tone: "from-yellow-200/80 via-rose-200/70 to-amber-200/60", image: pb8_1 },
+  { id: 29, cat: "Perruques", h: 270, tone: "from-amber-200/80 via-yellow-300/70 to-rose-100/60", image: pb10_1 },
+  { id: 30, cat: "Perruques", h: 300, tone: "from-rose-300/80 via-amber-300/70 to-yellow-200/60", image: pcc12_1 },
+  { id: 31, cat: "Perruques", h: 260, tone: "from-amber-300/80 via-rose-200/70 to-yellow-100/60", image: pcc16_1 },
+  { id: 32, cat: "Perruques", h: 320, tone: "from-yellow-200/80 via-amber-200/70 to-rose-200/60", image: pll35_1 },
+  { id: 33, cat: "Perruques", h: 240, tone: "from-rose-200/80 via-yellow-300/70 to-amber-200/60", image: pem40_1 },
 ];
 
 // Helper: Get first image for a category

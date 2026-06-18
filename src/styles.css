@@ -125,6 +125,8 @@
     background-attachment: fixed;
     color: var(--color-foreground);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, .font-display {
@@ -140,8 +142,13 @@
   }
 
   /* Improve scrolling fluidity on mobile */
-  main, nav, [class*="overflow-x-auto"] {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  main, nav, [class*="overflow-x-auto"], [class*="snap-"] {
     -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
   }
 
   /* Optimize animations for mobile */
@@ -155,6 +162,11 @@
     /* Reduce animation on small devices for better performance */
     .animate-fade-up {
       animation: fade-up 0.3s ease-out both;
+    }
+    
+    /* Smoother transitions on mobile */
+    * {
+      scroll-behavior: auto;
     }
   }
 }
@@ -258,5 +270,70 @@
   *, *::before, *::after {
     animation-duration: .001ms !important;
     transition-duration: .001ms !important;
+  }
+}
+
+/* Mobile performance: Reduced blur and smooth animations */
+@media (max-width: 768px) {
+  .glass, .glass-strong, .liquid-glass {
+    backdrop-filter: blur(12px) saturate(180%) !important;
+  }
+  
+  .glass-nav {
+    backdrop-filter: blur(16px) saturate(200%) !important;
+  }
+  
+  /* Smoother animations on mobile */
+  .animate-fade-up {
+    animation: fade-up 0.4s ease-out both !important;
+  }
+  
+  .animate-float {
+    animation: float 4.5s ease-in-out infinite !important;
+  }
+  
+  /* GPU acceleration for smoother rendering */
+  .animate-fade-up, .animate-float, .glass, .glass-strong, .liquid-glass, .glass-nav,
+  [class*="overflow-x"], [class*="snap-"] {
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  
+  /* Reduce motion on very small devices */
+  @media (max-width: 480px) {
+    .glass, .glass-strong, .liquid-glass {
+      backdrop-filter: blur(8px) saturate(160%) !important;
+    }
+    
+    .glass-nav {
+      backdrop-filter: blur(10px) saturate(180%) !important;
+    }
+    
+    .animate-fade-up {
+      animation: fade-up 0.3s ease-out both !important;
+    }
+    
+    .animate-float {
+      animation: float 5s ease-in-out infinite !important;
+    }
+    
+    /* Disable background-attachment for better scroll performance */
+    body {
+      background-attachment: scroll !important;
+    }
+  }
+}
+
+/* Global fluidity optimization */
+@media (min-width: 769px) {
+  /* Desktop optimizations */
+  .animate-fade-up, .animate-float, .glass, .glass-strong, .liquid-glass, .glass-nav {
+    will-change: auto;
+  }
+  
+  /* Smooth transitions on desktop */
+  button, a, input {
+    transition: all 200ms ease-in-out;
   }
 }

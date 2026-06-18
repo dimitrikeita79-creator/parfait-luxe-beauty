@@ -48,8 +48,8 @@ function GalleryPage() {
               <button
                 key={g.id}
                 onClick={() => setOpen(g)}
-                className="relative block w-full active:scale-[0.98] transition animate-fade-up"
-                style={{ height: g.h, animationDelay: `${i * 60}ms` }}
+                className="relative block w-full active:scale-[0.98] transition"
+                style={{ height: g.h, animationDelay: `${i * 30}ms` }}
               >
                 <Frame variant="plain" rounded="rounded-3xl" className="h-full w-full" image={g.image} alt={g.cat}>
                   <span

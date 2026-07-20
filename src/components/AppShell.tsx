@@ -1,8 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Sparkles, Image as ImageIcon, LayoutGrid, Phone } from "lucide-react";
+import { Home, Sparkles, Image as ImageIcon, LayoutGrid, Phone, UserRound } from "lucide-react";
 import { type CSSProperties, type ReactNode } from "react";
-import { waLink, BRAND } from "@/lib/salon-data";
-import logoAsset from "@/assets/Parfait design.jpg";
+import { waLink } from "@/lib/salon-data";
+import logoAsset from "@/assets/DESMOHAIR.jpg";
 
 const NAV = [
   { to: "/",        label: "Accueil",   icon: Home,       color: "oklch(0.62 0.11 80)" }, // gold
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/gallery",  label: "Galerie",  icon: ImageIcon,  color: "#1877F2" },             // blue
   { to: "/catalog",  label: "Catalogue",icon: LayoutGrid, color: "oklch(0.45 0.02 60)" },
   { to: "/contact",  label: "Contact",  icon: Phone,      color: "#25D366" },             // green
+  { to: "/profile",    label: "Profil", icon: UserRound,     color: "oklch(0.62 0.11 80)" },
 ] as const;
 
 export function WhatsAppIcon({ className = "", style }: { className?: string; style?: CSSProperties }) {
@@ -36,11 +37,11 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
         <div className="glass-strong flex items-center justify-between rounded-full px-4 py-2.5">
           <Link to="/" className="flex items-center gap-2.5">
             <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-white shadow-soft ring-1 ring-black/5">
-              <img src={logoAsset} alt={BRAND} className="h-full w-full object-contain p-0.5" />
+              <img src={logoAsset} alt="Desmohair" className="h-full w-full object-contain p-0.5" />
             </span>
             <div className="leading-tight">
-              <p className="font-display text-[13px] font-semibold">Parfait.Design</p>
-              <p className="text-[10px] tracking-[0.18em] text-muted-foreground uppercase">Desmohair</p>
+              <p className="font-display text-sm font-semibold uppercase tracking-[0.08em]">Desmohair</p>
+              <p className="text-[10px] text-muted-foreground">Parfait Design</p>
             </div>
           </Link>
           <a

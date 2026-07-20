@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Search, Calendar, MapPin, BookOpen, Star, ChevronRight, Sparkles, Scissors, Heart, Crown, Gem, Package } from "lucide-react";
 import { AppShell, SectionTitle, WhatsAppIcon } from "@/components/AppShell";
@@ -34,9 +34,9 @@ type SearchHit =
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Parfait.Design/Desmohair — Accueil" },
+      { title: "Desmohair — Accueil" },
       { name: "description", content: "Salon de beauté luxe à Ouagadougou : perruques, mèches, tresses, mariage." },
-      { property: "og:title", content: "Parfait.Design/Desmohair" },
+      { property: "og:title", content: "Desmohair" },
       { property: "og:description", content: "Votre beauté, notre passion." },
     ],
   }),
@@ -52,7 +52,18 @@ function Index() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const blurTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const storedNotice = window.sessionStorage.getItem("authNotice");
+    if (storedNotice) {
+      setNotice(storedNotice);
+      window.sessionStorage.removeItem("authNotice");
+      const timer = window.setTimeout(() => setNotice(null), 6000);
+      return () => window.clearTimeout(timer);
+    }
+  }, []);
 
   // Category preview images for catalog teaser
   const categoryImages: Record<string, string> = {
@@ -144,14 +155,16 @@ function Index() {
 
       {/* Hero text */}
       <section className="mt-3 animate-fade-up">
-        <span className="glass inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--gold-deep)]">
-          <Sparkles className="h-3 w-3" /> Beauté premium
-        </span>
+        {notice ? (
+          <div className="mb-3 rounded-2xl border border-[var(--gold-soft)]/80 bg-[var(--gold-soft)]/60 px-3 py-2 text-sm text-[var(--gold-deep)]">
+            {notice}
+          </div>
+        ) : null}
         <h1 className="font-display mt-3 text-3xl leading-[1.1] font-semibold">
           Révélez votre <span className="text-gold">élégance</span> naturelle
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Perruques • Mèches • Coiffures • Mariage • Beauté
+          Perruques • Mèches • Coiffures • Mariage • Soins capillaires
         </p>
         <div className="mt-4 flex gap-2">
           <GlassButton as={Link} to="/contact" variant="light" size="md" full className="flex-1 opacity-100">

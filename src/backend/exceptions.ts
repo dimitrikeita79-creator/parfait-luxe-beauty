@@ -27,6 +27,6 @@ export class ApiException extends Error {
       return new ApiException('Erreur réseau. Vérifiez votre connexion internet.');
     }
 
-    return new ApiException('Une erreur est survenue. Réessayez.');
+    return new ApiException('ERREUR REELLE : ' + errorMessage);
   }
 }

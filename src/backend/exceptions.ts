@@ -27,6 +27,7 @@ export class ApiException extends Error {
       return new ApiException('Erreur réseau. Vérifiez votre connexion internet.');
     }
 
-    return new ApiException('ERREUR REELLE : ' + errorMessage);
+    const errorJson = JSON.stringify(error, Object.getOwnPropertyNames(error));
+    return new ApiException('ERREUR REELLE : ' + errorJson);
   }
 }

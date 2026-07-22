@@ -24,20 +24,43 @@ export default function UploadProfilePhoto({ userId }: { userId: string }) {
     setUploading(true);
     setErrorMessage(null);
 
-    try {
+        try {
       // 1. Créer un nom de fichier unique
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // 2. Uploader le fichier dans le bucket "team" ou un bucket dédié "avatars"
-      // (Assurez-vous d'avoir un bucket nommé "avatars" ou utilisez "gallery")
+      // 2. Uploader le fichier dans le bucket "gallery"
       const { error: uploadError } = await supabase.storage
-        .from(BUCKETS.GALLERY) // On réutilise le bucket gallery pour l'exemple
+        .from(BUCKETS.GALLERY) 
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false,
+          upsert: true,
         });
+
+      if (uploadError) throw uploadError;
+
+      // 3. Récupérer l'URL publique
+      const { data } = supabase.storage
+        .from(BUCKETS.GALLERY)
+        .getPublicUrl(filePath);
+
+      const publicUrl = data.publicUrl;
+      setAvatarUrl(publicUrl);
+
+      // 4. Mettre à jour UNIQUEMENT l'avatar_url (pas d'upsert complet)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl }) // <-- ON FAIT JUSTE UN UPDATE ICI
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      alert('✅ Photo de profil mise à jour avec succès !');
+
+    } catch (error: any) {
+      // ... la gestion d'erreur
+    }
 
       if (uploadError) throw uploadError;
 

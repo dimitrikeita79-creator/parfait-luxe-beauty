@@ -15,6 +15,16 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+.next/
+build/
+coverage/
+android/build/
+ios/build/
+.expo/
+.turbo/
+.wrangler/
+.vite/
+*.tsbuildinfo
 
 # Wrangler / Cloudflare
 .wrangler/

@@ -1,16 +1,21 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Sparkles, Image as ImageIcon, LayoutGrid, Phone, UserRound } from "lucide-react";
 import { type CSSProperties, type ReactNode } from "react";
 import { waLink } from "@/lib/salon-data";
 import logoAsset from "@/assets/DESMOHAIR.jpg";
+import homeIcon from "@/assets/icone/page-daccueil.svg";
+import servicesIcon from "@/assets/icone/soutien-technique.svg";
+import galleryIcon from "@/assets/icone/galerie-dimages.svg";
+import catalogIcon from "@/assets/icone/catalogue.svg";
+import contactIcon from "@/assets/icone/contact.svg";
+import profileIcon from "@/assets/icone/profil.svg";
 
 const NAV = [
-  { to: "/",        label: "Accueil",   icon: Home,       color: "oklch(0.62 0.11 80)" }, // gold
-  { to: "/services", label: "Services", icon: Sparkles,   color: "#E1306C" },             // rose
-  { to: "/gallery",  label: "Galerie",  icon: ImageIcon,  color: "#1877F2" },             // blue
-  { to: "/catalog",  label: "Catalogue",icon: LayoutGrid, color: "oklch(0.45 0.02 60)" },
-  { to: "/contact",  label: "Contact",  icon: Phone,      color: "#25D366" },             // green
-  { to: "/profile",    label: "Profil", icon: UserRound,     color: "oklch(0.62 0.11 80)" },
+  { to: "/", label: "Accueil", icon: homeIcon, color: "oklch(0.62 0.11 80)" },
+  { to: "/services", label: "Services", icon: servicesIcon, color: "#E1306C" },
+  { to: "/gallery", label: "Galerie", icon: galleryIcon, color: "#1877F2" },
+  { to: "/catalog", label: "Catalogue", icon: catalogIcon, color: "oklch(0.45 0.02 60)" },
+  { to: "/contact", label: "Contact", icon: contactIcon, color: "#25D366" },
+  { to: "/profile", label: "Profil", icon: profileIcon, color: "oklch(0.62 0.11 80)" },
 ] as const;
 
 export function WhatsAppIcon({ className = "", style }: { className?: string; style?: CSSProperties }) {
@@ -74,8 +79,8 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
       {/* Bottom nav — 5 onglets équilibrés */}
       <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-4 pb-4 pt-2">
         <div className="glass-nav flex items-center justify-between rounded-full px-2 py-2">
-          {NAV.map(({ to, label, icon: Icon, color }) => (
-            <NavItem key={to} to={to} label={label} Icon={Icon} color={color} pathname={pathname} />
+          {NAV.map(({ to, label, icon, color }) => (
+            <NavItem key={to} to={to} label={label} icon={icon} color={color} pathname={pathname} />
           ))}
         </div>
       </nav>
@@ -86,13 +91,13 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
 function NavItem({
   to,
   label,
-  Icon,
+  icon,
   color,
   pathname,
 }: {
   to: (typeof NAV)[number]["to"];
   label: string;
-  Icon: typeof Home;
+  icon: string;
   color: string;
   pathname: string;
 }) {
@@ -117,10 +122,14 @@ function NavItem({
       <span
         className={`relative grid h-7 w-7 place-items-center rounded-full transition-transform duration-300 ${active ? "animate-nav-pop" : "group-hover:scale-110"}`}
       >
-        <Icon
-          className="h-[18px] w-[18px]"
-          style={{ color: active ? color : "oklch(0.5 0.015 60)" }}
-          strokeWidth={active ? 2.4 : 1.9}
+        <img
+          src={icon}
+          alt=""
+          className="h-[18px] w-[18px] object-contain"
+          style={{
+            opacity: active ? 1 : 0.78,
+            filter: active ? "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18))" : "grayscale(0.15) brightness(0.9)",
+          }}
         />
       </span>
       <span

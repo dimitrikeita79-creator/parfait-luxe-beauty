@@ -59,9 +59,9 @@ export class SalonService {
 
   private async _createDefault(): Promise<SalonInfo> {
     const defaultData = {
-      salon_name: 'Parfait Luxe Beauty',
+      salon_name: 'Desmohair',
       slogan: 'Votre beauté, notre passion',
-      about_text: 'Bienvenue chez Parfait Luxe Beauty',
+      about_text: 'Bienvenue chez Desmohair',
     };
     const { data, error } = await supabase
       .from(TABLES.SALON_INFO)

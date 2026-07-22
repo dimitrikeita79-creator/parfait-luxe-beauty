@@ -3,11 +3,18 @@ import { AppShell, GlassCard, WhatsAppIcon } from "@/components/AppShell";
 import { IconBadge } from "@/components/IconBadge";
 import { GlassButton } from "@/components/GlassButton";
 import { MapPin, Phone, Facebook, Instagram, Globe, User, Calendar, MessageSquare, Sparkles, ShoppingBag, Building2 } from "lucide-react";
-import {
-  SERVICES, SOCIALS, SALONS, CATALOG_ITEMS, formatFCFA,
-  waLinkFor, pickSalonFor, type SalonId,
-} from "@/lib/salon-data";
-import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+import { SALONS, SOCIALS, waLinkFor, pickSalonFor, type SalonId } from "@/lib/salon-data";
+import { servicesService, catalogService } from "@/backend/services";
+import type { ServiceItem, CatalogItem } from "@/backend/models";
+import { useMemo, useState, useEffect, type ChangeEvent, type FormEvent, type ReactNode } from "react";
+
+const formatFCFA = (price: number) => {
+  return new Intl.NumberFormat("fr-BF", {
+    style: "currency",
+    currency: "XOF",
+    minimumFractionDigits: 0,
+  }).format(price);
+};
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -22,24 +29,57 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
-  const products = useMemo(
-    () => [
-      ...CATALOG_ITEMS.produits.map((p) => ({ id: p.id, label: `Produit · ${p.name}`, price: p.price, cat: "produits" })),
-      ...CATALOG_ITEMS.equipement.map((p) => ({ id: p.id, label: `Équipement · ${p.name}`, price: p.price, cat: "equipement" })),
-      ...CATALOG_ITEMS.perruques.slice(0, 16).map((p) => ({ id: p.id, label: `Perruque · ${p.name}`, price: p.price, cat: "perruques" })),
-    ],
-    [],
-  );
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   const [mapSalon, setMapSalon] = useState<SalonId>("parfait");
   const [form, setForm] = useState({
     nom: "",
     tel: "",
-    service: SERVICES[0].title,
+    service: "",
     produit: "aucun",
     salonId: "parfait" as SalonId,
     date: "",
     message: "",
   });
+
+  // Charger les services et produits
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [servicesData, catalogData] = await Promise.all([
+          servicesService.getActive(),
+          catalogService.getAvailable(),
+        ]);
+        setServices(servicesData);
+        setCatalogItems(catalogData);
+        // Set le premier service par défaut
+        if (servicesData.length > 0) {
+          setForm((f) => ({ ...f, service: servicesData[0].title }));
+        }
+      } catch {
+        // Silent fail - utiliser les données vides
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const products = useMemo(
+    () => {
+      const result = catalogItems
+        .filter((item) => ["produits", "equipement", "perruques"].includes(item.category.toLowerCase()))
+        .slice(0, 40)
+        .map((p) => ({ id: p.id, label: `${p.category} · ${p.title}`, price: p.price, cat: p.category }));
+      return result;
+    },
+    [catalogItems],
+  );
+
   const set = (k: keyof typeof form) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = e.target.value;
     setForm((f) => {
@@ -122,7 +162,9 @@ function ContactPage() {
         </Field>
         <Field label="Service souhaité" icon={Sparkles}>
           <select value={form.service} onChange={set("service")} className="input">
-            {SERVICES.map((s) => <option key={s.id}>{s.title}</option>)}
+            {services.map((s) => (
+              <option key={s.id}>{s.title}</option>
+            ))}
           </select>
         </Field>
         <Field label="Produit / Équipement (optionnel)" icon={ShoppingBag}>

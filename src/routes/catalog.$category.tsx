@@ -1,55 +1,95 @@
-import { createFileRoute, Link, notFound, useSearch } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { ChevronLeft, Heart, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
 import { GlassButton } from "@/components/GlassButton";
-import { CATALOG, CATALOG_ITEMS, formatFCFA, pickSalonFor, waLinkFor, getFirstImageForCategory } from "@/lib/salon-data";
+import { catalogService, salonService } from "@/backend/services";
+import { waLinkFor, SALONS, pickSalonFor } from "@/lib/salon-data";
+import type { CatalogItem, SalonInfo } from "@/backend/models";
+import { asFavoriteItem, getFavorites, toggleFavorite } from "@/lib/favorites";
+
+const formatFCFA = (price: number) => {
+  return new Intl.NumberFormat("fr-BF", {
+    style: "currency",
+    currency: "XOF",
+    minimumFractionDigits: 0,
+  }).format(price);
+};
 
 export const Route = createFileRoute("/catalog/$category")({
   validateSearch: (s: Record<string, unknown>) => ({
     highlight: typeof s.highlight === "string" ? s.highlight : undefined,
   }),
   head: ({ params }) => {
-    const cat = CATALOG.find((c) => c.slug === params.category);
-    const name = cat?.name ?? "Catégorie";
+    const catName = params.category.charAt(0).toUpperCase() + params.category.slice(1);
     return {
       meta: [
-        { title: `${name} — Catalogue Parfait.Design/Desmohair` },
-        { name: "description", content: `Découvrez nos ${name.toLowerCase()} — ${cat?.countLabel ?? ""}.` },
-        { property: "og:title", content: `${name} — Parfait.Design/Desmohair` },
-        { property: "og:description", content: `${cat?.countLabel ?? ""} dans la collection ${name}.` },
+        { title: `${catName} — Catalogue Parfait.Design/Desmohair` },
+        { name: "description", content: `Découvrez nos ${catName.toLowerCase()}.` },
+        { property: "og:title", content: `${catName} — Parfait.Design/Desmohair` },
+        { property: "og:description", content: `Collection ${catName.toLowerCase()}.` },
       ],
     };
   },
-  loader: ({ params }) => {
-    const cat = CATALOG.find((c) => c.slug === params.category);
-    if (!cat) throw notFound();
-    return { cat };
-  },
-  notFoundComponent: () => (
-    <AppShell title="Introuvable">
-      <p className="mt-6 text-sm text-muted-foreground">Cette catégorie n'existe pas.</p>
-      <Link to="/catalog" className="liquid-glass mt-4 inline-flex rounded-full px-4 py-2 text-xs font-semibold">
-        Retour au catalogue
-      </Link>
-    </AppShell>
-  ),
-  errorComponent: ({ reset }) => (
-    <AppShell title="Erreur">
-      <p className="mt-6 text-sm text-muted-foreground">Une erreur est survenue.</p>
-      <button onClick={reset} className="liquid-glass mt-4 rounded-full px-4 py-2 text-xs font-semibold">Réessayer</button>
-    </AppShell>
-  ),
   component: CategoryPage,
 });
 
 function CategoryPage() {
-  const { cat } = Route.useLoaderData();
+  const { category } = Route.useParams();
   const { highlight } = useSearch({ from: "/catalog/$category" });
-  const items = CATALOG_ITEMS[cat.slug] ?? [];
-  const salon = pickSalonFor(cat.slug);
+  
+  const [items, setItems] = useState<CatalogItem[]>([]);
+  const [salonInfo, setSalonInfo] = useState<SalonInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState(getFavorites());
+  const [open, setOpen] = useState<CatalogItem | null>(null);
+  
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
+  
+  const catName = category.charAt(0).toUpperCase() + category.slice(1);
+  const salon = SALONS.find((s) => s.tags.some((tag) => tag === category)) || pickSalonFor(category);
+
+  // Charger les items de la catégorie
+  useEffect(() => {
+    const loadCategory = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await catalogService.getByCategory(category);
+        setItems(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur lors du chargement de la catégorie");
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategory();
+  }, [category]);
+
+  // Charger les infos du salon
+  useEffect(() => {
+    const loadSalonInfo = async () => {
+      try {
+        const info = await salonService.getInfo();
+        setSalonInfo(info);
+      } catch {
+        // Silent fail
+      }
+    };
+
+    loadSalonInfo();
+  }, []);
+
+  const handleToggleFavorite = (item: CatalogItem) => {
+    const nextItems = toggleFavorite(asFavoriteItem(item, "catalog"));
+    setFavorites(nextItems);
+  };
+
+  // Scroll vers l'élément highlighté
   useEffect(() => {
     if (!highlight) return;
     const el = refs.current[highlight];
@@ -58,99 +98,94 @@ function CategoryPage() {
     }
   }, [highlight]);
 
+  if (loading) {
+    return (
+      <AppShell title={catName} subtitle="Chargement...">
+        <Link to="/catalog" className="glass mt-4 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-medium">
+          <ChevronLeft className="h-3 w-3" /> Catalogue
+        </Link>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-current/20 border-t-current" />
+          <p className="text-sm text-muted-foreground">Chargement des articles...</p>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
-    <AppShell title={cat.name} subtitle={cat.countLabel}>
+    <AppShell title={catName} subtitle={`${items.length} article${items.length > 1 ? "s" : ""}`}>
       <Link to="/catalog" className="glass mt-4 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-medium">
         <ChevronLeft className="h-3 w-3" /> Catalogue
       </Link>
 
-      {/* Cover image */}
-      {!cat.comingSoon && (
-        <div className="mt-3 rounded-[24px] overflow-hidden">
-          <Frame variant="plain" rounded="rounded-[24px]" className="aspect-video w-full" image={getFirstImageForCategory(cat.slug)} alt={cat.name} />
+      {/* Message d'erreur */}
+      {error && (
+        <div className="mt-4 rounded-2xl border border-red-200/70 bg-red-50/70 p-4 text-sm text-red-600 backdrop-blur-sm">
+          ⚠️ {error}
         </div>
       )}
 
-      {cat.comingSoon ? (
+      {/* Affichage des articles */}
+      {items.length === 0 ? (
         <div className="glass-strong mt-8 rounded-[28px] p-8 text-center">
-          <p className="font-display text-2xl font-semibold text-gold">Bientôt disponible</p>
+          <p className="font-display text-2xl font-semibold text-gold">Aucun article</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Nos {cat.name.toLowerCase()} arrivent très prochainement. Contactez-nous pour être averti(e).
+            Aucun article disponible dans cette catégorie pour le moment.
           </p>
-          <GlassButton
-            as="a"
-            href={waLinkFor(salon.id, `Bonjour ${salon.name}, je souhaite être informé(e) dès l'arrivée des ${cat.name.toLowerCase()}.`)}
-            target="_blank"
-            rel="noreferrer"
-            variant="whatsapp"
-            size="md"
-            className="mt-5"
-          >
-            <WhatsAppIcon className="h-3.5 w-3.5" style={{ color: "#25D366" }} /> M'avertir via WhatsApp
+          <GlassButton as={Link} to="/catalog" variant="whatsapp" size="md" className="mt-5">
+            Retour au catalogue
           </GlassButton>
         </div>
       ) : (
         <>
-        <p className="mt-3 text-[11px] text-muted-foreground">
-          Commandes traitées par <span className="font-semibold text-[var(--gold-deep)]">{salon.name}</span> · {salon.area}
-        </p>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {items.map((p, i) => (
-            <div
-              key={p.id}
-              ref={(el) => { refs.current[p.id] = el; }}
-              className={`liquid-glass animate-fade-up rounded-[24px] p-3 transition-all duration-300 ${highlight === p.id ? "ring-2 ring-[var(--gold)] scale-[1.02]" : ""}`}
-              style={{ animationDelay: `${i * 25}ms` }}
-            >
-              <Frame variant="plain" rounded="rounded-2xl" className="aspect-[4/5] w-full" image={p.image} alt={p.name}>
-                {p.badge && (
-                  <span
-                    className="absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md"
-                    style={{ background: "oklch(1 0 0 / 0.9)", color: "oklch(0.5 0.11 80)", border: "1px solid oklch(1 0 0 / 0.95)" }}
-                  >
-                    {p.badge}
-                  </span>
-                )}
-                {p.code && (
-                  <span
-                    className="absolute right-2 top-2 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold backdrop-blur-md"
-                    style={{ background: "oklch(1 0 0 / 0.85)", color: "oklch(0.3 0.01 60)", border: "1px solid oklch(1 0 0 / 0.9)" }}
-                  >
-                    {p.code}
-                  </span>
-                )}
-              </Frame>
-              <p className="mt-2 text-xs font-semibold leading-tight line-clamp-2">{p.name}</p>
-              {(p.subCategory || p.texture) && (
-                <p className="mt-0.5 text-[9px] uppercase tracking-wider text-[var(--gold-deep)]">
-                  {[p.subCategory, p.texture].filter(Boolean).join(" · ")}
-                </p>
-              )}
-              <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-1">{p.desc}</p>
-              {p.price !== undefined && p.price > 0 && (
-                <p className="mt-1.5 flex items-baseline gap-1.5">
-                  {p.fromPrice && <span className="text-[9px] text-muted-foreground">Dès</span>}
-                  <span className="text-sm font-bold text-gold">{formatFCFA(p.price)}</span>
-                  {p.oldPrice && (
-                    <span className="text-[10px] text-muted-foreground line-through">{formatFCFA(p.oldPrice)}</span>
-                  )}
-                </p>
-              )}
-              <GlassButton
-                as="a"
-                href={waLinkFor(salon.id, `Bonjour ${salon.name}, je souhaite commander : ${p.name}${p.code ? ` [${p.code}]` : ""}${p.price ? ` — ${formatFCFA(p.price)}` : ""}.`)}
-                target="_blank"
-                rel="noreferrer"
-                variant="whatsapp"
-                size="sm"
-                full
-                className="mt-2"
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Commandes traitées par <span className="font-semibold text-[var(--gold-deep)]">{salon.name}</span> · {salon.area}
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {items.map((p, i) => (
+              <div
+                key={p.id}
+                ref={(el) => {
+                  refs.current[p.id] = el;
+                }}
+                className={`liquid-glass animate-fade-up rounded-[24px] p-3 transition-all duration-300 ${highlight === p.id ? "ring-2 ring-[var(--gold)] scale-[1.02]" : ""}`}
+                style={{ animationDelay: `${i * 25}ms` }}
               >
-                <WhatsAppIcon className="h-3 w-3" style={{ color: "#25D366" }} /> {cat.slug === "promotion" ? "J'en profite" : "Commander"}
-              </GlassButton>
-            </div>
-          ))}
-        </div>
+                <button type="button" onClick={() => setOpen(p)} className="w-full text-left">
+                {p.image_url && (
+                  <Frame variant="plain" rounded="rounded-2xl" className="aspect-[4/5] w-full" image={p.image_url} alt={p.title} />
+                )}
+                <p className="mt-2 text-xs font-semibold leading-tight line-clamp-2">{p.title}</p>
+                {p.description && (
+                  <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-1">{p.description}</p>
+                )}
+                {p.price > 0 && (
+                  <p className="mt-1.5 flex items-baseline gap-1.5">
+                    <span className="text-sm font-bold text-gold">{formatFCFA(p.price)}</span>
+                  </p>
+                )}
+                  <GlassButton
+                    as="a"
+                    href={waLinkFor(salon.id as any, `Bonjour ${salon.name}, je souhaite commander : ${p.title}${p.price ? ` — ${formatFCFA(p.price)}` : ""}.`)}
+                    target="_blank"
+                    rel="noreferrer"
+                    variant="whatsapp"
+                    size="sm"
+                    full
+                    className="mt-2"
+                  >
+                    <WhatsAppIcon className="h-3 w-3" style={{ color: "#25D366" }} /> Commander
+                  </GlassButton>
+                </button>
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-[10px] text-muted-foreground">Cliquez sur l’image pour voir les détails</p>
+                  <button type="button" className={`rounded-full border px-2.5 py-1.5 text-sm ${favorites.some((favorite) => favorite.kind === "catalog" && favorite.id === p.id) ? "border-rose-400 bg-rose-500/10 text-rose-600" : "border-stone-300 text-stone-600"}`} onClick={() => handleToggleFavorite(p)}>
+                    <Heart className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </>
       )}
     </AppShell>

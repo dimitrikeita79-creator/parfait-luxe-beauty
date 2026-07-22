@@ -63,49 +63,49 @@
 
 :root {
   --radius: 1.75rem;
-  /* Pure white + liquid glass + discrete gold */
+  /* Pure white + liquid glass + discrete red accents */
   --background: oklch(1 0 0);
   --foreground: oklch(0.16 0.005 60);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.16 0.005 60);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.16 0.005 60);
-  --primary: oklch(0.18 0.005 60);
+  --primary: oklch(0.58 0.16 18);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.97 0.003 80);
   --secondary-foreground: oklch(0.2 0.005 60);
   --muted: oklch(0.97 0.003 80);
   --muted-foreground: oklch(0.5 0.01 60);
-  --accent: oklch(0.96 0.01 80);
+  --accent: oklch(0.95 0.03 18);
   --accent-foreground: oklch(0.2 0.005 60);
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
   --border: oklch(0.92 0.005 80 / 0.7);
   --input: oklch(0.94 0.005 80);
-  --ring: oklch(0.78 0.1 85);
-  --chart-1: oklch(0.78 0.1 85);
+  --ring: oklch(0.68 0.16 18);
+  --chart-1: oklch(0.68 0.16 18);
   --chart-2: oklch(0.7 0.02 60);
   --chart-3: oklch(0.85 0.02 80);
   --chart-4: oklch(0.5 0.01 60);
   --chart-5: oklch(0.3 0.01 60);
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.16 0.005 60);
-  --sidebar-primary: oklch(0.18 0.005 60);
+  --sidebar-primary: oklch(0.58 0.16 18);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.96 0.01 80);
+  --sidebar-accent: oklch(0.95 0.03 18);
   --sidebar-accent-foreground: oklch(0.2 0.005 60);
   --sidebar-border: oklch(0.92 0.005 80);
-  --sidebar-ring: oklch(0.78 0.1 85);
+  --sidebar-ring: oklch(0.68 0.16 18);
 
-  /* Discrete gold accents */
-  --gold: oklch(0.78 0.1 85);
-  --gold-soft: oklch(0.9 0.06 85);
-  --gold-deep: oklch(0.62 0.11 80);
-  --rose: oklch(0.96 0.01 80);
+  /* Discrete red accents */
+  --gold: oklch(0.68 0.16 18);
+  --gold-soft: oklch(0.92 0.06 18);
+  --gold-deep: oklch(0.54 0.16 16);
+  --rose: oklch(0.96 0.01 18);
   --ivory: oklch(1 0 0);
 
-  --gradient-gold: linear-gradient(135deg, oklch(0.85 0.08 85), oklch(0.68 0.1 80));
-  --gradient-bg: radial-gradient(120% 80% at 0% 0%, oklch(0.98 0.006 85 / 0.9), transparent 60%), radial-gradient(100% 70% at 100% 100%, oklch(0.96 0.008 80 / 0.7), transparent 60%), oklch(1 0 0);
+  --gradient-gold: linear-gradient(135deg, oklch(0.82 0.12 18), oklch(0.6 0.16 16));
+  --gradient-bg: radial-gradient(120% 80% at 0% 0%, oklch(0.98 0.008 18 / 0.9), transparent 60%), radial-gradient(100% 70% at 100% 100%, oklch(0.95 0.012 16 / 0.75), transparent 60%), oklch(1 0 0);
 
   /* Liquid glass tokens */
   --glass-bg: oklch(1 0 0 / 0.55);

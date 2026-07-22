@@ -1,12 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+// On force la lecture avec import.meta.env
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+// On affiche dans le terminal pour vérifier
+console.log('URL utilisée :', supabaseUrl);
+console.log('Clé utilisée :', supabaseAnonKey ? 'OK (présente)' : 'MANQUANTE !');
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Variables d\'environnement Supabase manquantes. Vérifiez votre fichier .env'
-  );
+  console.error('🚨 ERREUR : Les variables Supabase ne sont pas chargées. Vérifiez votre fichier .env et redémarrez le serveur.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -16,7 +19,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Noms des tables centralisés
+// Tables et Buckets
 export const TABLES = {
   PROFILES: 'profiles',
   GALLERY: 'gallery',
@@ -26,7 +29,6 @@ export const TABLES = {
   SALON_INFO: 'salon_info',
 } as const;
 
-// Noms des buckets storage centralisés
 export const BUCKETS = {
   GALLERY: 'gallery',
   LOGO: 'logo',

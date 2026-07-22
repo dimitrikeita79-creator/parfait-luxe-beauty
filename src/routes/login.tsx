@@ -1,9 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Eye, EyeOff, Lock, Mail, Sparkles, UserRound } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, UserRound } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { AppShell } from "@/components/AppShell";
 import { GlassButton } from "@/components/GlassButton";
 import { authService } from "@/backend/services";
+import profileIcon from "@/assets/icone/profil.svg";
+
+const brandText = "Desmohair";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -62,7 +65,12 @@ function LoginPage() {
       if (user.role === "admin") {
         navigate({ to: "/profile" });
       } else {
-        sessionStorage.setItem("authNotice", "Vous êtes connecté(e). Vous serez informé(e) des mises à jour et nouveaux ajouts.");
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(
+            "authNotice",
+            "Vous êtes connecté(e). Vous serez informé(e) des mises à jour et nouveaux ajouts.",
+          );
+        }
         navigate({ to: "/profile" });
       }
     } catch (err) {
@@ -73,24 +81,24 @@ function LoginPage() {
   };
 
   return (
-    <AppShell title={mode === "signup" ? "Créer un compte" : "Connexion"} subtitle={mode === "signup" ? "Rejoignez Desmohair pour suivre les nouveautés du salon" : "Accédez à votre espace Desmohair avec élégance et simplicité"}>
-      <div className="mt-6 rounded-[32px] border border-white/80 bg-gradient-to-br from-white/95 via-[var(--gold-soft)]/35 to-white/80 p-5 shadow-[0_24px_90px_-32px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-6">
-        <div className="rounded-[24px] border border-[var(--gold-soft)]/70 bg-[var(--gold-soft)]/60 p-5">
+    <AppShell title={mode === "signup" ? "Créer un compte" : "Connexion"} subtitle={mode === "signup" ? "Rejoignez Desmohair pour suivre les nouveautés du salon" : "Accédez à votre espace client avec simplicité"}>
+      <div className="mt-6 rounded-[32px] border border-stone-200 bg-white p-5 shadow-[0_24px_90px_-32px_rgba(0,0,0,0.22)] sm:p-6">
+        <div className="rounded-[24px] border border-stone-200 bg-stone-50 p-5">
           <div className="flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center rounded-3xl bg-white/80 shadow-sm">
-              <Sparkles className="h-6 w-6 text-[var(--gold-deep)]" />
+            <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-3xl bg-white shadow-sm">
+              <img src={profileIcon} alt="Icône profil" className="h-6 w-6 object-contain" />
             </div>
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--gold-deep)]">Desmohair</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-rose-600">{brandText}</p>
               <p className="text-[11px] text-muted-foreground">Espace client & administration</p>
             </div>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">Réservez, découvrez les nouveautés et profitez d’un suivi personnalisé.</p>
-          <div className="mt-4 flex gap-2 rounded-full bg-white/70 p-2 shadow-inner">
-            <button type="button" onClick={() => setMode("login")} className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition ${mode === "login" ? "bg-[var(--gold-soft)] text-[var(--gold-deep)] shadow-sm" : "text-muted-foreground"}`}>
+          <p className="mt-3 text-sm text-muted-foreground">Bienvenue espace client.</p>
+          <div className="mt-4 flex gap-2 rounded-full bg-white p-2 shadow-inner">
+            <button type="button" onClick={() => setMode("login")} className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition ${mode === "login" ? "bg-rose-600 text-white shadow-sm" : "text-muted-foreground"}`}>
               Connexion
             </button>
-            <button type="button" onClick={() => setMode("signup")} className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition ${mode === "signup" ? "bg-[var(--gold-soft)] text-[var(--gold-deep)] shadow-sm" : "text-muted-foreground"}`}>
+            <button type="button" onClick={() => setMode("signup")} className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition ${mode === "signup" ? "bg-rose-600 text-white shadow-sm" : "text-muted-foreground"}`}>
               Créer un compte
             </button>
           </div>
@@ -166,7 +174,7 @@ function LoginPage() {
           {error ? <p className="rounded-2xl bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p> : null}
           {infoMessage ? <p className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">{infoMessage}</p> : null}
 
-          <GlassButton type="submit" variant="gold" size="md" full disabled={!canSubmit || loading}>
+          <GlassButton type="submit" variant="light" size="md" full disabled={!canSubmit || loading}>
             {loading ? (mode === "signup" ? "Création..." : "Connexion...") : mode === "signup" ? "Créer mon compte" : "Se connecter"}
           </GlassButton>
         </form>

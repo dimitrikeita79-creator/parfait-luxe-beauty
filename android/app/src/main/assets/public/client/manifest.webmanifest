@@ -1,0 +1,27 @@
+{
+  "name": "Parfait.Design/Desmohair",
+  "short_name": "Parfait.Design",
+  "description": "Salon de beauté luxe à Ouagadougou — perruques, mèches, tresses, mariage.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "lang": "fr",
+  "categories": ["beauty", "lifestyle", "shopping"],
+  "icons": [
+    {
+      "src": "/__l5e/assets-v1/logo-fallback/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/__l5e/assets-v1/logo-fallback/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

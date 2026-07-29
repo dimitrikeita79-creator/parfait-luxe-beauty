@@ -3,8 +3,7 @@ import { ApiException } from "../exceptions";
 import type { AppUser } from "../models";
 
 const ADMIN_EMAIL = "essadjikeita794@gmail.com";
-const isAdminEmail = (email?: string | null) =>
-  email?.trim().toLowerCase() === ADMIN_EMAIL;
+const isAdminEmail = (email?: string | null) => email?.trim().toLowerCase() === ADMIN_EMAIL;
 
 export class AuthService {
   async signIn(email: string, password: string): Promise<AppUser> {
@@ -23,10 +22,10 @@ export class AuthService {
       const role = (
         isAdminEmail(data.user.email)
           ? "admin"
-          : data.user.user_metadata?.role ??
+          : (data.user.user_metadata?.role ??
             data.user.app_metadata?.role ??
             profile.role ??
-            "user"
+            "user")
       ) as AppUser["role"];
 
       try {
@@ -35,9 +34,7 @@ export class AuthService {
             id: data.user.id,
             email: data.user.email ?? email,
             full_name:
-              data.user.user_metadata?.full_name ??
-              profile.full_name ??
-              email.split("@")[0],
+              data.user.user_metadata?.full_name ?? profile.full_name ?? email.split("@")[0],
             role,
           },
           { onConflict: "id" },
@@ -50,8 +47,8 @@ export class AuthService {
         ...profile,
         role,
         email: profile.email || data.user.email || email,
-        full_name:
-          profile.full_name ?? data.user.user_metadata?.full_name ?? null,
+        full_name: profile.full_name ?? data.user.user_metadata?.full_name ?? null,
+        theme: profile.theme ?? 'gold',
       };
     } catch (error) {
       throw ApiException.fromError(error);
@@ -68,9 +65,7 @@ export class AuthService {
       throw new ApiException("Veuillez saisir votre email et mot de passe");
     }
     if (password.length < 6) {
-      throw new ApiException(
-        "Le mot de passe doit contenir au moins 6 caractères",
-      );
+      throw new ApiException("Le mot de passe doit contenir au moins 6 caractères");
     }
     const resolvedIsAdmin = isAdmin || isAdminEmail(email);
 
@@ -93,36 +88,32 @@ export class AuthService {
 
       const profilePayload = {
         id: data.user.id,
-        full_name:
-          fullName ?? data.user.user_metadata?.full_name ?? email.split("@")[0],
+        email: data.user.email ?? email,
+        full_name: fullName ?? data.user.user_metadata?.full_name ?? email.split("@")[0],
         role: resolvedIsAdmin ? "admin" : "user",
+        avatar_url: null,
+        theme: 'gold',
       };
 
       try {
-        await supabase
-          .from(TABLES.PROFILES)
-          .upsert(profilePayload, { onConflict: "id" });
+        await supabase.from(TABLES.PROFILES).upsert(profilePayload, { onConflict: "id" });
       } catch {
-        // Ignorer les erreurs de profil - ce n'est pas critique
-        console.warn(
-          "Impossible de sauvegarder le profil, mais l'inscription a réussi",
-        );
+        console.warn("Impossible de sauvegarder le profil, mais l'inscription a réussi");
       }
 
-      // Retourner le profil (fallback si la table n'existe pas)
       try {
         return await this.getUserProfile(data.user.id);
       } catch {
         return {
           id: data.user.id,
           email: data.user.email || email,
-          full_name:
-            fullName ?? data.user.user_metadata?.full_name ?? email.split("@")[0],
+          full_name: fullName ?? data.user.user_metadata?.full_name ?? email.split("@")[0],
           role: resolvedIsAdmin ? "admin" : "user",
           avatar_url: null,
+          theme: 'gold',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        } as AppUser; // ← ajout du cast explicite
+        } as AppUser;
       }
     } catch (error) {
       console.error("🔴 signUp final error:", error);
@@ -132,30 +123,32 @@ export class AuthService {
 
   async updateProfile(updates: Partial<AppUser>): Promise<AppUser> {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user?.id;
-      if (!userId) {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+
+      const user = sessionData.session?.user;
+      if (!user?.id) {
         throw new ApiException("Utilisateur non connecté");
       }
 
-      const payload = {
-        id: userId,
-        ...(updates.full_name !== undefined
-          ? { full_name: updates.full_name }
-          : {}),
-        ...(updates.email !== undefined ? { email: updates.email } : {}),
-        ...(updates.avatar_url !== undefined
-          ? { avatar_url: updates.avatar_url }
-          : {}),
-        ...(updates.role !== undefined ? { role: updates.role } : {}),
-      };
+      const resolvedEmail = updates.email ?? user.email;
+      if (!resolvedEmail) {
+        throw new ApiException("Impossible de récupérer l'email de l'utilisateur.");
+      }
 
-      const { error } = await supabase
-        .from(TABLES.PROFILES)
-        .upsert(payload, { onConflict: "id" });
+      const payload: Record<string, unknown> = {
+        id: user.id,
+        email: resolvedEmail,
+      };
+      if (updates.full_name !== undefined) payload.full_name = updates.full_name;
+      if (updates.avatar_url !== undefined) payload.avatar_url = updates.avatar_url;
+      if (updates.role !== undefined) payload.role = updates.role;
+      if (updates.theme !== undefined) payload.theme = updates.theme;
+
+      const { error } = await supabase.from(TABLES.PROFILES).upsert(payload, { onConflict: "id" });
       if (error) throw error;
 
-      return this.getUserProfile(userId);
+      return this.getUserProfile(user.id);
     } catch (error) {
       throw ApiException.fromError(error);
     }
@@ -185,20 +178,14 @@ export class AuthService {
       const { data: authData } = await supabase.auth.getUser();
       const authUser = authData?.user;
       const fallbackEmail = authUser?.email ?? "";
-      const authRole = (
-        authUser?.user_metadata?.role ??
-        authUser?.app_metadata?.role ??
-        null
-      ) as AppUser["role"] | null;
+      const authRole = (authUser?.user_metadata?.role ?? authUser?.app_metadata?.role ?? null) as
+        | AppUser["role"]
+        | null;
       const fallbackRole = (
-        isAdminEmail(fallbackEmail) || authRole === "admin"
-          ? "admin"
-          : (authRole ?? "user")
+        isAdminEmail(fallbackEmail) || authRole === "admin" ? "admin" : (authRole ?? "user")
       ) as AppUser["role"];
       const fallbackName =
-        authUser?.user_metadata?.full_name ??
-        authUser?.user_metadata?.name ??
-        null;
+        authUser?.user_metadata?.full_name ?? authUser?.user_metadata?.name ?? null;
 
       const { data, error } = await supabase
         .from(TABLES.PROFILES)
@@ -214,6 +201,7 @@ export class AuthService {
             full_name: fallbackName ?? "Utilisateur",
             role: fallbackRole,
             avatar_url: null,
+            theme: 'gold',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };
@@ -235,12 +223,9 @@ export class AuthService {
         return fallback as AppUser;
       }
 
-      const profileRole =
-        (data?.role as AppUser["role"] | undefined) ?? fallbackRole;
+      const profileRole = (data?.role as AppUser["role"] | undefined) ?? fallbackRole;
       const resolvedRole = (
-        isAdminEmail(fallbackEmail) ||
-        authRole === "admin" ||
-        profileRole === "admin"
+        isAdminEmail(fallbackEmail) || authRole === "admin" || profileRole === "admin"
           ? "admin"
           : profileRole
       ) as AppUser["role"];
@@ -267,6 +252,7 @@ export class AuthService {
         full_name: data?.full_name ?? data?.nom ?? fallbackName ?? null,
         role: resolvedRole,
         avatar_url: data?.avatar_url ?? null,
+        theme: (data?.theme as AppUser['theme']) ?? 'gold',
         created_at: data?.created_at ?? new Date().toISOString(),
         updated_at: data?.updated_at ?? new Date().toISOString(),
       } as AppUser;
@@ -282,16 +268,29 @@ export class AuthService {
   }
 
   onAuthStateChange(callback: (user: AppUser | null) => void): () => void {
-    const { data } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (!session?.user) {
-          callback(null);
-          return;
-        }
+    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!session?.user) {
+        callback(null);
+        return;
+      }
+      try {
         const profile = await this.getUserProfile(session.user.id);
         callback(profile);
-      },
-    );
+      } catch (error) {
+        console.error("Failed to load user profile on auth state change:", error);
+        const fallback: AppUser = {
+          id: session.user.id,
+          email: session.user.email ?? "",
+          full_name: session.user.user_metadata?.full_name ?? null,
+          role: isAdminEmail(session.user.email) ? "admin" : "user",
+          avatar_url: null,
+          theme: 'gold',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        callback(fallback);
+      }
+    });
     return data.subscription.unsubscribe;
   }
 }

@@ -1,21 +1,24 @@
 // Modèles fortement typés
 
-export interface AppUser {
+export interface Profile {
   id: string;
   email: string;
   full_name: string | null;
-  role: 'admin' | 'user';
   avatar_url: string | null;
+  role: 'admin' | 'user';
+  theme: 'gold' | 'light' | 'silver';
   created_at: string;
   updated_at: string;
 }
+
+export type AppUser = Profile;
 
 export interface GalleryItem {
   id: string;
   title: string;
   description: string | null;
   image_url: string;
-  category: 'coiffure' | 'maquillage' | 'ongles' | 'soin' | 'autre';
+  category: 'coiffure' | 'mèches' | 'équipement' | 'Produits' | 'Promo';
   is_featured: boolean;
   sort_order: number;
   created_at: string;
@@ -24,6 +27,7 @@ export interface GalleryItem {
 
 export interface CatalogItem {
   id: string;
+  code?: string;
   title: string;
   description: string | null;
   price: number;
@@ -31,17 +35,6 @@ export interface CatalogItem {
   category: string;
   is_available: boolean;
   sort_order: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TeamMember {
-  id: string;
-  full_name: string;
-  role: string;
-  description: string | null;
-  photo_url: string;
-  specialties: string[];
   created_at: string;
   updated_at: string;
 }
@@ -57,6 +50,30 @@ export interface ServiceItem {
   active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface Review {
+  id: string;
+  user_id: string | null;
+  author_name: string;
+  title: string | null;
+  comment: string;
+  rating: number;
+  is_approved: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type FavoriteKind = 'gallery' | 'catalog' | 'service';
+
+export interface FavoriteItem {
+  id: string;
+  kind: FavoriteKind;
+  title: string;
+  description: string | null;
+  price: number | null;
+  imageUrl: string | null;
+  category: string | null;
 }
 
 export interface SalonInfo {
@@ -75,4 +92,12 @@ export interface SalonInfo {
   whatsapp_url: string | null;
   opening_hours: string | null;
   updated_at: string;
+}
+
+export interface SavedProduct {
+  id: string;
+  user_id: string;
+  title: string;
+  note: string;
+  created_at: string;
 }

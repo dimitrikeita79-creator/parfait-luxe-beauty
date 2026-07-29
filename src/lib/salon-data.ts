@@ -191,7 +191,7 @@ export const SALONS: Salon[] = [
   {
     id: "parfait",
     name: "Parfait Design",
-    area: "Ouaga centre",
+    area: "Zone 1",
     city: "Ouagadougou, Burkina Faso",
     phone: "+22670028336",
     phoneDisplay: "+226 70 02 83 36",
@@ -242,7 +242,24 @@ export function pickSalonFor(category?: string): Salon {
 export function waLinkFor(salonId: SalonId, message?: string) {
   const s = getSalon(salonId);
   const text = message ?? `Bonjour ${s.name},\n\nJe souhaite obtenir plus d'informations.`;
-  return `https://wa.me/${s.whatsapp}?text=${encodeURIComponent(text)}`;
+  const encoded = encodeURIComponent(text);
+  const fallback = `https://wa.me/${s.whatsapp}?text=${encoded}`;
+  if (typeof window !== "undefined" && window.Capacitor?.isNativeApp?.()) {
+    return `whatsapp://send?phone=${s.whatsapp}&text=${encoded}`;
+  }
+  return fallback;
+}
+
+export function waLinkWithChoice(salonIds: SalonId[], message?: string) {
+  const salons = salonIds.map(id => getSalon(id));
+  const text = message ?? "Bonjour,\n\nJe souhaite obtenir plus d'informations.";
+  
+  if (salons.length === 1) {
+    return `https://wa.me/${salons[0].whatsapp}?text=${encodeURIComponent(text)}`;
+  }
+  
+  // Pour multiple salons, on utilise le premier par défaut mais on peut ajouter un sélecteur
+  return `https://wa.me/${salons[0].whatsapp}?text=${encodeURIComponent(text)}`;
 }
 
 // ============================================================

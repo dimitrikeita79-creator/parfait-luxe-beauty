@@ -1,4 +1,4 @@
-name = "parfait-luxe-beauty"
+name = "test"
 main = "./dist/server/server.js"
 compatibility_date = "2026-07-22"
 

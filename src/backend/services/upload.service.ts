@@ -1,27 +1,87 @@
-import { supabase, BUCKETS } from '../client';
-import { ApiException } from '../exceptions';
+import { supabase, BUCKETS } from "../client";
+import { ApiException } from "../exceptions";
+import { sanitizeFileName } from "../../lib/utils";
+
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp"]);
+const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp"]);
+
+function getExtension(fileName: string): string {
+  return fileName.split(".").pop()?.toLowerCase() ?? "";
+}
+
+function buildUserFilePath(userId: string, fileName: string): string {
+  const cleanedName = sanitizeFileName(fileName);
+  return `${userId}/${Date.now()}-${cleanedName}`;
+}
 
 export class UploadService {
-  async uploadImage(
-    file: File,
-    bucket: string,
-    fileName?: string
-  ): Promise<string> {
-    try {
-      const finalName = fileName || `${Date.now()}_${file.name}`;
-      const { error } = await supabase.storage
-        .from(bucket)
-        .upload(finalName, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-      if (error) throw error;
-
-      const { data } = supabase.storage.from(bucket).getPublicUrl(finalName);
-      return data.publicUrl as string;
-    } catch (error) {
-      throw ApiException.fromError(error);
+  async uploadImage(file: File, bucket: string, fileName?: string): Promise<string> {
+    if (!file) {
+      throw new ApiException("Fichier invalide : aucun fichier fourni.");
     }
+
+    if (!Object.values(BUCKETS).includes(bucket as (typeof BUCKETS)[keyof typeof BUCKETS])) {
+      throw new ApiException(`Bucket introuvable : ${bucket}`);
+    }
+
+    const mimeType = file.type?.toLowerCase() ?? "";
+    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+      throw new ApiException(`Type MIME invalide : ${mimeType || "inconnu"}`);
+    }
+
+    const extension = getExtension(file.name);
+    if (!ALLOWED_EXTENSIONS.has(extension)) {
+      throw new ApiException(`Extension de fichier invalide : .${extension}`);
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      throw new ApiException(
+        `Fichier trop lourd : ${Math.round(file.size / 1024)} KB. Taille max ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)} MB.`,
+      );
+    }
+
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError) {
+      throw ApiException.fromError(authError);
+    }
+
+    const userId = authData.user?.id;
+    if (!userId) {
+      throw new ApiException("Utilisateur non authentifié.");
+    }
+
+    const rawFileName = fileName || file.name;
+    const safeFileName = sanitizeFileName(rawFileName);
+    const finalFileName = /\.([a-z0-9]+)$/i.test(safeFileName)
+      ? safeFileName
+      : `${safeFileName}.${extension}`;
+    const filePath = buildUserFilePath(userId, finalFileName);
+
+    const { error: uploadError, data: uploadData } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error(uploadError);
+      throw new ApiException(
+        `Upload refusé : ${uploadError.message || JSON.stringify(uploadError)}`,
+      );
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    const publicUrl = publicUrlData?.publicUrl;
+    if (!publicUrl) {
+      throw new ApiException("Impossible de récupérer l'URL publique après upload.");
+    }
+
+    return publicUrl as string;
   }
 
   async deleteImage(bucket: string, path: string): Promise<void> {
@@ -45,8 +105,8 @@ export class UploadService {
     return this.uploadImage(file, BUCKETS.BANNER, fileName);
   }
 
-  uploadTeamPhoto(file: File, fileName?: string): Promise<string> {
-    return this.uploadImage(file, BUCKETS.TEAM, fileName);
+  uploadAvatar(file: File, fileName?: string): Promise<string> {
+    return this.uploadImage(file, BUCKETS.AVATAR, fileName);
   }
 }
 

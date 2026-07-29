@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { type CSSProperties, type ReactNode } from "react";
+import { motion } from "motion/react";
 import { waLink } from "@/lib/salon-data";
 import logoAsset from "@/assets/DESMOHAIR.jpg";
 import homeIcon from "@/assets/icone/page-daccueil.svg";
@@ -10,12 +11,12 @@ import contactIcon from "@/assets/icone/contact.svg";
 import profileIcon from "@/assets/icone/profil.svg";
 
 const NAV = [
-  { to: "/", label: "Accueil", icon: homeIcon, color: "oklch(0.62 0.11 80)" },
-  { to: "/services", label: "Services", icon: servicesIcon, color: "#E1306C" },
-  { to: "/gallery", label: "Galerie", icon: galleryIcon, color: "#1877F2" },
-  { to: "/catalog", label: "Catalogue", icon: catalogIcon, color: "oklch(0.45 0.02 60)" },
-  { to: "/contact", label: "Contact", icon: contactIcon, color: "#25D366" },
-  { to: "/profile", label: "Profil", icon: profileIcon, color: "oklch(0.62 0.11 80)" },
+  { to: "/", label: "Accueil", icon: homeIcon, color: "var(--gold-deep)" },
+  { to: "/services", label: "Services", icon: servicesIcon, color: "var(--crimson)" },
+  { to: "/gallery", label: "Galerie", icon: galleryIcon, color: "var(--gold)" },
+  { to: "/catalog", label: "Catalogue", icon: catalogIcon, color: "var(--gold-deep)" },
+  { to: "/contact", label: "Contact", icon: contactIcon, color: "var(--crimson)" },
+  { to: "/profile", label: "Profil", icon: profileIcon, color: "var(--gold)" },
 ] as const;
 
 export function WhatsAppIcon({ className = "", style }: { className?: string; style?: CSSProperties }) {
@@ -26,7 +27,7 @@ export function WhatsAppIcon({ className = "", style }: { className?: string; st
   );
 }
 
-export function AppShell({ children, title, subtitle }: { children: ReactNode; title?: string; subtitle?: string }) {
+export function AppShell({ children, title, subtitle, headerRight }: { children: ReactNode; title?: string; subtitle?: string; headerRight?: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
@@ -49,21 +50,24 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
               <p className="text-[10px] text-muted-foreground">Parfait Design</p>
             </div>
           </Link>
-          <a
-            href={waLink()}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="WhatsApp"
-            className="relative grid h-10 w-10 place-items-center rounded-full transition-transform duration-200 hover:scale-110 active:scale-95"
-            style={{
-              background: "linear-gradient(180deg, oklch(1 0 0 / 0.85), oklch(1 0 0 / 0.55))",
-              backdropFilter: "blur(18px) saturate(180%)",
-              border: "1px solid oklch(1 0 0 / 0.85)",
-              boxShadow: "0 8px 20px -10px rgba(37,211,102,0.55), inset 0 1px 0 oklch(1 0 0 / 0.8)",
-            }}
-          >
-            <WhatsAppIcon className="h-5 w-5" style={{ color: "#25D366" }} />
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={waLink()}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="WhatsApp"
+              className="relative grid h-10 w-10 place-items-center rounded-full transition-transform duration-200 hover:scale-110 active:scale-95"
+              style={{
+                background: "linear-gradient(180deg, oklch(1 0 0 / 0.85), oklch(1 0 0 / 0.55))",
+                backdropFilter: "blur(18px) saturate(180%)",
+                border: "1px solid oklch(1 0 0 / 0.85)",
+                boxShadow: "0 8px 20px -10px rgba(37,211,102,0.55), inset 0 1px 0 oklch(1 0 0 / 0.8)",
+              }}
+            >
+              <WhatsAppIcon className="h-5 w-5" style={{ color: "#25D366" }} />
+            </a>
+            {headerRight}
+          </div>
         </div>
         {title && (
           <div className="mt-5 px-1 animate-fade-up">
@@ -109,18 +113,22 @@ function NavItem({
       className="group relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-1 py-1.5 transition-transform duration-200 hover:-translate-y-0.5 active:scale-95"
     >
       {active && (
-        <span
+        <motion.span
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
           className="absolute inset-0 rounded-full"
           style={{
             background: "linear-gradient(180deg, oklch(1 0 0 / 0.9), oklch(1 0 0 / 0.6))",
             backdropFilter: "blur(18px) saturate(200%)",
             border: "1px solid oklch(1 0 0 / 0.95)",
-            boxShadow: `0 10px 22px -10px ${color === "oklch(0.45 0.02 60)" ? "oklch(0.78 0.1 85 / 0.5)" : color + "70"}, inset 0 1px 0 oklch(1 0 0 / 0.85)`,
+            boxShadow: `0 10px 22px -10px oklch(0.78 0.1 85 / 0.5), inset 0 1px 0 oklch(1 0 0 / 0.85)`,
           }}
         />
       )}
-      <span
+      <motion.span
         className={`relative grid h-7 w-7 place-items-center rounded-full transition-transform duration-300 ${active ? "animate-nav-pop" : "group-hover:scale-110"}`}
+        whileHover={{ scale: 1.15 }}
+        whileTap={{ scale: 0.9 }}
       >
         <img
           src={icon}
@@ -131,13 +139,14 @@ function NavItem({
             filter: active ? "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18))" : "grayscale(0.15) brightness(0.9)",
           }}
         />
-      </span>
-      <span
+      </motion.span>
+      <motion.span
         className="relative text-[9.5px] font-semibold uppercase tracking-[0.08em]"
         style={{ color: active ? color : "oklch(0.5 0.015 60)" }}
+        whileHover={{ y: -1 }}
       >
         {label}
-      </span>
+      </motion.span>
     </Link>
   );
 }

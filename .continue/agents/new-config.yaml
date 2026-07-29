@@ -1,0 +1,49 @@
+name: Example Config
+version: 1.0.0
+schema: v1
+
+models:
+  - name: my gpt-5
+    provider: openai
+    model: gpt-5
+    apiKey: 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
+
+  - name: qwen2.5-coder 7b
+    provider: ollama
+    model: qwen2.5-coder:7b
+    roles:
+      - apply
+      - autocomplete
+      - chat
+      - edit
+
+  - name: Claude 4 Sonnet
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    apiKey: ${{ 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}}
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 200000
+      maxTokens: 64000
+    capabilities:
+      - tool_use
+      - image_input
+
+  - name: GLM 5.2 NVIDIA
+    provider: openai
+    model: z-ai/glm-5.2
+    apiBase: https://integrate.api.nvidia.com/v1
+    apiKey: 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
+    roles:
+      - chat
+      - edit
+      - apply
+      - autocomplete
+    defaultCompletionOptions:
+      contextLength: 131072
+      maxTokens: 16384
+    capabilities:
+      - tool_use

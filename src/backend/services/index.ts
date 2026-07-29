@@ -3,5 +3,7 @@ export { galleryService } from './gallery.service';
 export { catalogService } from './catalog.service';
 export { teamService } from './team.service';
 export { servicesService } from './services.service';
+export { favoritesService } from './favorites.service';
+export { reviewsService } from './reviews.service';
 export { salonService } from './salon.service';
 export { uploadService } from './upload.service';

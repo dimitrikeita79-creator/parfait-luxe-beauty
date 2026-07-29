@@ -7,4 +7,7 @@ export default defineConfig({
       entry: "server",
     },
   },
+  preview: {
+    port: 4173,
+  },
 });

@@ -1,9 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ShieldCheck, Sparkles, Settings, Image as ImageIcon, LayoutGrid } from "lucide-react";
+import { motion } from "motion/react";
+import {
+  ShieldCheck,
+  Sparkles,
+  Settings,
+  Image as ImageIcon,
+  LayoutGrid,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { GlassButton } from "@/components/GlassButton";
 import { ImprovedAdminEditor } from "@/components/ImprovedAdminEditor";
+import { AdminNotifications } from "@/components/AdminNotifications";
 import type { AppUser } from "@/backend/models";
 import { authService } from "@/backend/services";
 
@@ -13,7 +21,8 @@ export const Route = createFileRoute("/admin")({
       { title: "Administration — Parfait.Design/Desmohair" },
       {
         name: "description",
-        content: "Espace d’édition réservé aux administrateurs Parfait.Design/Desmohair",
+        content:
+          "Espace d'édition réservé aux administrateurs Parfait.Design/Desmohair",
       },
     ],
   }),
@@ -31,8 +40,10 @@ function AdminPage() {
     const loadUser = async () => {
       try {
         const currentUser = await authService.getCurrentUser();
+
         if (active.current) {
           setUser(currentUser);
+
           if (!currentUser || currentUser.role !== "admin") {
             navigate({ to: "/profile", replace: true });
           }
@@ -49,6 +60,7 @@ function AdminPage() {
     };
 
     void loadUser();
+
     return () => {
       active.current = false;
     };
@@ -79,10 +91,21 @@ function AdminPage() {
 
   if (checking) {
     return (
-      <AppShell title="Vérification de l’accès" subtitle="Connexion sécurisée en cours…">
-        <div className="mt-6 rounded-[28px] border border-white/70 bg-white/70 p-5 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-          <p className="text-sm text-muted-foreground">Vérification du statut administrateur…</p>
-        </div>
+      <AppShell
+        title="Vérification de l'accès"
+        subtitle="Connexion sécurisée en cours…"
+      >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-6 flex flex-col items-center justify-center py-16"
+        >
+          <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-blue-200 border-t-blue-600" />
+
+          <p className="mt-4 text-sm text-muted-foreground">
+            Vérification du statut administrateur…
+          </p>
+        </motion.div>
       </AppShell>
     );
   }
@@ -92,51 +115,82 @@ function AdminPage() {
   }
 
   return (
-    <AppShell title="Administration" subtitle="Espace réservé aux comptes administrateurs">
-      <div className="mt-6 rounded-[28px] border border-white/70 bg-white/70 p-5 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-        <div className="flex items-center gap-2 text-[var(--gold-deep)]">
-          <ShieldCheck className="h-4 w-4" />
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em]">Accès sécurisé</p>
-        </div>
+    <AppShell
+      title="Administration"
+      subtitle="Espace réservé aux comptes administrateurs"
+      headerRight={<AdminNotifications isAdmin={true} />}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mt-6"
+      >
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-xl space-y-6">
 
-        <div className="mt-4 rounded-3xl border border-[var(--gold-soft)]/70 bg-[var(--gold-soft)]/50 p-4">
-          <p className="text-sm font-semibold text-[var(--gold-deep)]">
-            Bienvenue dans votre tableau de bord
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Vous êtes connecté en tant qu’administrateur. Cette vue vous permet de préparer les
-            modifications du salon.
-          </p>
-        </div>
+          {/* Badge */}
+          <div className="flex items-center gap-2 text-blue-700">
+            <ShieldCheck className="h-4 w-4" />
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em]">
+              Accès sécurisé
+            </p>
+          </div>
 
-        <div className="mt-4 space-y-2">
-          {actions.map(({ title, description, icon: Icon }) => (
-            <div
-              key={title}
-              className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/80 px-3 py-3"
-            >
-              <div className="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--gold-soft)]/70 text-[var(--gold-deep)]">
-                <Icon className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">{title}</p>
-                <p className="text-xs text-muted-foreground">{description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+          {/* Carte de bienvenue */}
+          <div className="rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-red-50 p-5 shadow-sm">
+            <p className="text-sm font-semibold text-blue-700">
+              Bienvenue dans votre tableau de bord
+            </p>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          <GlassButton as={Link} to="/" variant="gold" size="md">
-            Retour à l’accueil
-          </GlassButton>
-          <GlassButton as={Link} to="/login" variant="light" size="md">
-            Changer de compte
-          </GlassButton>
-        </div>
+            <p className="mt-2 text-sm text-slate-600">
+              Vous êtes connecté en tant qu'administrateur. Cette vue vous permet
+              de préparer les modifications du salon.
+            </p>
+          </div>
 
-        <ImprovedAdminEditor />
-      </div>
+          {/* Actions */}
+          <div className="space-y-3">
+            {actions.map(({ title, description, icon: Icon }, i) => (
+              <motion.div
+                key={title}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + i * 0.05 }}
+                className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md"
+              >
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">
+                  <Icon className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {title}
+                  </p>
+
+                  <p className="text-xs text-slate-500">
+                    {description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Boutons */}
+          <div className="flex flex-wrap gap-3">
+            <GlassButton as={Link} to="/" variant="gold" size="md">
+              Retour à l'accueil
+            </GlassButton>
+
+            <GlassButton as={Link} to="/login" variant="light" size="md">
+              Changer de compte
+            </GlassButton>
+          </div>
+
+          {/* Éditeur */}
+          <ImprovedAdminEditor />
+
+        </div>
+      </motion.div>
     </AppShell>
   );
 }

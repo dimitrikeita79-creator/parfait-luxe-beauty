@@ -1,16 +1,4 @@
-import type { CatalogItem, GalleryItem, ServiceItem } from "@/backend/models";
-
-export type FavoriteKind = "gallery" | "catalog" | "service";
-
-export interface FavoriteItem {
-  id: string;
-  kind: FavoriteKind;
-  title: string;
-  description?: string | null;
-  price?: number | null;
-  imageUrl?: string | null;
-  category?: string | null;
-}
+import type { CatalogItem, GalleryItem, ServiceItem, FavoriteItem, FavoriteKind } from "@/backend/models";
 
 const FAVORITES_STORAGE_KEY = "desmohair-favorites";
 
@@ -33,6 +21,7 @@ export function saveFavorites(items: FavoriteItem[]) {
   }
 
   window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(items));
+  window.dispatchEvent(new Event("favorites-updated"));
 }
 
 export function isFavorite(kind: FavoriteKind, id: string) {

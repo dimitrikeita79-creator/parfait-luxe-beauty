@@ -7,9 +7,50 @@ const config: CapacitorConfig = {
   backgroundColor: "#ffffff",
   android: {
     allowMixedContent: false,
+    captureInput: true,
+    hideNavigationBar: false,
+    statusBarBackgroundColor: "#ffffff",
+    statusBarStyle: "dark",
+    windowSoftInputMode: "adjustResize",
+    launchAutoHide: true,
+    splashScreen: {
+      launchShowDuration: 2000,
+      launchAutoHide: true,
+      backgroundColor: "#ffffff",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+    },
+  },
+  ios: {
+    contentInset: "always",
+    scrollsToTop: true,
   },
   server: {
     androidScheme: "https",
+    iosScheme: "https",
+  },
+  plugins: {
+    StatusBar: {
+      style: "light",
+      backgroundColor: "#ffffff",
+    },
+    SplashScreen: {
+      launchShowDuration: 2000,
+      launchAutoHide: true,
+      backgroundColor: "#ffffff",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+    },
+    App: {
+      urlHandlers: [
+        {
+          scheme: "https",
+          host: "gjahsoafbclqpodnblnd.supabase.co",
+        },
+      ],
+    },
   },
 };
 

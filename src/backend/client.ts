@@ -24,14 +24,17 @@ export const TABLES = {
   PROFILES: 'profiles',
   GALLERY: 'gallery',
   CATALOG: 'catalog',
-  TEAM: 'team',
   SERVICES: 'services',
   SALON_INFO: 'salon_info',
+  FAVORITES: 'favorites',
+  CAROUSEL_SLIDES: 'carousel_slides',
+  REVIEWS: 'reviews',
+  SAVED_PRODUCTS: 'saved_products',
 } as const;
 
 export const BUCKETS = {
   GALLERY: 'gallery',
   LOGO: 'logo',
   BANNER: 'banner',
-  TEAM: 'team',
+  AVATAR: 'avatars',
 } as const;

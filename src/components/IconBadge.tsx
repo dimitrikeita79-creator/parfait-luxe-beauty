@@ -3,7 +3,7 @@ import type { ComponentType, SVGProps } from "react";
 type IconBadgeProps = {
   icon: ComponentType<SVGProps<SVGSVGElement> & { className?: string }>;
   size?: "sm" | "md" | "lg";
-  tone?: "neutral" | "gold" | "green" | "blue" | "pink" | "rose" | "dark";
+  tone?: "neutral" | "gold" | "green" | "blue" | "pink" | "rose";
   className?: string;
 };
 
@@ -14,7 +14,6 @@ const TONES: Record<NonNullable<IconBadgeProps["tone"]>, { color: string; glow: 
   blue:    { color: "#1877F2",             glow: "rgba(24, 119, 242, 0.45)" },
   pink:    { color: "#E1306C",             glow: "rgba(225, 48, 108, 0.5)" },
   rose:    { color: "#FE2C55",             glow: "rgba(254, 44, 85, 0.45)" },
-  dark:    { color: "oklch(0.22 0.01 60)", glow: "oklch(0.2 0 0 / 0.25)" },
 };
 
 const SIZES = {

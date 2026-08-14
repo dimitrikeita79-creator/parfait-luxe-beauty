@@ -22,13 +22,13 @@ export class FavoritesService {
           id: favorite.item_id,
           kind: favorite.item_type,
           title: String(favorite.item_data.title ?? ''),
-          description: favorite.item_data.description ?? null,
+          description: (favorite.item_data.description as string | null) ?? null,
           price:
             favorite.item_data.price === null || favorite.item_data.price === undefined
               ? null
               : Number(favorite.item_data.price),
-          imageUrl: favorite.item_data.imageUrl ?? null,
-          category: favorite.item_data.category ?? null,
+          imageUrl: (favorite.item_data.imageUrl as string | null) ?? null,
+          category: (favorite.item_data.category as string | null) ?? null,
         }));
     } catch (error) {
       throw ApiException.fromError(error);

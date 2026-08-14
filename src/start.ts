@@ -2,6 +2,15 @@ import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
 
+if (typeof document !== "undefined") {
+  const safeAreaMeta = document.createElement("meta");
+  safeAreaMeta.name = "viewport";
+  safeAreaMeta.content = "width=device-width, initial-scale=1, viewport-fit=cover";
+  safeAreaMeta.setAttribute("data-safe-area", "true");
+  if (document.head) {
+    document.head.appendChild(safeAreaMeta);
+  }
+}
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -17,7 +26,6 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
     });
   }
 });
-
 
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware],

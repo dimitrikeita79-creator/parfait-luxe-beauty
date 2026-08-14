@@ -30,6 +30,9 @@ export const TABLES = {
   CAROUSEL_SLIDES: 'carousel_slides',
   REVIEWS: 'reviews',
   SAVED_PRODUCTS: 'saved_products',
+  CART: 'cart',
+  TEAM: 'team',
+  NOTIFICATIONS: 'notifications',
 } as const;
 
 export const BUCKETS = {

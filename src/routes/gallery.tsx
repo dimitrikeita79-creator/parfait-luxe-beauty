@@ -7,7 +7,8 @@ import { GlassButton } from "@/components/GlassButton";
 import { galleryService, authService } from "@/backend/services";
 import type { GalleryItem } from "@/backend/models";
 import { useEffect, useState, useMemo } from "react";
-import { asFavoriteItem, getFavorites, toggleFavorite } from "@/lib/favorites";
+import { asFavoriteItem, toggleFavorite } from "@/lib/favorites";
+import { useFavorites } from "@/hooks/useFavorites";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
@@ -35,7 +36,7 @@ function GalleryPage() {
   const [error, setError] = useState<string | null>(null);
   const [cat, setCat] = useState("Tout");
   const [open, setOpen] = useState<GalleryItem | null>(null);
-  const [favorites, setFavorites] = useState(getFavorites());
+  const { favorites, setFavorites } = useFavorites();
 
   useEffect(() => {
     const loadGallery = async () => {
@@ -82,7 +83,7 @@ function GalleryPage() {
   };
 
   return (
-    <AppShell title="Galerie" subtitle="Nos plus belles realisations">
+    <>
       <AnimatePresence>
         {error && (
           <motion.div
@@ -213,10 +214,10 @@ function GalleryPage() {
             onClick={() => setOpen(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="w-full max-w-xs"
               onClick={(e) => e.stopPropagation()}
             >
@@ -265,6 +266,6 @@ function GalleryPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </AppShell>
+    </>
   );
 }

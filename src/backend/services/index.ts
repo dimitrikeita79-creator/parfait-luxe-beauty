@@ -7,3 +7,7 @@ export { favoritesService } from './favorites.service';
 export { reviewsService } from './reviews.service';
 export { salonService } from './salon.service';
 export { uploadService } from './upload.service';
+export { notificationService } from './notification.service';
+export { cartService } from './cart.service';
+export { localNotificationService } from './local-notification.service';
+export { pushNotificationService } from './push-notification.service';

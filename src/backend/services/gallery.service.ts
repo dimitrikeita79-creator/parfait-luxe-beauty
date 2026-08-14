@@ -1,6 +1,7 @@
 import { supabase, TABLES } from '../client';
 import { ApiException } from '../exceptions';
 import type { GalleryItem } from '../models';
+import { notificationService } from './notification.service';
 
 export class GalleryService {
   async getAll(): Promise<GalleryItem[]> {
@@ -52,6 +53,7 @@ export class GalleryService {
         .select()
         .single();
       if (error) throw error;
+      void notificationService.createForItem('gallery', item.title, 'created');
       return data as GalleryItem;
     } catch (error) {
       throw ApiException.fromError(error);
@@ -67,6 +69,7 @@ export class GalleryService {
         .select()
         .single();
       if (error) throw error;
+      void notificationService.createForItem('gallery', data.title, 'updated');
       return data as GalleryItem;
     } catch (error) {
       throw ApiException.fromError(error);
@@ -75,8 +78,12 @@ export class GalleryService {
 
   async delete(id: string): Promise<void> {
     try {
+      const { data } = await supabase.from(TABLES.GALLERY).select('title').eq('id', id).single();
       const { error } = await supabase.from(TABLES.GALLERY).delete().eq('id', id);
       if (error) throw error;
+      if (data) {
+        void notificationService.createForItem('gallery', data.title, 'deleted');
+      }
     } catch (error) {
       throw ApiException.fromError(error);
     }

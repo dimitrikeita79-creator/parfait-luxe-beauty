@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-export type Theme = "gold" | "light" | "silver";
+export type Theme = "light" | "gold" | "silver" | "green" | "red";
 
 const STORAGE_KEY = "desmohair-theme";
+const THEMES: Theme[] = ["light", "gold", "silver", "green", "red"];
 
 interface ThemeContextValue {
   theme: Theme;
@@ -12,45 +13,41 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY) as Theme;
-        if (stored && (stored === "light" || stored === "gold" || stored === "silver")) {
-          return stored;
-        }
-      } catch (e) {
-        console.error("Error reading localStorage:", e);
-      }
-    }
-    return "light";
-  });
+  // Deterministic on first render (matches SSR). The stored theme is read
+  // after mount so client/server hydration never mismatch.
+  const [theme, setThemeState] = useState<Theme>("light");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const applyTheme = () => {
-      if (typeof document !== "undefined") {
-        const body = document.body;
-        
-        // Remove all theme classes
-        body.classList.remove("theme-light", "theme-gold", "theme-silver");
-        
-        // Add current theme class
-        body.classList.add(`theme-${theme}`);
-        
-        // Save to localStorage
-        try {
-          localStorage.setItem(STORAGE_KEY, theme);
-        } catch (e) {
-          console.error("Error saving to localStorage:", e);
-        }
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
+      if (stored && THEMES.includes(stored)) {
+        setThemeState(stored);
       }
-    };
+    } catch (e) {
+      console.error("Error reading localStorage:", e);
+    }
+    setMounted(true);
+  }, []);
 
-    applyTheme();
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    const body = document.body;
+
+    body.classList.remove("theme-light", "theme-gold", "theme-silver", "theme-green", "theme-red", "theme-dark");
+    root.classList.remove("dark");
+
+    body.classList.add(`theme-${theme}`);
+
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch (e) {
+      console.error("Error saving to localStorage:", e);
+    }
   }, [theme]);
 
   const setTheme = (next: Theme) => {
-    console.log("Setting theme to:", next);
     setThemeState(next);
   };
 

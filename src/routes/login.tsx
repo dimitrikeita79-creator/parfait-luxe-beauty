@@ -65,12 +65,6 @@ function LoginPage() {
       if (user.role === "admin") {
         navigate({ to: "/profile" });
       } else {
-        if (typeof window !== "undefined") {
-          window.sessionStorage.setItem(
-            "authNotice",
-            "Vous êtes connecté(e). Vous serez informé(e) des mises à jour et nouveaux ajouts.",
-          );
-        }
         navigate({ to: "/profile" });
       }
     } catch (err) {
@@ -83,7 +77,6 @@ function LoginPage() {
   };
 
   return (
-    <AppShell title={mode === "signup" ? "Créer un compte" : "Connexion"} subtitle={mode === "signup" ? "Rejoignez Desmohair pour suivre les nouveautés du salon" : "Accédez à votre espace client avec simplicité"}>
       <div className="mt-6 rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-blue-50/80 to-white p-5 shadow-md shadow-blue-200/20 sm:p-6">
         <div className="rounded-[24px] border border-blue-100/50 bg-gradient-to-br from-white to-blue-50/60 p-5">
           <div className="flex items-center gap-3">
@@ -203,7 +196,17 @@ function LoginPage() {
         <div className="mt-5 text-center text-xs text-muted-foreground">
           <Link to="/" className="font-semibold text-blue-600">Retour à l'accueil</Link>
         </div>
+
+        {/* Legal links */}
+        <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
+          <Link to="/privacy" className="underline underline-offset-2 hover:text-[var(--gold-deep)] transition">
+            Politique de confidentialité
+          </Link>
+          <span className="text-stone-300">|</span>
+          <Link to="/terms" className="underline underline-offset-2 hover:text-[var(--gold-deep)] transition">
+            Conditions d'utilisation
+          </Link>
+        </div>
       </div>
-    </AppShell>
   );
 }

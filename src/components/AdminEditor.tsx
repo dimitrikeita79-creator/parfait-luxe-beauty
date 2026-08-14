@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { catalogService, galleryService, servicesService, teamService, uploadService } from "@/backend/services";
 import type { CatalogItem, GalleryItem, ServiceItem } from "@/backend/models";
-import { CATALOG_ITEMS } from "@/lib/salon-data";
+import { SALONS } from "@/lib/salon-data";
 import { Image, Package, Scissors, Users } from "lucide-react";
 
 const galleryCategories = ["Coiffure", "équipement", "Produits", "Promo", "autres"] as const;
@@ -28,6 +28,7 @@ export function AdminEditor() {
     imageUrl: "",
     category: "Coiffure" as GalleryItem["category"],
     isFeatured: false,
+    salon_name: SALONS[0]?.name ?? "Parfait Design",
   });
   const [galleryFile, setGalleryFile] = useState<File | null>(null);
   const [galleryEditingId, setGalleryEditingId] = useState<string | null>(null);
@@ -38,12 +39,15 @@ export function AdminEditor() {
     title: "",
     description: "",
     price: "",
+    originalPrice: "",
     imageUrl: "",
-    category: "",
+    category: "Coiffure",
     code: "",
     isAvailable: true,
+    salon_name: SALONS[0]?.name ?? "Parfait Design",
   });
   const [catalogFile, setCatalogFile] = useState<File | null>(null);
+  const [catalogPreviewUrl, setCatalogPreviewUrl] = useState<string | null>(null);
   const [catalogEditingId, setCatalogEditingId] = useState<string | null>(null);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogFeedback, setCatalogFeedback] = useState<string | null>(null);
@@ -53,11 +57,13 @@ export function AdminEditor() {
     description: "",
     price: "",
     durationMin: "",
-    category: "",
+    category: "Coiffure",
     imageUrl: "",
     active: true,
+    salon_name: SALONS[0]?.name ?? "Parfait Design",
   });
   const [serviceFile, setServiceFile] = useState<File | null>(null);
+  const [servicePreviewUrl, setServicePreviewUrl] = useState<string | null>(null);
   const [serviceEditingId, setServiceEditingId] = useState<string | null>(null);
   const [serviceLoading, setServiceLoading] = useState(false);
   const [serviceFeedback, setServiceFeedback] = useState<string | null>(null);
@@ -87,10 +93,18 @@ export function AdminEditor() {
     setTeamMembers(teamData);
   };
 
-  const availableCodes = useMemo(() => {
-    const s = new Set<string>();
-    Object.values(CATALOG_ITEMS).forEach((list) => list.forEach((it) => it.code && s.add(it.code)));
-    return Array.from(s).sort();
+  const [availableCodes, setAvailableCodes] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadCodes = async () => {
+      try {
+        const codes = await catalogService.getAllCodes();
+        setAvailableCodes(codes);
+      } catch (e) {
+        console.error("Failed to load catalog codes:", e);
+      }
+    };
+    void loadCodes();
   }, []);
 
   useEffect(() => {
@@ -121,6 +135,7 @@ export function AdminEditor() {
         category: galleryForm.category,
         is_featured: galleryForm.isFeatured,
         sort_order: 0,
+        salon_name: galleryForm.salon_name,
       };
 
       if (galleryEditingId) {
@@ -131,12 +146,13 @@ export function AdminEditor() {
         setGalleryFeedback("Nouvelle photo ajoutée avec succès.");
       }
 
-      setGalleryForm({ title: "", description: "", imageUrl: "", category: "coiffure", isFeatured: false });
+      setGalleryForm({ title: "", description: "", imageUrl: "", category: "coiffure", isFeatured: false, salon_name: SALONS[0]?.name ?? "Parfait Design" });
       setGalleryFile(null);
       setGalleryEditingId(null);
       await loadData();
     } catch (error) {
-      setGalleryFeedback(error instanceof Error ? error.message : "Erreur inconnue");
+      const msg = error instanceof Error ? error.message : "Erreur inconnue";
+      setGalleryFeedback("Erreur lors de l'enregistrement. Veuillez réessayer.");
     } finally {
       setGalleryLoading(false);
     }
@@ -150,6 +166,7 @@ export function AdminEditor() {
       imageUrl: item.image_url,
       category: item.category,
       isFeatured: item.is_featured,
+      salon_name: item.salon_name || (SALONS[0]?.name ?? "Parfait Design"),
     });
     setGalleryFile(null);
     setGalleryFeedback("Modifiez les champs puis validez.");
@@ -190,10 +207,13 @@ export function AdminEditor() {
         description: catalogForm.description || null,
         code: (catalogForm as any).code?.trim() || null,
         price: Number(catalogForm.price) || 0,
+        original_price: (catalogForm as any).originalPrice ? Number((catalogForm as any).originalPrice) : null,
         image_url: imageUrl || null,
+        gallery_images: [],
         category,
         is_available: catalogForm.isAvailable,
         sort_order: 0,
+        salon_name: catalogForm.salon_name,
       };
 
       if (catalogEditingId) {
@@ -204,12 +224,13 @@ export function AdminEditor() {
         setCatalogFeedback("Nouvel élément ajouté au catalogue.");
       }
 
-      setCatalogForm({ title: "", description: "", price: "", imageUrl: "", category: "", code: "", isAvailable: true });
+      setCatalogForm({ title: "", description: "", price: "", originalPrice: "", imageUrl: "", category: "", code: "", isAvailable: true, salon_name: SALONS[0]?.name ?? "Parfait Design" });
       setCatalogFile(null);
+      setCatalogPreviewUrl(null);
       setCatalogEditingId(null);
       await loadData();
     } catch (error) {
-      setCatalogFeedback(error instanceof Error ? error.message : "Erreur inconnue");
+      setGalleryFeedback("Erreur lors de l'enregistrement. Veuillez réessayer.");
     } finally {
       setCatalogLoading(false);
     }
@@ -221,12 +242,15 @@ export function AdminEditor() {
       title: item.title,
       description: item.description || "",
       price: String(item.price),
+      originalPrice: String((item as any).original_price || ""),
       imageUrl: item.image_url || "",
       category: item.category,
       code: (item as any).code || "",
       isAvailable: item.is_available,
+      salon_name: item.salon_name || (SALONS[0]?.name ?? "Parfait Design"),
     });
     setCatalogFile(null);
+    setCatalogPreviewUrl(item.image_url || null);
     setCatalogFeedback("Modifiez les champs puis validez.");
   };
 
@@ -250,11 +274,14 @@ export function AdminEditor() {
       const payload = {
         title: serviceForm.title,
         description: serviceForm.description || null,
+        code: (serviceForm as any).code?.trim() || null,
         price: Number(serviceForm.price) || 0,
         duration_min: Number(serviceForm.durationMin) || 0,
         category: serviceForm.category,
         image_url: imageUrl || null,
+        gallery_images: [],
         active: serviceForm.active,
+        salon_name: serviceForm.salon_name,
       };
 
       if (serviceEditingId) {
@@ -265,12 +292,13 @@ export function AdminEditor() {
         setServiceFeedback("Nouveau service ajouté.");
       }
 
-      setServiceForm({ title: "", description: "", price: "", durationMin: "", category: "", imageUrl: "", active: true });
+      setServiceForm({ title: "", description: "", price: "", durationMin: "", category: "", imageUrl: "", active: true, salon_name: SALONS[0]?.name ?? "Parfait Design" });
       setServiceFile(null);
+      setServicePreviewUrl(null);
       setServiceEditingId(null);
       await loadData();
     } catch (error) {
-      setServiceFeedback(error instanceof Error ? error.message : "Erreur inconnue");
+      setServiceFeedback("Erreur lors de l'enregistrement. Veuillez réessayer.");
     } finally {
       setServiceLoading(false);
     }
@@ -286,8 +314,10 @@ export function AdminEditor() {
       category: item.category,
       imageUrl: item.image_url || "",
       active: item.active,
+      salon_name: item.salon_name || (SALONS[0]?.name ?? "Parfait Design"),
     });
     setServiceFile(null);
+    setServicePreviewUrl(item.image_url || null);
     setServiceFeedback("Modifiez les champs puis validez.");
   };
 
@@ -329,7 +359,7 @@ export function AdminEditor() {
       setTeamEditingId(null);
       await loadData();
     } catch (error) {
-      setTeamFeedback(error instanceof Error ? error.message : "Erreur inconnue");
+      setTeamFeedback("Erreur lors de l'enregistrement. Veuillez réessayer.");
     } finally {
       setTeamLoading(false);
     }
@@ -382,6 +412,11 @@ export function AdminEditor() {
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
+          <select className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={galleryForm.salon_name} onChange={(event) => setGalleryForm({ ...galleryForm, salon_name: event.target.value })}>
+            {SALONS.map((salon) => (
+              <option key={salon.id} value={salon.name}>{salon.name}</option>
+            ))}
+          </select>
           <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={galleryForm.imageUrl} onChange={(event) => setGalleryForm({ ...galleryForm, imageUrl: event.target.value })} placeholder="Lien externe de l'image (https://...)" />
           <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" type="file" accept="image/*" onChange={(event) => setGalleryFile(event.target.files?.[0] ?? null)} />
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -418,16 +453,29 @@ export function AdminEditor() {
         <form className="mt-4 space-y-3" onSubmit={handleCatalogSubmit}>
           <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={catalogForm.title} onChange={(event) => setCatalogForm({ ...catalogForm, title: event.target.value })} placeholder="Nom du produit" />
           <textarea className="min-h-24 w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={catalogForm.description} onChange={(event) => setCatalogForm({ ...catalogForm, description: event.target.value })} placeholder="Description" />
-          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={catalogForm.price} onChange={(event) => setCatalogForm({ ...catalogForm, price: event.target.value })} placeholder="Prix" />
           <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={catalogForm.category} onChange={(event) => setCatalogForm({ ...catalogForm, category: event.target.value })} placeholder="Catégorie" />
+          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={catalogForm.price} onChange={(event) => setCatalogForm({ ...catalogForm, price: event.target.value })} placeholder="Prix (FCFA)" />
+          {(catalogForm as any).category === "Promo" && (
+            <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={(catalogForm as any).originalPrice} onChange={(event) => setCatalogForm({ ...catalogForm, originalPrice: event.target.value } as any)} placeholder="Prix d'origine (FCFA)" />
+          )}
+          <select className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={catalogForm.salon_name} onChange={(event) => setCatalogForm({ ...catalogForm, salon_name: event.target.value })}>
+            {SALONS.map((salon) => (
+              <option key={salon.id} value={salon.name}>{salon.name}</option>
+            ))}
+          </select>
           <select className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={(catalogForm as any).code} onChange={(event) => setCatalogForm({ ...catalogForm, code: event.target.value })}>
             <option value="">Utiliser un code existant (optionnel)</option>
             {availableCodes.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={catalogForm.imageUrl} onChange={(event) => setCatalogForm({ ...catalogForm, imageUrl: event.target.value })} placeholder="Lien externe de l'image" />
-          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" type="file" accept="image/*" onChange={(event) => setCatalogFile(event.target.files?.[0] ?? null)} />
+          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={catalogForm.imageUrl} onChange={(event) => { setCatalogForm({ ...catalogForm, imageUrl: event.target.value }); setCatalogPreviewUrl(event.target.value.trim() || null); }} placeholder="Lien externe de l'image" />
+          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0] ?? null; setCatalogFile(file); if (file) setCatalogPreviewUrl(URL.createObjectURL(file)); }} />
+          {catalogPreviewUrl && (
+            <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+              <img src={catalogPreviewUrl} alt="Aperçu" className="aspect-square w-full object-cover" />
+            </div>
+          )}
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input type="checkbox" checked={catalogForm.isAvailable} onChange={(event) => setCatalogForm({ ...catalogForm, isAvailable: event.target.checked })} />
             Disponible
@@ -464,8 +512,18 @@ export function AdminEditor() {
           <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={serviceForm.price} onChange={(event) => setServiceForm({ ...serviceForm, price: event.target.value })} placeholder="Prix" />
           <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={serviceForm.durationMin} onChange={(event) => setServiceForm({ ...serviceForm, durationMin: event.target.value })} placeholder="Durée en minutes" />
           <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={serviceForm.category} onChange={(event) => setServiceForm({ ...serviceForm, category: event.target.value })} placeholder="Catégorie" />
-          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={serviceForm.imageUrl} onChange={(event) => setServiceForm({ ...serviceForm, imageUrl: event.target.value })} placeholder="Lien externe de l'image" />
-          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" type="file" accept="image/*" onChange={(event) => setServiceFile(event.target.files?.[0] ?? null)} />
+          <select className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={serviceForm.salon_name} onChange={(event) => setServiceForm({ ...serviceForm, salon_name: event.target.value })}>
+            {SALONS.map((salon) => (
+              <option key={salon.id} value={salon.name}>{salon.name}</option>
+            ))}
+          </select>
+          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" value={serviceForm.imageUrl} onChange={(event) => { setServiceForm({ ...serviceForm, imageUrl: event.target.value }); setServicePreviewUrl(event.target.value.trim() || null); }} placeholder="Lien externe de l'image" />
+          <input className="w-full rounded-xl border border-black/10 bg-white/90 px-3 py-2" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0] ?? null; setServiceFile(file); if (file) setServicePreviewUrl(URL.createObjectURL(file)); }} />
+          {servicePreviewUrl && (
+            <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+              <img src={servicePreviewUrl} alt="Aperçu" className="aspect-square w-full object-cover" />
+            </div>
+          )}
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input type="checkbox" checked={serviceForm.active} onChange={(event) => setServiceForm({ ...serviceForm, active: event.target.checked })} />
             Actif

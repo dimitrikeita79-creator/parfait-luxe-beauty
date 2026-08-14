@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { GlassButton } from "@/components/GlassButton";
 import { ImprovedAdminEditor } from "@/components/ImprovedAdminEditor";
-import { AdminNotifications } from "@/components/AdminNotifications";
 import type { AppUser } from "@/backend/models";
 import { authService } from "@/backend/services";
 
@@ -91,11 +90,7 @@ function AdminPage() {
 
   if (checking) {
     return (
-      <AppShell
-        title="Vérification de l'accès"
-        subtitle="Connexion sécurisée en cours…"
-      >
-        <motion.div
+      <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="mt-6 flex flex-col items-center justify-center py-16"
@@ -106,7 +101,6 @@ function AdminPage() {
             Vérification du statut administrateur…
           </p>
         </motion.div>
-      </AppShell>
     );
   }
 
@@ -115,12 +109,7 @@ function AdminPage() {
   }
 
   return (
-    <AppShell
-      title="Administration"
-      subtitle="Espace réservé aux comptes administrateurs"
-      headerRight={<AdminNotifications isAdmin={true} />}
-    >
-      <motion.div
+    <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
@@ -191,6 +180,5 @@ function AdminPage() {
 
         </div>
       </motion.div>
-    </AppShell>
   );
 }

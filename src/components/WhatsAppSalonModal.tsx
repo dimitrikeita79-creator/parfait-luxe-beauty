@@ -10,10 +10,11 @@ interface WhatsAppSalonModalProps {
   itemName: string;
   itemImage?: string;
   itemPrice?: string;
-  itemLink?: string; // Lien vers l'élément dans l'application
-  itemCategory?: string; // Catégorie de l'élément
+  itemLink?: string;
+  itemCategory?: string;
   message?: string;
-  userName?: string; // Nom de l'utilisateur connecté
+  userName?: string;
+  initialSalonId?: SalonId;
 }
 
 export function WhatsAppSalonModal({
@@ -26,8 +27,9 @@ export function WhatsAppSalonModal({
   itemCategory,
   userName,
   message = "",
+  initialSalonId,
 }: WhatsAppSalonModalProps) {
-  const [selectedSalon, setSelectedSalon] = useState<SalonId>("parfait");
+  const [selectedSalon, setSelectedSalon] = useState<SalonId>(initialSalonId ?? "parfait");
   
   // Determine if salon selection should be shown based on category
   // Hide salon selection for équipement and produits (Beauté Essentielle)
@@ -44,10 +46,8 @@ export function WhatsAppSalonModal({
     const salon = SALONS.find(s => s.id === selectedSalon);
     if (!salon) return;
 
-    // Build enhanced message with item details and user name
     let enhancedMessage = message || `Bonjour ${salon.name}, je souhaite commander : ${itemName}`;
     
-    // Add user name if provided
     if (userName) {
       enhancedMessage = `Bonjour ${salon.name}, je suis ${userName} et je souhaite commander : ${itemName}`;
     }
@@ -56,11 +56,9 @@ export function WhatsAppSalonModal({
       enhancedMessage += ` — ${itemPrice}`;
     }
     
-    // Use application link instead of direct image link
     if (itemLink) {
       enhancedMessage += `\n\n🔗 Voir l'article : ${itemLink}`;
     } else if (itemImage) {
-      // Fallback to image link if no app link available
       enhancedMessage += `\n\n📷 Image: ${itemImage}`;
     }
 
@@ -91,7 +89,7 @@ export function WhatsAppSalonModal({
             <div className="w-full max-w-md rounded-3xl border border-stone-200 bg-white/95 p-6 shadow-2xl backdrop-blur-xl">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-foreground">
-                  {showSalonSelection ? "Choisir l'établissement" : "Confirmer la commande"}
+                  Choisir l'établissement
                 </h3>
                 <button
                   type="button"
@@ -117,7 +115,7 @@ export function WhatsAppSalonModal({
                 {itemPrice && <span className="font-semibold text-foreground"> — {itemPrice}</span>}
               </p>
 
-              {showSalonSelection ? (
+              {showSalonSelection && (
                 <div className="space-y-2 mb-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Sélectionnez un salon
@@ -141,12 +139,6 @@ export function WhatsAppSalonModal({
                       )}
                     </button>
                   ))}
-                </div>
-              ) : (
-                <div className="mb-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-semibold">Établissement sélectionné :</span> {SALONS.find(s => s.id === selectedSalon)?.name}
-                  </p>
                 </div>
               )}
 

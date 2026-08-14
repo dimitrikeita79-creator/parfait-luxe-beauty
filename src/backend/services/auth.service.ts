@@ -131,6 +131,9 @@ export class AuthService {
         throw new ApiException("Utilisateur non connecté");
       }
 
+      const currentProfile = await this.getUserProfile(user.id);
+      const currentRole = currentProfile?.role ?? "user";
+
       const resolvedEmail = updates.email ?? user.email;
       if (!resolvedEmail) {
         throw new ApiException("Impossible de récupérer l'email de l'utilisateur.");
@@ -142,8 +145,16 @@ export class AuthService {
       };
       if (updates.full_name !== undefined) payload.full_name = updates.full_name;
       if (updates.avatar_url !== undefined) payload.avatar_url = updates.avatar_url;
-      if (updates.role !== undefined) payload.role = updates.role;
       if (updates.theme !== undefined) payload.theme = updates.theme;
+      if (updates.role !== undefined) {
+        const isCurrentAdmin = currentRole === "admin";
+        const isHardcodedAdmin = isAdminEmail(resolvedEmail);
+        const isAuthAdmin = (user.user_metadata?.role ?? user.app_metadata?.role) === "admin";
+        const canChangeRole = isCurrentAdmin && (isHardcodedAdmin || isAuthAdmin);
+        if (canChangeRole) {
+          payload.role = updates.role;
+        }
+      }
 
       const { error } = await supabase.from(TABLES.PROFILES).upsert(payload, { onConflict: "id" });
       if (error) throw error;

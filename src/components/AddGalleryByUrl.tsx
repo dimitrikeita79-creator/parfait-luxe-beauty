@@ -10,7 +10,7 @@ export default function AddGalleryByUrl({ onAdded }: { onAdded?: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   // Valeurs par défaut (peuvent être des menus déroulants)
-  const [category, setCategory] = useState<GalleryItem['category']>('Coiffure');
+  const [category, setCategory] = useState<GalleryItem['category']>('coiffure');
   const [isFeatured, setIsFeatured] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,10 +38,11 @@ export default function AddGalleryByUrl({ onAdded }: { onAdded?: () => void }) {
       await galleryService.create({
         title,
         description: description || null,
-        image_url: imageUrl, // <-- L'URL est stockée ici
+        image_url: imageUrl,
         category,
         is_featured: isFeatured,
         sort_order: 0,
+        salon_name: "Parfait Design",
       });
 
       alert('Photo ajoutée avec succès !');
@@ -90,12 +91,12 @@ export default function AddGalleryByUrl({ onAdded }: { onAdded?: () => void }) {
       />
 
       {/* Exemple de sélection de catégorie */}
-      <select value={category} onChange={(e) => setCategory(e.target.value)}>
-        <option value="Coiffure">Coiffure</option>
-        <option value="équipement">équipement</option>
+      <select value={category} onChange={(e) => setCategory(e.target.value as GalleryItem['category'])}>
+        <option value="coiffure">Coiffure</option>
+        <option value="mèches">Mèches</option>
+        <option value="équipement">Équipement</option>
         <option value="Produits">Produits</option>
         <option value="Promo">Promo</option>
-        <option value="autres">autres</option>
       </select>
 
       <label>

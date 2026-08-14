@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SALONS, waLinkFor, type SalonId } from "@/lib/salon-data";
+import { SALONS, waLinkNative, type SalonId } from "@/lib/salon-data";
 import { GlassButton } from "@/components/GlassButton";
 import { ChevronDown, Check } from "lucide-react";
 
@@ -43,7 +43,7 @@ export function WhatsAppSelector({
       enhancedMessage = `${enhancedMessage}\n📷 Image: ${itemImage}`;
     }
     
-    const link = waLinkFor(selectedSalon, enhancedMessage);
+    const link = waLinkNative(selectedSalon, enhancedMessage);
     window.open(link, "_blank", "noopener,noreferrer");
   };
 

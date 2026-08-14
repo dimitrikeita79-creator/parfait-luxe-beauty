@@ -99,7 +99,7 @@ function CatalogLayout() {
   }, [items]);
 
   return (
-    <AppShell title="Catalogue" subtitle="Explorez nos collections luxe">
+    <>
       {/* Message d'erreur */}
       {error && (
         <motion.div
@@ -189,6 +189,6 @@ function CatalogLayout() {
           })}
         </motion.div>
       )}
-    </AppShell>
+    </>
   );
 }

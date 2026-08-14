@@ -166,13 +166,13 @@ export function AdminNotifications({ isAdmin }: AdminNotificationsProps) {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <p className="text-sm text-foreground">{notification.message}</p>
-                          {notification.rating && (
+                          {notification.rating != null && (
                             <div className="mt-1 flex items-center gap-1">
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <span
                                   key={i}
                                   className={`text-xs ${
-                                    i < notification.rating ? "text-yellow-500" : "text-gray-300"
+                                    i < (notification.rating as number) ? "text-yellow-500" : "text-gray-300"
                                   }`}
                                 >
                                   ★

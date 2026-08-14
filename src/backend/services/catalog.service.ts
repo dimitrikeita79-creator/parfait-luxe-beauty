@@ -1,6 +1,7 @@
-import { supabase, TABLES } from "../client";
-import { ApiException } from "../exceptions";
-import type { CatalogItem } from "../models";
+import { supabase, TABLES } from '../client';
+import { ApiException } from '../exceptions';
+import type { CatalogItem } from '../models';
+import { notificationService } from './notification.service';
 
 export class CatalogService {
   async getAll(): Promise<CatalogItem[]> {
@@ -33,7 +34,6 @@ export class CatalogService {
   async getByCategory(category: string): Promise<CatalogItem[]> {
     try {
       const normalizedCategory = category.trim().toLowerCase();
-      // Comprehensive category mapping — covers all aliases and casings
       const categoryMap: Record<string, string> = {
         coiffure: "Coiffure",
         meches: "Mèches",
@@ -67,6 +67,7 @@ export class CatalogService {
     try {
       const { data, error } = await supabase.from(TABLES.CATALOG).insert(item).select().single();
       if (error) throw error;
+      void notificationService.createForItem('catalog', item.title, 'created');
       return data as CatalogItem;
     } catch (error) {
       throw ApiException.fromError(error);
@@ -82,7 +83,23 @@ export class CatalogService {
         .select()
         .single();
       if (error) throw error;
+      void notificationService.createForItem('catalog', data.title, 'updated');
       return data as CatalogItem;
+    } catch (error) {
+      throw ApiException.fromError(error);
+    }
+  }
+
+  async getAllCodes(): Promise<string[]> {
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.CATALOG)
+        .select('code')
+        .not('code', 'is', null)
+        .neq('code', '');
+      if (error) throw error;
+      const codes = [...new Set((data ?? []).map((row) => row.code).filter((code): code is string => typeof code === 'string' && code.trim().length > 0))];
+      return codes.sort();
     } catch (error) {
       throw ApiException.fromError(error);
     }
@@ -90,8 +107,12 @@ export class CatalogService {
 
   async delete(id: string): Promise<void> {
     try {
+      const { data } = await supabase.from(TABLES.CATALOG).select('title').eq('id', id).single();
       const { error } = await supabase.from(TABLES.CATALOG).delete().eq("id", id);
       if (error) throw error;
+      if (data) {
+        void notificationService.createForItem('catalog', data.title, 'deleted');
+      }
     } catch (error) {
       throw ApiException.fromError(error);
     }

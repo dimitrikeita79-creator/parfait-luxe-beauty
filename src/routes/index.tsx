@@ -24,7 +24,7 @@ import { Frame } from "@/components/Frame";
 import { CoverCarousel } from "@/components/CoverCarousel";
 import { WhatsAppSelector } from "@/components/WhatsAppSelector";
 import { useToast } from "@/hooks/useToast";
-import { galleryService, catalogService, servicesService, reviewsService, authService } from "@/backend/services";
+import { galleryService, catalogService, servicesService, reviewsService, authService, notificationService } from "@/backend/services";
 import { TESTIMONIALS, waLink, LOCATION, SALONS, type SalonId } from "@/lib/salon-data";
 import type { ServiceItem, CatalogItem, GalleryItem, Review } from "@/backend/models";
 import { Trash2, Eye } from "lucide-react";
@@ -56,9 +56,48 @@ const norm = (s: string) =>
     .replace(/[\u0300-\u036f]/g, "");
 
 type SearchHit =
-  | { type: "item"; id: string; name: string; category: string }
+  | { type: "item"; id: string; name: string; category: string; code?: string }
   | { type: "service"; id: string; name: string }
   | { type: "category"; name: string };
+
+const formatFCFA = (price: number) => {
+  return new Intl.NumberFormat("fr-BF", {
+    style: "currency",
+    currency: "XOF",
+    minimumFractionDigits: 0,
+  }).format(price);
+};
+
+const isPromoCategory = (category: string) => /promo|promotion|offres/i.test(category);
+
+const HomeCard = ({ image, title, category, price, originalPrice, to, params, search, children }: { image?: string; title: string; category?: string; price?: number; originalPrice?: number | null; to: string; params?: Record<string, string>; search?: Record<string, any>; children?: React.ReactNode }) => {
+  const promo = isPromoCategory(category || "");
+  return (
+    <Link to={to} params={params} search={search} preload="intent" className="block">
+      <div className="relative overflow-hidden rounded-[24px] aspect-[4/5] w-full bg-white shadow-sm">
+        {image ? (
+          <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover" style={{ objectFit: "cover" }} loading="lazy" />
+        ) : (
+          <div className="absolute inset-0 bg-stone-100" />
+        )}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-2.5">
+          <p className="font-display text-sm font-semibold text-white leading-tight line-clamp-2">{title}</p>
+          {promo && originalPrice && originalPrice > (price || 0) && (
+            <div className="mt-0.5 flex flex-col gap-0.5">
+              <span className="text-[10px] font-semibold text-red-500 line-through">{formatFCFA(originalPrice)}</span>
+              <span className="text-xs font-bold text-gold">{formatFCFA(price || 0)}</span>
+            </div>
+          )}
+          {!promo && price && price > 0 && (
+            <p className="mt-0.5 text-xs font-bold text-gold">{formatFCFA(price)}</p>
+          )}
+          {children}
+        </div>
+      </div>
+    </Link>
+  );
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -115,6 +154,13 @@ function ReviewForm({ onReviewSubmitted }: { onReviewSubmitted?: () => void }) {
         comment: text.trim(),
         rating: Math.min(5, Math.max(1, rating)),
         user_id: user.id,
+      });
+      void notificationService.create({
+        user_id: user.id,
+        title: 'Nouvel avis',
+        message: `${authorName.trim()} a laissé un avis de ${Math.min(5, Math.max(1, rating))} étoiles.`,
+        type: 'info',
+        read: false,
       });
       setText("");
       setRating(5);
@@ -196,6 +242,9 @@ function Index() {
   const blurTimer = useRef<number | null>(null);
   const reviewsRef = useRef<HTMLDivElement | null>(null);
   const searchDebounce = useRef<number | null>(null);
+  const searchOpen = useRef(false);
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  const reviewIndexRef = useRef(0);
 
   useEffect(() => {
     const loadData = async () => {
@@ -231,16 +280,24 @@ function Index() {
     const container = reviewsRef.current;
     if (!container || reviewSlides.length === 0) return;
 
-    let currentIndex = 0;
+    reviewIndexRef.current = 0;
     container.scrollTo({ left: 0, behavior: "smooth" });
+
+    const computeStep = () => {
+      const item = container.querySelector('[data-review-slide]');
+      if (item) {
+        return (item as HTMLElement).offsetWidth + 8;
+      }
+      return Math.max(container.clientWidth * 0.7, 1);
+    };
 
     const interval = window.setInterval(() => {
       if (!container) return;
-      const slideWidth = container.clientWidth;
-      currentIndex = (currentIndex + 1) % reviewSlides.length;
+      const step = computeStep();
+      reviewIndexRef.current = (reviewIndexRef.current + 1) % reviewSlides.length;
       const target = Math.min(
-        currentIndex * (slideWidth * 0.7),
-        container.scrollWidth - slideWidth,
+        reviewIndexRef.current * step,
+        container.scrollWidth - container.clientWidth,
       );
       container.scrollTo({ left: target, behavior: "smooth" });
     }, 4500);
@@ -335,6 +392,7 @@ function Index() {
         id: item.id,
         name: item.title,
         category: item.category,
+        code: item.code,
       });
     }
     for (const s of services) {
@@ -356,25 +414,30 @@ function Index() {
     const scored: { hit: SearchHit; score: number }[] = [];
     for (const h of searchIndex) {
       const n = norm(h.name);
+      const code = (h as { code?: string }).code ? norm((h as { code?: string }).code!) : "";
       let score = 0;
-      if (n === q) score = 100;
-      else if (n.startsWith(q)) score = 60;
-      else if (n.includes(q)) score = 30;
+      const isCodeSearch = /^[a-z0-9]+$/i.test(q) && q.length <= 10;
+      if (isCodeSearch && code && code === q) score = 200;
+      else if (n === q || code === q) score = 100;
+      else if (n.startsWith(q) || (code && code.startsWith(q))) score = 60;
+      else if (n.includes(q) || (code && code.includes(q))) score = 30;
       else if (n.split(/\s+/).some((w) => w.startsWith(q))) score = 20;
+      else if (code && code.split(/\s+/).some((w) => w.startsWith(q))) score = 20;
       if (score > 0)
         scored.push({
           hit: h,
-          score: score + (h.type === "item" ? 5 : 0),
+          score: score + (h.type === "item" ? 5 : 0) + (isCodeSearch && h.type === "item" ? 20 : 0),
         });
     }
     return scored
       .sort((a, b) => b.score - a.score)
-      .slice(0, 8)
+      .slice(0, 10)
       .map((s) => s.hit);
   }, [query, searchIndex]);
 
   const goToHit = (h: SearchHit) => {
     setFocused(false);
+    searchOpen.current = false;
     setQuery("");
     if (h.type === "item") {
       navigate({
@@ -472,7 +535,7 @@ function Index() {
   const coversWithImages = defaultCovers;
 
   return (
-    <AppShell>
+    <>
       {/* Message d'erreur global */}
       <AnimatePresence>
         {error && (
@@ -488,23 +551,17 @@ function Index() {
       </AnimatePresence>
 
       {/* Cover carousel */}
-      {!loading && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mt-2"
-        >
-          <CoverCarousel covers={coversWithImages} />
-        </motion.section>
-      )}
+      <section className="mt-6">
+        <CoverCarousel covers={coversWithImages} />
+      </section>
 
       {/* Hero text */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
+        transition={{ duration: 0.35, ease: "easeOut", delay: 0.05 }}
         className="mt-3"
+        style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
       >
         {notice && (
           <motion.div
@@ -516,55 +573,75 @@ function Index() {
             {notice}
           </motion.div>
         )}
-        <div className="rounded-[24px] bg-gradient-to-br from-[var(--gold-light)] via-white to-[var(--gold-soft)]/30 p-5 border border-[var(--gold-soft)]/40 shadow-lg shadow-[var(--gold)]/5">
-          <h1 className="font-display text-3xl leading-[1.1] font-semibold">
-            Révélez votre <span className="text-gold">élégance</span> naturelle
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Perruques • Mèches • Coiffures • Mariage • Soins capillaires
-          </p>
-          <div className="mt-4 flex gap-2">
-            <GlassButton as={Link} to="/contact" variant="gold" size="md" full className="flex-1 shadow-lg shadow-[var(--gold)]/20">
-              <Calendar className="h-4 w-4" />
-              Réserver
-            </GlassButton>
-            <GlassButton as={Link} to="/catalog" variant="light" size="md" full className="flex-1 border-[var(--gold-soft)]/50">
-              <BookOpen className="h-4 w-4" />
-              Catalogue
-            </GlassButton>
+        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[var(--gold-light)] via-white to-[var(--gold-soft)]/20 p-6 md:p-8 border border-[var(--gold-soft)]/40 shadow-xl shadow-[var(--gold)]/10">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_oklch(1_0_0/_0.9),_transparent_55%),radial-gradient(ellipse_at_bottom_left,_oklch(0.92_0.06_85/_0.5),_transparent_55%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,_oklch(1_0_0/_0)_0%,_oklch(1_0_0/_0.35)_100%)]" />
+          <div className="relative">
+            <h1 className="font-display text-3xl leading-[1.15] font-semibold md:text-4xl">
+              Révélez votre <span className="rainbow-text">élégance</span> naturelle
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground md:text-base">
+              Perruques • Mèches • Coiffures • Mariage • Soins capillaires
+            </p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <GlassButton as={Link} to="/contact" variant="gold" size="md" full className="border-2 border-black shadow-lg shadow-[var(--gold)]/20 sm:flex-1" preload="intent">
+                <Calendar className="h-4 w-4" />
+                Réserver
+              </GlassButton>
+              <GlassButton as={Link} to="/catalog" variant="light" size="md" full className="border-2 border-black sm:flex-1" preload="intent">
+                <BookOpen className="h-4 w-4" />
+                Catalogue
+              </GlassButton>
+            </div>
           </div>
         </div>
       </motion.section>
 
       {/* Search */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.15 }}
+        transition={{ duration: 0.3, ease: "easeOut", delay: 0.1 }}
         className="relative mt-5"
       >
         <form
           onSubmit={handleSearch}
-          className="flex items-center gap-2 rounded-full border border-[var(--gold-soft)]/30 bg-white/80 pl-4 pr-1.5 py-1.5 transition focus-within:ring-2 focus-within:ring-[var(--crimson)]/40 focus-within:border-[var(--crimson)]/30 shadow-sm"
+          className="flex items-center gap-2 rounded-full border border-[var(--gold-soft)]/30 bg-white pl-4 pr-1.5 py-1.5 transition focus-within:ring-2 focus-within:ring-[var(--gold-soft)] focus-within:border-[var(--gold-soft)] shadow-sm"
+          style={{ backfaceVisibility: "hidden" }}
+          ref={searchContainerRef}
         >
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setFocused(true)}
+            onFocus={() => {
+              setFocused(true);
+              searchOpen.current = true;
+            }}
             onBlur={() => {
-              blurTimer.current = window.setTimeout(() => setFocused(false), 150);
+              if (searchOpen.current) {
+                setTimeout(() => {
+                  searchOpen.current = false;
+                  setFocused(false);
+                }, 150);
+              }
             }}
             onKeyDown={(e) => {
-              if (e.key === "Escape") (e.target as HTMLInputElement).blur();
+              if (e.key === "Escape") {
+                (e.target as HTMLInputElement).blur();
+                setFocused(false);
+                searchOpen.current = false;
+              }
             }}
             placeholder="Rechercher : huile argan, perruque, mariage…"
             className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-muted-foreground"
             aria-label="Recherche"
+            style={{ touchAction: "manipulation" }}
           />
           <button
             type="submit"
             className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-red-700 to-red-800 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-red-600/30 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
+            style={{ touchAction: "manipulation" }}
           >
             OK
           </button>
@@ -575,11 +652,14 @@ function Index() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="absolute left-0 right-0 top-full z-40 mt-2 max-h-72 overflow-y-auto rounded-3xl border border-[var(--gold-soft)]/30 bg-white/90 p-1.5 shadow-xl backdrop-blur-md"
+              className="absolute left-0 right-0 top-full z-40 mt-2 max-h-72 overflow-y-auto rounded-3xl border border-[var(--gold-soft)]/30 bg-white p-1.5 shadow-xl"
               onMouseDown={(e) => {
                 e.preventDefault();
-                if (blurTimer.current) window.clearTimeout(blurTimer.current);
               }}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              style={{ touchAction: "manipulation" }}
             >
               {suggestions.length === 0 ? (
                 <p className="px-3 py-3 text-xs text-muted-foreground">
@@ -590,6 +670,10 @@ function Index() {
                   <GlassButton
                     key={`${h.type}-${"id" in h ? h.id : h.name}`}
                     type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      goToHit(h);
+                    }}
                     onClick={() => goToHit(h)}
                     variant="light"
                     size="sm"
@@ -601,18 +685,20 @@ function Index() {
                       tone={h.type === "item" ? "gold" : h.type === "service" ? "pink" : "blue"}
                       size="sm"
                     />
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-xs font-semibold leading-tight truncate">
-                        {h.name}
-                      </span>
-                      <span className="block text-[10px] text-muted-foreground">
-                        {h.type === "item"
-                          ? h.category
-                          : h.type === "service"
-                            ? "Service"
-                            : "Catégorie"}
-                      </span>
-                    </span>
+                     <span className="flex-1 min-w-0">
+                       <span className="block text-xs font-semibold leading-tight truncate">
+                         {h.name}
+                       </span>
+                        <span className="block text-[10px] text-muted-foreground">
+                          {h.type === "item"
+                            ? (h as { code?: string }).code
+                              ? `${h.category} · Code: ${(h as { code?: string }).code}`
+                              : h.category
+                            : h.type === "service"
+                             ? "Service"
+                             : "Catégorie"}
+                       </span>
+                     </span>
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                   </GlassButton>
                 ))
@@ -624,10 +710,11 @@ function Index() {
 
       {/* Quick actions */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-        className="mt-5 grid grid-cols-4 gap-1.5"
+        transition={{ duration: 0.3, ease: "easeOut", delay: 0.15 }}
+        className="mt-5 grid grid-cols-4 gap-2"
+        style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
       >
         {(
           [
@@ -637,23 +724,20 @@ function Index() {
               tone: "gold" as const,
               to: "/contact" as const,
               href: undefined,
-              wa: false,
             },
             {
               label: "WhatsApp",
               icon: null,
               tone: "green" as const,
-              to: undefined,
-              href: waLink(),
-              wa: true,
+              to: "/contact" as const,
+              href: undefined,
             },
             {
               label: "Itinéraire",
               icon: MapPin,
               tone: "rose" as const,
-              to: undefined,
-              href: LOCATION.mapsLink,
-              wa: false,
+              to: "/contact" as const,
+              href: undefined,
             },
             {
               label: "Catalogue",
@@ -661,49 +745,44 @@ function Index() {
               tone: "blue" as const,
               to: "/catalog" as const,
               href: undefined,
-              wa: false,
             },
           ] as const
-        ).map(({ label, icon: Icon, tone, to, href, wa }) => {
+        ).map(({ label, icon: Icon, tone, to, href }) => {
           const inner = (
-            <div className="rounded-2xl border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[var(--gold)]/10 active:scale-95">
-              {wa ? (
-                <div className="flex flex-col items-center gap-1">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-white/90 shadow-md">
-                    <WhatsAppIcon className="h-5 w-5 text-green-600" />
-                  </div>
-                </div>
-              ) : Icon ? (
-                <div className="flex flex-col items-center gap-1">
-                  <div
-                    className="grid h-10 w-10 place-items-center rounded-full bg-white/90 shadow-md"
+            <div className="flex flex-col items-center gap-1.5 rounded-2xl border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[var(--gold)]/10 active:scale-95" style={{ touchAction: "manipulation" }}>
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md"
+                style={{
+                  boxShadow: `0 4px 12px -2px ${
+                    tone === "gold"
+                      ? "rgba(200, 160, 80, 0.3)"
+                      : tone === "blue"
+                        ? "rgba(24, 119, 242, 0.3)"
+                        : tone === "green"
+                          ? "rgba(37, 211, 102, 0.3)"
+                          : "rgba(254, 44, 85, 0.3)"
+                  }`,
+                  touchAction: "manipulation",
+                }}
+              >
+                {label === "WhatsApp" ? (
+                  <WhatsAppIcon className="h-5 w-5" style={{ color: "#25D366" }} />
+                ) : (
+                  <Icon
+                    className="h-5 w-5"
                     style={{
-                      boxShadow: `0 4px 12px -2px ${
-                        tone === "gold"
-                          ? "rgba(200, 160, 80, 0.3)"
-                          : tone === "blue"
-                            ? "rgba(24, 119, 242, 0.3)"
-                            : "rgba(254, 44, 85, 0.3)"
-                      }`,
+                      color: (tone as string) === "gold"
+                        ? "#c8a050"
+                        : (tone as string) === "blue"
+                          ? "#1877F2"
+                          : (tone as string) === "green"
+                            ? "#25D366"
+                            : "#FE2C55",
                     }}
-                  >
-                    <Icon
-                      className="h-5 w-5"
-                      style={{
-                        color:
-                          tone === "gold"
-                            ? "#c8a050"
-                            : tone === "blue"
-                              ? "#1877F2"
-                              : tone === "rose"
-                                ? "#FE2C55"
-                                : "#25D366",
-                      }}
-                    />
-                  </div>
-                </div>
-              ) : null}
-              <span className="text-[10px] font-medium text-center line-clamp-1 mt-1">{label}</span>
+                  />
+                )}
+              </div>
+              <span className="text-[10px] font-medium text-center line-clamp-1">{label}</span>
             </div>
           );
           return to ? (
@@ -732,37 +811,33 @@ function Index() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.25 }}
-            className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory"
+            transition={{ delay: 0.2, duration: 0.3 }}
+            className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory md:mx-0 md:px-0"
+            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
           >
             {popularServices.map((s, i) => {
               const Icon = getCategoryIcon(s.category);
               return (
                 <motion.div
                   key={s.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + i * 0.04 }}
+                  transition={{ delay: 0.25 + i * 0.03, duration: 0.3 }}
+                  style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
                 >
-                  <Link to="/services" preload="intent" className="snap-start block">
-                    <div className="w-44 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-3 shadow-sm hover:shadow-md hover:shadow-[var(--gold)]/10 transition-all duration-200">
-                      {s.image_url ? (
-                        <div className="mb-2 h-20 w-full overflow-hidden rounded-2xl ring-1 ring-black/5">
-                          <img src={s.image_url} alt={s.title} className="h-full w-full object-cover" loading="lazy" />
-                        </div>
-                      ) : (
-                        <IconBadge icon={Icon} tone="gold" size="md" />
-                      )}
-                      <p className="mt-2 font-display text-sm font-semibold leading-tight">
-                        {s.title}
-                      </p>
-                      {s.description && (
-                        <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">
-                          {s.description}
-                        </p>
-                      )}
+                  <div className="snap-start block">
+                    <div className="w-44 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm hover:shadow-md hover:shadow-[var(--gold)]/10 transition-all duration-200">
+                      <HomeCard
+                        image={s.image_url}
+                        title={s.title}
+                        category="service"
+                        price={s.price}
+                        to="/services"
+                        params={{}}
+                        search={{}}
+                      />
                     </div>
-                  </Link>
+                  </div>
                 </motion.div>
               );
             })}
@@ -780,43 +855,30 @@ function Index() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="grid grid-cols-2 gap-2"
+            transition={{ delay: 0.25, duration: 0.3 }}
+            className="grid grid-cols-2 gap-2 md:grid-cols-4"
+            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
           >
             {Array.from(categorizedCatalog.entries())
               .slice(0, 4)
               .map(([cat, items], i) => (
                 <motion.div
                   key={cat}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.35 + i * 0.05 }}
+                  transition={{ delay: 0.3 + i * 0.04, duration: 0.3 }}
+                  style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
                 >
-                  <Link
-                    to="/catalog/$category"
-                    params={{ category: makeCategorySlug(cat) }}
-                    search={{} as any}
-                    preload="intent"
-                    className="block"
-                  >
-                    <Frame
-                      variant="plain"
-                      rounded="rounded-[24px]"
-                      className="aspect-[5/4] w-full"
-                      image={items[0]?.image_url || categoryImages[cat.toLowerCase()]}
-                      alt={cat}
-                    >
-                      <div
-                        className="absolute left-1 bottom-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold backdrop-blur-md capitalize"
-                        style={{
-                          background: "oklch(1 0 0 / 0.85)",
-                          color: "var(--gold-deep)",
-                        }}
-                      >
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </div>
-                    </Frame>
-                  </Link>
+                   <div className="block">
+                     <HomeCard
+                       image={items[0]?.image_url || categoryImages[cat.toLowerCase()]}
+                       title={cat.charAt(0).toUpperCase() + cat.slice(1)}
+                       category={cat}
+                       to="/catalog/$category"
+                       params={{ category: makeCategorySlug(cat) }}
+                       search={{}}
+                     />
+                   </div>
                 </motion.div>
               ))}
           </motion.div>
@@ -832,38 +894,31 @@ function Index() {
                   </Link>
                 }
               />
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="grid grid-cols-3 gap-1.5"
-              >
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35, duration: 0.3 }}
+            className="grid grid-cols-3 gap-1.5 md:grid-cols-4 lg:grid-cols-6"
+            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
+          >
                 {works.map((g, i) => (
                   <motion.div
                     key={g.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
+                    initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.45 + i * 0.03 }}
+                    transition={{ delay: 0.4 + i * 0.02, duration: 0.25 }}
+                    style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
                   >
-                    <Link to="/gallery" preload="intent" className="block aspect-square">
-                      <Frame
-                        variant="plain"
-                        rounded="rounded-2xl"
-                        className="h-full w-full"
-                        image={g.image_url}
-                        alt={g.title}
-                      >
-                        <span
-                          className="absolute left-1 bottom-1 rounded-full px-1 py-0.5 text-[8px] font-semibold backdrop-blur-md capitalize"
-                          style={{
-                            background: "oklch(1 0 0 / 0.85)",
-                            color: "var(--gold-deep)",
-                          }}
-                        >
-                          {g.category}
-                        </span>
-                      </Frame>
-                    </Link>
+                     <div className="block aspect-square">
+                       <HomeCard
+                         image={g.image_url}
+                         title={g.title}
+                         category={g.category}
+                         to="/gallery"
+                         params={{}}
+                         search={{}}
+                       />
+                     </div>
                   </motion.div>
                 ))}
               </motion.div>
@@ -886,41 +941,36 @@ function Index() {
                   </Link>
                 }
               />
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.45 }}
-                className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory"
-              >
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.3 }}
+            className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory md:mx-0 md:px-0"
+            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
+          >
                 {popularWigs.map((p, i) => (
                   <motion.div
                     key={p.id}
-                    initial={{ opacity: 0, x: -20 }}
+                    initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + i * 0.03 }}
+                    transition={{ delay: 0.45 + i * 0.03, duration: 0.3 }}
                     className="snap-start"
+                    style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
                   >
-                    <Link
-                      to="/catalog/$category"
-                      params={{ category: makeCategorySlug("Perruques") }}
-                      search={{} as any}
-                      className="block"
-                    >
-                      <div className="w-36 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm">
-                        {p.image_url && (
-                          <Frame
-                            variant="plain"
-                            rounded="rounded-2xl"
-                            className="h-24 w-full"
-                            image={p.image_url}
-                            alt={p.title}
-                          />
-                        )}
-                        <p className="mt-1.5 text-[11px] font-semibold leading-tight line-clamp-2">
-                          {p.title}
-                        </p>
-                      </div>
-                    </Link>
+                     <div className="block">
+                       <div className="w-36 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm">
+                         <HomeCard
+                           image={p.image_url}
+                           title={p.title}
+                           category={p.category}
+                           price={p.price}
+                           originalPrice={(p as any).original_price}
+                           to="/catalog/$category"
+                           params={{ category: makeCategorySlug("Perruques") }}
+                           search={{ highlight: p.id }}
+                         />
+                       </div>
+                     </div>
                   </motion.div>
                 ))}
               </motion.div>
@@ -943,41 +993,36 @@ function Index() {
                   </Link>
                 }
               />
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory"
-              >
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.45, duration: 0.3 }}
+            className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory md:mx-0 md:px-0"
+            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
+          >
                 {popularBraids.map((p, i) => (
                   <motion.div
                     key={p.id}
-                    initial={{ opacity: 0, x: -20 }}
+                    initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.55 + i * 0.03 }}
+                    transition={{ delay: 0.5 + i * 0.03, duration: 0.3 }}
                     className="snap-start"
+                    style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
                   >
-                    <Link
-                      to="/catalog/$category"
-                      params={{ category: makeCategorySlug("Coiffure") }}
-                      search={{} as any}
-                      className="block"
-                    >
-                      <div className="w-36 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm">
-                        {p.image_url && (
-                          <Frame
-                            variant="plain"
-                            rounded="rounded-2xl"
-                            className="h-24 w-full"
-                            image={p.image_url}
-                            alt={p.title}
-                          />
-                        )}
-                        <p className="mt-1.5 text-[11px] font-semibold leading-tight line-clamp-2">
-                          {p.title}
-                        </p>
-                      </div>
-                    </Link>
+                     <div className="block">
+                       <div className="w-36 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm">
+                         <HomeCard
+                           image={p.image_url}
+                           title={p.title}
+                           category={p.category}
+                           price={p.price}
+                           originalPrice={(p as any).original_price}
+                           to="/catalog/$category"
+                           params={{ category: makeCategorySlug("Coiffure") }}
+                           search={{ highlight: p.id }}
+                         />
+                       </div>
+                     </div>
                   </motion.div>
                 ))}
               </motion.div>
@@ -990,8 +1035,9 @@ function Index() {
             ref={reviewsRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.55 }}
-            className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory scroll-smooth"
+            transition={{ delay: 0.5, duration: 0.3 }}
+            className="flex gap-3 overflow-x-auto pb-3 -mx-5 px-5 snap-x snap-mandatory scroll-smooth md:mx-0 md:px-0"
+            style={{ willChange: "transform, opacity", transform: "translateZ(0)", overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
           >
             {reviewSlides.map((t, i) => {
               const reviewObj = typeof t === "object" && t !== null ? (t as Record<string, unknown>) : null;
@@ -1001,46 +1047,47 @@ function Index() {
                   key={reviewObj?.id ? String(reviewObj.id) : `r-${i}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + i * 0.04 }}
-                  className="relative min-w-[18rem] shrink-0 snap-start rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-3 shadow-sm"
+                  transition={{ delay: 0.55 + i * 0.03, duration: 0.3 }}
+                  className="relative min-w-[18rem] shrink-0 snap-start rounded-[24px] border border-[var(--gold-soft)]/25 bg-white/80 p-4 shadow-md shadow-[var(--gold)]/5 backdrop-blur-sm"
+                  style={{ willChange: "transform, opacity", transform: "translateZ(0)", touchAction: "manipulation" }}
+                  data-review-slide
                 >
-                  <div className="flex items-center gap-0.5 text-red-600">
-                    {Array.from({ length: (reviewObj?.rating as number) ?? 5 }).map((_, k) => (
-                      <Star key={k} className="h-3 w-3 fill-current" />
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-0.5 text-red-600">
+                      {Array.from({ length: (reviewObj?.rating as number) ?? 5 }).map((_, k) => (
+                        <Star key={k} className="h-3.5 w-3.5 fill-current" />
+                      ))}
+                    </div>
+                    <MessageSquare className="h-3.5 w-3.5 text-[var(--gold)]" aria-hidden="true" />
                   </div>
-                  <p className="mt-1.5 text-sm leading-relaxed">
+                  <p className="mt-2.5 text-sm leading-relaxed text-foreground/90">
                     "{(reviewObj?.comment as string) ?? (reviewObj?.text as string) ?? (reviewObj?.message as string) ?? "Excellent service."}"
                   </p>
-                  <p className="mt-2 text-[11px] font-semibold">
-                    — {(reviewObj?.author_name as string) ?? (reviewObj?.name as string) ?? "Client satisfait"}
-                  </p>
-                  {isAdmin && reviewId && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteReview(reviewId)}
-                      className="absolute top-2 right-2 rounded-full p-1 text-xs text-red-500 hover:bg-red-50 transition"
-                      title="Supprimer cet avis"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  )}
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-[11px] font-semibold text-[var(--gold-deep)]">
+                      — {(reviewObj?.author_name as string) ?? (reviewObj?.name as string) ?? "Client satisfait"}
+                    </p>
+                    {isAdmin && reviewId && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteReview(reviewId)}
+                        className="rounded-full p-1.5 text-red-500 transition hover:bg-red-50"
+                        title="Supprimer cet avis"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </motion.div>
               );
             })}
           </motion.div>
 
-          {/* Formulaire d'avis */}
-          <section className="mt-6">
-            <SectionTitle title="Donnez votre avis" />
-            <ReviewForm onReviewSubmitted={() => setRefreshKey((prev) => prev + 1)} />
-          </section>
-
-          {/* Promotions */}
-          {promotionItems.length > 0 && (
+          {/* Carousel promo */}
+          {promotionItems.length > 0 ? (
             <>
               <SectionTitle
-                title="Offres du mois"
+                title="Promotions"
                 action={
                   <Link
                     to="/catalog/$category"
@@ -1053,40 +1100,97 @@ function Index() {
                 }
               />
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.55, duration: 0.3 }}
+                className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory scroll-smooth md:mx-0 md:px-0"
+                style={{ willChange: "transform, opacity", transform: "translateZ(0)", overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
               >
-                <Link
-                  to="/catalog/$category"
-                  params={{ category: "promotion" }}
-                  search={{} as any}
-                  preload="intent"
-                  className="block"
-                >
-                  <Frame
-                    variant="plain"
-                    rounded="rounded-[28px]"
-                    className="aspect-video w-full"
-                    image={promotionItems[0]?.image_url || promo1}
-                    alt="Promotions"
+                {promotionItems.map((p, i) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 + i * 0.03, duration: 0.3 }}
+                    className="snap-start"
+                    style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
                   >
-                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent rounded-b-[24px]" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <p className="font-display text-lg font-semibold text-white">
-                        {promotionItems.length} promotions
-                      </p>
-                      <p className="mt-0.5 text-xs text-white/80">
-                        Découvrez nos meilleures offres
-                      </p>
-                    </div>
-                  </Frame>
-                </Link>
+                    <Link
+                      to="/catalog/$category"
+                      params={{ category: "promotion" }}
+                      search={{ highlight: p.id } as any}
+                      className="block w-40 shrink-0"
+                    >
+                       <div className="relative overflow-hidden rounded-[24px] border border-[var(--gold-soft)]/20 bg-white shadow-sm">
+                         <div className="aspect-[4/5] w-full overflow-hidden bg-white">
+                           {p.image_url ? (
+                             <img
+                               src={p.image_url}
+                               alt={p.title}
+                               className="h-full w-full object-cover"
+                               loading="lazy"
+                             />
+                           ) : (
+                             <div className="flex h-full w-full items-center justify-center bg-stone-100 text-xs text-muted-foreground">Image</div>
+                           )}
+                         </div>
+                         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                         <div className="absolute bottom-0 left-0 right-0 p-2">
+                           <p className="font-display text-[13px] font-semibold text-white leading-tight line-clamp-2">{p.title}</p>
+                           <div className="mt-0.5 flex flex-col gap-0.5">
+                             <span className="text-[10px] font-semibold text-red-500 line-through">
+                               {formatFCFA((p as any).original_price)}
+                             </span>
+                             <span className="text-[11px] font-bold text-gold">{formatFCFA(p.price)}</span>
+                           </div>
+                         </div>
+                       </div>
+                    </Link>
+                  </motion.div>
+                ))}
               </motion.div>
             </>
+          ) : (
+            <motion.section
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.55 }}
+              className="mt-6"
+            >
+              <SectionTitle
+                title="Promotions"
+                action={
+                  <Link
+                    to="/catalog/$category"
+                    params={{ category: makeCategorySlug("Promo") }}
+                    search={{} as any}
+                    className="text-xs font-medium text-[var(--gold-deep)]"
+                  >
+                    Voir tout
+                  </Link>
+                }
+              />
+              <div className="rounded-[24px] border border-dashed border-[var(--gold-soft)]/40 bg-white/50 p-6 text-center">
+                <p className="text-sm text-muted-foreground">Aucune promotion disponible pour le moment.</p>
+                <Link
+                  to="/catalog/$category"
+                  params={{ category: makeCategorySlug("Promo") }}
+                  search={{} as any}
+                  className="mt-3 inline-block rounded-full bg-[var(--gold)] px-4 py-2 text-xs font-semibold text-white"
+                >
+                  Découvrir le catalogue
+                </Link>
+              </div>
+            </motion.section>
           )}
+
+          {/* Formulaire d'avis */}
+          <section className="mt-6">
+            <SectionTitle title="Donnez votre avis" />
+            <ReviewForm onReviewSubmitted={() => setRefreshKey((prev) => prev + 1)} />
+          </section>
         </>
       )}
-    </AppShell>
+    </>
   );
 }

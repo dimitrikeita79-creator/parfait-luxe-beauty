@@ -1,0 +1,19 @@
+import { useEffect, useState } from "react";
+import { getFavorites, toggleFavorite, type FavoriteItem } from "@/lib/favorites";
+
+export function useFavorites() {
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+
+  useEffect(() => {
+    setFavorites(getFavorites());
+    const handler = () => setFavorites(getFavorites());
+    window.addEventListener("favorites-updated", handler);
+    return () => window.removeEventListener("favorites-updated", handler);
+  }, []);
+
+  const toggle = (item: FavoriteItem) => {
+    setFavorites(toggleFavorite(item));
+  };
+
+  return { favorites, setFavorites, toggle };
+}

@@ -7,14 +7,21 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import React from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { GlassButton } from "@/components/GlassButton";
 import { Toaster } from "@/components/Toaster";
+import { CartProvider, useCart } from "@/context/CartContext";
+import { AppShell } from "@/components/AppShell";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import logoAsset from "../assets/Parfait design.jpg";
+import desmohairLogo from "../assets/DESMOHAIR.jpg";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { supabase } from "@/backend/client";
+import { localNotificationService } from "@/backend/services/local-notification.service";
+import { pushNotificationService } from "@/backend/services/push-notification.service";
 
 function NotFoundComponent() {
   return (
@@ -96,8 +103,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "icon", href: logoAsset },
-      { rel: "apple-touch-icon", href: logoAsset },
+      { rel: "icon", href: desmohairLogo },
+      { rel: "apple-touch-icon", href: desmohairLogo },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -114,11 +121,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="fr" className="theme-light" suppressHydrationWarning>
       <head>
         <HeadContent />
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-        <meta httpEquiv="X-Frame-Options" content="DENY" />
+
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
         <meta httpEquiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
         <meta name="color-scheme" content="light" />
@@ -133,13 +140,165 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [userId, setUserId] = React.useState<string | undefined>(undefined);
+  const [authLoading, setAuthLoading] = React.useState(true);
+  const [showSplash, setShowSplash] = React.useState(true);
+  const [splashPhase, setSplashPhase] = useState<"loading" | "welcome">("loading");
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUserId(user?.id);
+      } catch {
+        setUserId(undefined);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    void getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        void getUser();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    void localNotificationService.ensurePermission();
+  }, []);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => {
+      setSplashPhase("welcome");
+      const t2 = setTimeout(() => setShowSplash(false), 2600);
+      return () => clearTimeout(t2);
+    }, 2400);
+    return () => clearTimeout(t1);
+  }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <Outlet />
-        <Toaster position="top-right" richColors />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <>
+      {showSplash && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-white gpu-accelerated"
+        >
+          <AnimatePresence mode="wait">
+            {splashPhase === "loading" ? (
+              <motion.div
+                key="splash-loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35 }}
+                className="text-center gpu-accelerated"
+              >
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 0.2, ease: "backOut" }}
+                  className="mx-auto grid h-32 w-32 place-items-center rounded-[40px] shadow-luxe overflow-hidden"
+                >
+                  <img src={desmohairLogo} alt="Desmohair" className="h-full w-full object-contain p-2" />
+                </motion.div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="font-display mt-6 text-3xl font-semibold leading-tight"
+                >
+                  Desmohair
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.55 }}
+                  className="mt-3 text-sm italic text-muted-foreground"
+                >
+                  {"Votre beauté, notre passion"}
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
+                  className="mx-auto mt-8 flex items-center justify-center gap-1"
+                >
+                  <motion.span
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
+                    className="h-2 w-2 rounded-full bg-[var(--gold)]"
+                  />
+                  <motion.span
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: 0.15 }}
+                    className="h-2 w-2 rounded-full bg-[var(--gold)]"
+                  />
+                  <motion.span
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: 0.3 }}
+                    className="h-2 w-2 rounded-full bg-[var(--gold)]"
+                  />
+                </motion.div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="splash-welcome"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="text-center px-6 gpu-accelerated"
+              >
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.5, ease: "backOut" }}
+                  className="mx-auto mb-5 grid h-20 w-20 place-items-center rounded-full bg-white shadow-soft ring-1 ring-black/5 md:h-24 md:w-24"
+                >
+                  <img src={desmohairLogo} alt="Desmohair" className="h-full w-full object-contain p-0.5" />
+                </motion.div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.4 }}
+                  className="font-display text-3xl font-semibold leading-tight"
+                >
+                  Bienvenue chez Desmohair
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.4 }}
+                  className="mt-3 text-sm text-muted-foreground leading-relaxed"
+                >
+                  Laissez-nous révéler votre élégance naturelle.
+                </motion.p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      )}
+      {!authLoading && (
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <CartProvider userId={userId}>
+              <AppShell>
+                <Outlet />
+              </AppShell>
+              <Toaster />
+            </CartProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      )}
+    </>
   );
 }

@@ -30,8 +30,7 @@ export default function UploadProfilePhoto({ userId }: { userId: string }) {
       setAvatarUrl(avatarUrl);
       alert("✅ Photo de profil mise à jour avec succès !");
     } catch (error) {
-      const errorMessage = getErrorMessage(error);
-      setErrorMessage("❌ Erreur : " + errorMessage);
+      setErrorMessage("❌ Erreur lors de l'upload. Veuillez réessayer.");
       console.error("Erreur complète d'upload:", error);
     } finally {
       setUploading(false);

@@ -10,7 +10,7 @@ export default function TestSupabase() {
       const { data, error } = await supabase.from('gallery').select('*').limit(1);
       
       if (error) {
-        setStatus('❌ Erreur : ' + JSON.stringify(error));
+        setStatus('❌ Erreur de connexion. Vérifiez vos paramètres Supabase.');
       } else {
         setStatus('✅ Succès ! Données : ' + JSON.stringify(data));
       }

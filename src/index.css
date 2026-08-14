@@ -164,7 +164,7 @@
     border-color: var(--color-border);
     @apply border-border outline-ring/50;
   }
-  body {
+  html, body {
     background: var(--gradient-bg);
     background-attachment: fixed;
     color: var(--color-foreground);
@@ -401,26 +401,56 @@
   }
 }
 @media (max-width: 768px) {
-  .glass, .glass-strong, .liquid-glass { backdrop-filter: blur(12px) saturate(180%) !important; }
-  .glass-nav { backdrop-filter: blur(16px) saturate(200%) !important; }
-  .animate-fade-up { animation: fade-up 0.4s ease-out both !important; }
-  .animate-float { animation: float 4.5s ease-in-out infinite !important; }
-  .animate-fade-up, .animate-float, .glass, .glass-strong, .liquid-glass, .glass-nav, [class*="overflow-x"], [class*="snap-"] {
+  .glass, .glass-strong, .liquid-glass, .frame-glass { backdrop-filter: blur(8px) saturate(150%) !important; -webkit-backdrop-filter: blur(8px) saturate(150%) !important; }
+  .glass-nav { backdrop-filter: blur(12px) saturate(170%) !important; -webkit-backdrop-filter: blur(12px) saturate(170%) !important; }
+  .animate-fade-up { animation: fade-up 0.35s ease-out both !important; }
+  .animate-float { animation: float 5s ease-in-out infinite !important; }
+  .animate-fade-up, .animate-float, .glass, .glass-strong, .liquid-glass, .glass-nav, .frame-glass, [class*="overflow-x"], [class*="snap-"] {
     will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+  img { content-visibility: auto; }
+  .product-card, .service-card, .gallery-item, [class*="rounded-[28px]"], [class*="rounded-3xl"], [class*="rounded-2xl"] {
+    contain: layout style paint;
+  }
+  .snap-center, .snap-x, .snap-mandatory {
+    contain: layout style;
+  }
+  [data-carousel-item] {
+    contain: layout style paint;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+  [class*="backdrop-blur"] {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+  .fixed.inset-0 {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  button, [role="button"] {
+    touch-action: manipulation;
   }
 }
 @media (max-width: 480px) {
-  .glass, .glass-strong, .liquid-glass { backdrop-filter: blur(8px) saturate(160%) !important; }
-  .glass-nav { backdrop-filter: blur(10px) saturate(180%) !important; }
-  .animate-fade-up { animation: fade-up 0.3s ease-out both !important; }
-  .animate-float { animation: float 5s ease-in-out infinite !important; }
+  .glass, .glass-strong, .liquid-glass { backdrop-filter: blur(6px) saturate(140%) !important; -webkit-backdrop-filter: blur(6px) saturate(140%) !important; }
+  .glass-nav { backdrop-filter: blur(10px) saturate(160%) !important; -webkit-backdrop-filter: blur(10px) saturate(160%) !important; }
+  .animate-fade-up { animation: fade-up 0.25s ease-out both !important; }
+  .animate-float { animation: float 6s ease-in-out infinite !important; }
   body { background-attachment: scroll !important; }
+  header { position: sticky !important; top: 0.5rem !important; }
 }
 @media (min-width: 769px) {
   .animate-fade-up, .animate-float, .glass, .glass-strong, .liquid-glass, .glass-nav { will-change: auto; }
-  button, a, input { transition: all 200ms ease-in-out; }
+  button, a, input { transition: all 180ms ease-in-out; }
+}
+@media (min-width: 1024px) {
+  .glass, .glass-strong, .liquid-glass { backdrop-filter: blur(20px) saturate(180%) !important; }
 }
 
 [data-theme="light"], .theme-light {
@@ -601,4 +631,18 @@
   --glass-shadow: 0 4px 16px -8px oklch(0.2 0 0 / 0.1), inset 0 1px 0 oklch(1 0 0 / 0.6) !important;
   --shadow-luxe: 0 16px 48px -20px oklch(0.2 0 0 / 0.15) !important;
   --shadow-soft: 0 2px 12px -4px oklch(0.2 0 0 / 0.08) !important;
+}
+
+/* Safe area insets for tablets and phones with navigation buttons */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* On tablets with navigation buttons, ensure content doesn't overlap */
+@media (min-width: 768px) {
+  .glass-nav {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { AppShell, GlassCard, WhatsAppIcon } from "@/components/AppShell";
 import { IconBadge } from "@/components/IconBadge";
@@ -10,21 +10,18 @@ import {
   Instagram,
   Globe,
   User,
-  Calendar,
   MessageSquare,
-  Sparkles,
-  ShoppingBag,
   Building2,
 } from "lucide-react";
 import {
   SALONS,
   SOCIALS,
   waLinkFor,
-  pickSalonFor,
+  waLinkNative,
   type SalonId,
 } from "@/lib/salon-data";
-import { servicesService, catalogService, salonService } from "@/backend/services";
-import type { ServiceItem, CatalogItem, SalonInfo } from "@/backend/models";
+import { salonService } from "@/backend/services";
+import type { SalonInfo } from "@/backend/models";
 import {
   useMemo,
   useState,
@@ -34,28 +31,20 @@ import {
   type ReactNode,
 } from "react";
 
-const formatFCFA = (price: number) => {
-  return new Intl.NumberFormat("fr-BF", {
-    style: "currency",
-    currency: "XOF",
-    minimumFractionDigits: 0,
-  }).format(price);
-};
-
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       {
-        title: "Contact & Reservation — Parfait.Design / Desmo Hair / Beaute Essentielle",
+        title: "Contact & Reservation — Parfait.Design / Desmo Hair / Beaute Essentielle / KORO-RASTA",
       },
       {
         name: "description",
         content:
-          "Reservez votre rendez-vous dans l'un de nos trois etablissements a Ouagadougou.",
+          "Reservez votre rendez-vous dans l'un de nos etablissements a Ouagadougou.",
       },
       {
         property: "og:title",
-        content: "Contact — Parfait.Design / Desmo Hair / Beaute Essentielle",
+        content: "Contact — Parfait.Design / Desmo Hair / Beaute Essentielle / KORO-RASTA",
       },
       {
         property: "og:description",
@@ -68,8 +57,6 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
-  const [services, setServices] = useState<ServiceItem[]>([]);
-  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
   const [salonInfo, setSalonInfo] = useState<SalonInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -77,8 +64,6 @@ function ContactPage() {
   const [form, setForm] = useState({
     nom: "",
     tel: "",
-    service: "",
-    produit: "aucun",
     salonId: "parfait" as SalonId,
     date: "",
     message: "",
@@ -88,17 +73,10 @@ function ContactPage() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [servicesData, catalogData, salonData] = await Promise.all([
-          servicesService.getActive(),
-          catalogService.getAvailable(),
+        const [salonData] = await Promise.all([
           salonService.getInfo(),
         ]);
-        setServices(servicesData);
-        setCatalogItems(catalogData);
         setSalonInfo(salonData);
-        if (servicesData.length > 0) {
-          setForm((f) => ({ ...f, service: servicesData[0].title }));
-        }
       } catch {
         // Silent fail
       } finally {
@@ -108,58 +86,27 @@ function ContactPage() {
     loadData();
   }, []);
 
-  const products = useMemo(() => {
-    const result = catalogItems
-      .filter((item) =>
-        ["produits", "equipement", "perruques"].includes(
-          item.category.toLowerCase()
-        )
-      )
-      .slice(0, 40)
-      .map((p) => ({
-        id: p.id,
-        label: `${p.category} · ${p.title}`,
-        price: p.price,
-        cat: p.category,
-        code: (p as any).code,
-        image_url: p.image_url,
-      }));
-    return result;
-  }, [catalogItems]);
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const salon = SALONS.find((s) => s.id === form.salonId);
+    if (!salon) return;
+    const msg = `Bonjour ${salon.name},\n\nJe souhaite contacter le salon :\n• Nom : ${form.nom}\n• Telephone : ${form.tel}\n• Date souhaitee : ${form.date}\n\n${form.message}`;
+    const url = waLinkNative(form.salonId, msg);
+    window.open(url, "_blank");
+  };
 
   const set = (k: keyof typeof form) => (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const value = e.target.value;
-    setForm((f) => {
-      const next = { ...f, [k]: value } as typeof f;
-      if (k === "produit" && value !== "aucun") {
-        const p = products.find((x) => x.id === value);
-        if (p) next.salonId = pickSalonFor(p.cat).id;
-      }
-      return next;
-    });
-  };
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const prod = products.find((p) => p.id === form.produit);
-    const prodCode = prod?.code ? `• Code : ${prod.code}\n` : "";
-    const prodLine = prod
-      ? `• Produit : ${prod.label}${prod.price ? ` (${formatFCFA(prod.price)})` : ""}\n`
-      : "";
-    const prodImageLine = prod?.image_url ? `• Image : ${prod.image_url}\n` : "";
-    const salon = SALONS.find((s) => s.id === form.salonId)!;
-    const msg = `Bonjour ${salon.name},\n\nJe souhaite reserver :\n• Nom : ${form.nom}\n• Telephone : ${form.tel}\n• Service : ${form.service}\n${prodCode}${prodLine}${prodImageLine}• Date souhaitee : ${form.date}\n\n${form.message}`;
-    const url = waLinkFor(form.salonId, msg);
-    window.open(url, "_blank");
+    setForm((f) => ({ ...f, [k]: value } as typeof f));
   };
 
   const mergedSalons = useMemo(() => {
     if (!salonInfo) return SALONS;
     const dbSalon: typeof SALONS[0] = {
       id: "parfait",
-      name: salonInfo.salon_name || "Parfait Design", // Use default if database is empty
+      name: SALONS[0].name,
       area: salonInfo.address || SALONS[0].area,
       city: SALONS[0].city,
       phone: salonInfo.phone_number || SALONS[0].phone,
@@ -170,11 +117,11 @@ function ContactPage() {
       logo: SALONS[0].logo,
       tags: SALONS[0].tags,
     };
-    return [dbSalon, SALONS[1], SALONS[2]];
+    return [dbSalon, ...SALONS.slice(1)];
   }, [salonInfo]);
 
   return (
-    <AppShell title="Contact" subtitle="Trois adresses a votre service">
+    <>
       {/* Etablissements */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -290,45 +237,28 @@ function ContactPage() {
 
           <SectionLabel>Demande</SectionLabel>
           <Field label="Etablissement" icon={Building2}>
-            <select
-              value={form.salonId}
-              onChange={set("salonId")}
-              className="input"
-            >
-              {SALONS.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} — {s.area}
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {SALONS.map((s) => {
+                const isActive = form.salonId === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, salonId: s.id }))}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-semibold whitespace-nowrap transition-all duration-200 shrink-0 ${
+                      isActive
+                        ? "bg-[var(--gold)] text-white shadow-lg shadow-[var(--gold)]/30"
+                        : "glass-button glass-button--light text-foreground"
+                    }`}
+                  >
+                    {isActive && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
           </Field>
-          <Field label="Service souhaite" icon={Sparkles}>
-            <select
-              value={form.service}
-              onChange={set("service")}
-              className="input"
-            >
-              {services.map((s) => (
-                <option key={s.id}>{s.title}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Produit / Equipement (optionnel)" icon={ShoppingBag}>
-            <select
-              value={form.produit}
-              onChange={set("produit")}
-              className="input"
-            >
-              <option value="aucun">Aucun</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                  {p.price ? ` — ${formatFCFA(p.price)}` : ""}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Date souhaitee" icon={Calendar}>
+          <Field label="Date souhaitee">
             <input
               required
               type="date"
@@ -375,19 +305,23 @@ function ContactPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
-        className="liquid-glass rounded-full p-1 flex gap-1"
+        className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
       >
         {SALONS.map((s) => (
-          <GlassButton
+          <button
             key={s.id}
             type="button"
-            onClick={() => setMapSalon(s.id)}
-            variant={mapSalon === s.id ? "primary" : "light"}
-            size="sm"
-            className="flex-1 whitespace-nowrap"
+            onClick={() => setMapSalon(s.id === mapSalon ? SALONS[0].id : s.id)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-semibold whitespace-nowrap transition-all duration-200 shrink-0 ${
+              mapSalon === s.id
+                ? "bg-[var(--gold)] text-white shadow-lg shadow-[var(--gold)]/30"
+                : "glass-button glass-button--light text-foreground"
+            }`}
           >
+            {mapSalon === s.id && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
             {s.name}
-          </GlassButton>
+          </button>
         ))}
       </motion.div>
       <GlassCard className="mt-3 overflow-hidden p-0">
@@ -461,10 +395,28 @@ function ContactPage() {
           box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.6);
         }
         .input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px oklch(0.85 0.1 85 / 0.25), inset 0 1px 0 oklch(1 0 0 / 0.6); }
-      `}</style>
-    </AppShell>
-  );
-}
+       `}</style>
+
+       {/* Legal links */}
+       <motion.div
+         initial={{ opacity: 0 }}
+         animate={{ opacity: 1 }}
+         transition={{ delay: 0.5 }}
+         className="mt-6 flex items-center justify-center gap-4 text-[10px] text-muted-foreground"
+       >
+         <Link to="/privacy" className="underline underline-offset-2 hover:text-[var(--gold-deep)] transition">
+           Politique de confidentialité
+         </Link>
+         <span className="text-stone-300">|</span>
+         <Link to="/terms" className="underline underline-offset-2 hover:text-[var(--gold-deep)] transition">
+           Conditions d'utilisation
+         </Link>
+         <span className="text-stone-300">|</span>
+         <span>Parfait.design © 2026</span>
+       </motion.div>
+      </>
+    );
+  }
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (

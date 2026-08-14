@@ -6,7 +6,7 @@ export interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   role: 'admin' | 'user';
-  theme: 'gold' | 'light' | 'silver';
+  theme: 'gold' | 'light' | 'silver' | 'green' | 'red';
   created_at: string;
   updated_at: string;
 }
@@ -21,6 +21,7 @@ export interface GalleryItem {
   category: 'coiffure' | 'mèches' | 'équipement' | 'Produits' | 'Promo';
   is_featured: boolean;
   sort_order: number;
+  salon_name: string;
   created_at: string;
   updated_at: string;
 }
@@ -31,10 +32,13 @@ export interface CatalogItem {
   title: string;
   description: string | null;
   price: number;
+  original_price?: number | null;
   image_url: string | null;
+  gallery_images: string[];
   category: string;
   is_available: boolean;
   sort_order: number;
+  salon_name: string;
   created_at: string;
   updated_at: string;
 }
@@ -47,7 +51,10 @@ export interface ServiceItem {
   duration_min: number;
   category: string;
   image_url: string | null;
+  gallery_images: string[];
+  code: string | null;
   active: boolean;
+  salon_name: string;
   created_at: string;
   updated_at: string;
 }
@@ -94,10 +101,61 @@ export interface SalonInfo {
   updated_at: string;
 }
 
+export interface CartItem {
+  id: string;
+  user_id: string;
+  item_type: 'catalog' | 'service' | 'gallery';
+  item_id: string;
+  title: string;
+  image_url: string | null;
+  price: number | null;
+  quantity: number;
+  salon_name: string | null;
+  code: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SavedProduct {
   id: string;
   user_id: string;
   title: string;
   note: string;
   created_at: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id?: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  created_at: string;
+}
+
+export interface CartItem {
+  id: string;
+  user_id: string;
+  item_type: 'catalog' | 'service' | 'gallery';
+  item_id: string;
+  title: string;
+  image_url: string | null;
+  price: number | null;
+  quantity: number;
+  salon_name: string | null;
+  code: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TeamMember {
+  id: string;
+  full_name: string;
+  role: string;
+  description: string | null;
+  photo_url: string | null;
+  specialties: string[];
+  created_at: string;
+  updated_at: string;
 }

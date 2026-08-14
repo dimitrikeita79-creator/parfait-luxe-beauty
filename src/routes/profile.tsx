@@ -342,8 +342,7 @@ function ProfilePage() {
 
   if (loading) {
     return (
-      <AppShell title="Chargement du profil" subtitle="Vérification de votre session…">
-        <motion.div
+      <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -352,14 +351,12 @@ function ProfilePage() {
           <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[var(--gold)]/30 border-t-[var(--gold)]" />
           <p className="text-sm text-muted-foreground">Vérification de votre session…</p>
         </motion.div>
-      </AppShell>
     );
   }
 
   if (!user) {
     return (
-      <AppShell title="Desmohair" subtitle="Connectez-vous pour accéder à votre espace client">
-        <motion.div
+      <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -390,20 +387,12 @@ function ProfilePage() {
               </GlassButton>
             </div>
           </div>
-        </motion.div>
-      </AppShell>
+      </motion.div>
     );
   }
 
   return (
-    <AppShell
-      title={isAdmin ? "Profil administrateur" : "Mon profil"}
-      subtitle={
-        isAdmin
-          ? "Gérez votre accès et l’espace de modification Desmohair"
-          : "Retrouvez vos favoris, vos produits sauvegardés et vos informations"
-      }
-    >
+    <>
       {/* Carte principale du profil */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -491,7 +480,7 @@ function ProfilePage() {
                 onClick={() => changeTheme("light")}
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition cursor-pointer hover:scale-105 active:scale-95 ${
                   currentTheme === "light"
-                    ? "border-[var(--gold)] bg-[var(--gold-soft)] text-[var(--gold-deep)]"
+                    ? "border-neutral-900 bg-neutral-900 text-white"
                     : "border-stone-200 bg-white text-foreground hover:border-stone-300"
                 }`}
               >
@@ -502,7 +491,7 @@ function ProfilePage() {
                 onClick={() => changeTheme("gold")}
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition cursor-pointer hover:scale-105 active:scale-95 ${
                   currentTheme === "gold"
-                    ? "border-[var(--gold)] bg-[var(--gold-soft)] text-[var(--gold-deep)]"
+                    ? "border-amber-500 bg-amber-500 text-white"
                     : "border-stone-200 bg-white text-foreground hover:border-stone-300"
                 }`}
               >
@@ -513,11 +502,33 @@ function ProfilePage() {
                 onClick={() => changeTheme("silver")}
                 className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition cursor-pointer hover:scale-105 active:scale-95 ${
                   currentTheme === "silver"
-                    ? "border-[var(--gold)] bg-[var(--gold-soft)] text-[var(--gold-deep)]"
+                    ? "border-slate-500 bg-slate-500 text-white"
                     : "border-stone-200 bg-white text-foreground hover:border-stone-300"
                 }`}
               >
                 Argent
+              </button>
+              <button
+                type="button"
+                onClick={() => changeTheme("green")}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition cursor-pointer hover:scale-105 active:scale-95 ${
+                  currentTheme === "green"
+                    ? "border-emerald-500 bg-emerald-500 text-white"
+                    : "border-stone-200 bg-white text-foreground hover:border-stone-300"
+                }`}
+              >
+                Vert
+              </button>
+              <button
+                type="button"
+                onClick={() => changeTheme("red")}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition cursor-pointer hover:scale-105 active:scale-95 ${
+                  currentTheme === "red"
+                    ? "border-red-500 bg-red-500 text-white"
+                    : "border-stone-200 bg-white text-foreground hover:border-stone-300"
+                }`}
+              >
+                Rouge
               </button>
             </div>
           </div>
@@ -540,7 +551,7 @@ function ProfilePage() {
           <form className="space-y-2" onSubmit={handleAddSavedProduct}>
             <div className="flex gap-2">
               <input
-                className="flex-1 rounded-2xl border border-stone-200 bg-white/80 px-3 py-2 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[var(--gold-soft)]"
+                className="min-w-0 flex-1 rounded-2xl border border-stone-200 bg-white/80 px-3 py-2 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-[var(--gold-soft)]"
                 value={newProductName}
                 onChange={(event) => setNewProductName(event.target.value)}
                 placeholder="Nom du produit"
@@ -549,7 +560,7 @@ function ProfilePage() {
                 type="submit"
                 variant="gold"
                 size="sm"
-                className="inline-flex items-center gap-1"
+                className="shrink-0 inline-flex items-center gap-1"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Ajouter
@@ -789,7 +800,25 @@ function ProfilePage() {
             </div>
           ) : null}
         </div>
-      </motion.div>
-    </AppShell>
-  );
-}
+        </motion.div>
+
+        {/* Legal links */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-6 flex items-center justify-center gap-4 text-[10px] text-muted-foreground"
+        >
+          <Link to="/privacy" className="underline underline-offset-2 hover:text-[var(--gold-deep)] transition">
+            Politique de confidentialité
+          </Link>
+          <span className="text-stone-300">|</span>
+          <Link to="/terms" className="underline underline-offset-2 hover:text-[var(--gold-deep)] transition">
+            Conditions d'utilisation
+          </Link>
+          <span className="text-stone-300">|</span>
+          <span>Parfait.design © 2026</span>
+        </motion.div>
+      </>
+    );
+  }

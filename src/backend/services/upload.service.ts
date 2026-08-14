@@ -62,14 +62,12 @@ export class UploadService {
       .from(bucket)
       .upload(filePath, file, {
         cacheControl: "3600",
-        upsert: false,
+        upsert: true,
       });
 
     if (uploadError) {
-      console.error(uploadError);
-      throw new ApiException(
-        `Upload refusé : ${uploadError.message || JSON.stringify(uploadError)}`,
-      );
+      console.error('[UploadService] upload error:', uploadError);
+      throw new ApiException("Upload refusé : impossible d'enregistrer l'image. Vérifiez le bucket et vos droits.");
     }
 
     const { data: publicUrlData } = supabase.storage

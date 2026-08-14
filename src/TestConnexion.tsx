@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../backend/client';
+import { supabase } from '@/backend/client';
 
 export default function TestConnexion() {
   const [resultat, setResultat] = useState("Cliquez sur le bouton pour tester Supabase...");
@@ -13,7 +13,7 @@ export default function TestConnexion() {
         .limit(1);
 
       if (error) {
-        setResultat("❌ Erreur Supabase : " + JSON.stringify(error));
+        setResultat("❌ Erreur de connexion. Vérifiez vos paramètres Supabase.");
       } else {
         setResultat("✅ Succès ! Connexion OK. Données : " + JSON.stringify(data));
       }

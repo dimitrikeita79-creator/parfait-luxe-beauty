@@ -1,15 +1,33 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { Clock, Scissors, Zap, Heart, X, Eye, Sparkles } from "lucide-react";
+import { Clock, Scissors, Zap, Heart, X, Sparkles, ShoppingCart, Palette, Wind, Droplets, Crown, Paintbrush } from "lucide-react";
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
-import { Frame } from "@/components/Frame";
 import { GlassButton } from "@/components/GlassButton";
-import { WhatsAppSalonModal } from "@/components/WhatsAppSalonModal";
-import { servicesService, salonService, authService } from "@/backend/services";
-import { SALONS, waLinkFor, type SalonId } from "@/lib/salon-data";
+import { servicesService, authService } from "@/backend/services";
+import { waLinkFor, getSalonIdFromName, getSalon } from "@/lib/salon-data";
 import type { ServiceItem } from "@/backend/models";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { asFavoriteItem, getFavorites, toggleFavorite } from "@/lib/favorites";
+import { useToast } from "@/hooks/useToast";
+import { useCart } from "@/context/CartContext";
+
+const ESTABLISHMENTS = ["Parfait Design", "Desmo Hair", "KORO-RASTA MULTI-SERVICE"] as const;
+type EstablishmentFilter = typeof ESTABLISHMENTS[number] | "all";
+
+type CategoryStyle = { icon: typeof Scissors; color: string; iconColor: string };
+
+const getCategoryIcon = (category?: string): CategoryStyle => {
+  const cat = category?.toLowerCase() || "";
+  if (cat.includes("coiffure") || cat.includes("coupe") || cat.includes("brushing")) return { icon: Scissors, color: "from-amber-100 to-orange-100", iconColor: "text-orange-600" };
+  if (cat.includes("mèche") || cat.includes("meche") || cat.includes("highlight")) return { icon: Sparkles, color: "from-pink-100 to-rose-100", iconColor: "text-pink-600" };
+  if (cat.includes("perruque") || cat.includes("tresse") || cat.includes("lock") || cat.includes("braid")) return { icon: Crown, color: "from-purple-100 to-violet-100", iconColor: "text-purple-600" };
+  if (cat.includes("coloration") || cat.includes("color") || cat.includes("teinture")) return { icon: Palette, color: "from-blue-100 to-indigo-100", iconColor: "text-blue-600" };
+  if (cat.includes("lissage") || cat.includes("defris") || cat.includes("straight")) return { icon: Wind, color: "from-cyan-100 to-teal-100", iconColor: "text-cyan-600" };
+  if (cat.includes("soin") || cat.includes("traitement") || cat.includes("treatment")) return { icon: Droplets, color: "from-emerald-100 to-green-100", iconColor: "text-emerald-600" };
+  if (cat.includes("extension") || cat.includes("pose") || cat.includes("nail") || cat.includes("ongle")) return { icon: Paintbrush, color: "from-fuchsia-100 to-pink-100", iconColor: "text-fuchsia-600" };
+  if (cat.includes("mariage") || cat.includes("wedding")) return { icon: Heart, color: "from-red-100 to-rose-100", iconColor: "text-red-500" };
+  return { icon: Zap, color: "from-yellow-100 to-amber-100", iconColor: "text-yellow-600" };
+};
 
 export const Route = createFileRoute("/services")({
   head: () => ({
@@ -39,11 +57,32 @@ function ServicesPage() {
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [favorites, setFavorites] = useState(getFavorites());
+  const favoriteSet = useMemo(() => {
+    const set = new Set<string>();
+    favorites.forEach((f) => set.add(`${f.kind}:${f.id}`));
+    return set;
+  }, [favorites]);
   const [open, setOpen] = useState<ServiceItem | null>(null);
-  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ServiceItem | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [salonId, setSalonId] = useState<SalonId>("parfait");
+  const [establishmentFilter, setEstablishmentFilter] = useState<EstablishmentFilter>("all");
+  const { success, error: toastError } = useToast();
+  const { addItem: addToCart } = useCart();
+  const modalRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open && modalRef.current) {
+      modalRef.current.scrollTop = 0;
+    }
+  }, [open]);
 
   // Charger les services
   useEffect(() => {
@@ -53,12 +92,6 @@ function ServicesPage() {
         setError(null);
         const data = await servicesService.getActive();
         setServices(data);
-        
-        // Load user info
-        const user = await authService.getCurrentUser();
-        if (user) {
-          setUserName(user.full_name || user.email);
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erreur lors du chargement des services");
         setServices([]);
@@ -76,29 +109,70 @@ function ServicesPage() {
     return ["Tout", ...unique];
   }, [services]);
 
-  // Filtrer les services selon le filtre actif
+  // Filtrer les services selon le filtre actif et l'établissement
   const filteredServices = useMemo(() => {
-    return services.filter((s) => !active || s.category === active);
-  }, [services, active]);
-
-  const handleToggleFavorite = async (service: ServiceItem) => {
-    // Vérifier si l'utilisateur est connecté
-    const user = await authService.getCurrentUser();
-    if (!user) {
-      navigate({ to: "/login" });
-      return;
+    let result = services;
+    if (active) {
+      result = result.filter((s) => s.category === active);
     }
-    const nextItems = toggleFavorite(asFavoriteItem(service, "service"));
-    setFavorites(nextItems);
-  };
+    if (establishmentFilter !== "all") {
+      result = result.filter((s) => s.salon_name === establishmentFilter);
+    }
+    return result;
+  }, [services, active, establishmentFilter]);
 
-  const handleWhatsAppClick = (service: ServiceItem) => {
-    setSelectedItem(service);
-    setWhatsappModalOpen(true);
-  };
+  const handleToggleFavorite = useCallback(
+    async (service: ServiceItem) => {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        navigate({ to: "/login" });
+        return;
+      }
+      const nextItems = toggleFavorite(asFavoriteItem(service, "service"));
+      setFavorites(nextItems);
+    },
+    [navigate],
+  );
+
+  const handleWhatsAppClick = useCallback(
+    (service: ServiceItem) => {
+      const salonId = getSalonIdFromName(service.salon_name);
+      const salon = getSalon(salonId);
+      const msg = `Bonjour ${salon.name}, je souhaite réserver : ${service.title}${service.price ? ` — ${service.price.toLocaleString()} FCFA` : ""}${service.duration_min ? ` (${service.duration_min} min)` : ""}.`;
+      const link = waLinkFor(salonId, msg);
+      window.open(link, "_blank", "noopener,noreferrer");
+    },
+    [],
+  );
+
+  const handleAddToCart = useCallback(
+    async (service: ServiceItem) => {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        navigate({ to: "/login" });
+        return;
+      }
+      try {
+        await addToCart({
+          item_type: "service",
+          item_id: service.id,
+          title: service.title,
+          image_url: service.image_url,
+          price: service.price,
+          quantity: 1,
+          salon_name: service.salon_name,
+          code: service.code,
+        });
+        success("Panier", "Article ajouté au panier");
+      } catch {
+        toastError("Panier", "Impossible d'ajouter l'article");
+      }
+    },
+    [navigate, addToCart, success, toastError],
+  );
 
   return (
-    <AppShell title="Nos Services" subtitle="Une prestation pensée pour vous">
+    <>
       {/* Message d'erreur */}
       <AnimatePresence>
         {error && (
@@ -113,28 +187,44 @@ function ServicesPage() {
         )}
       </AnimatePresence>
 
-      {/* Sélecteur de salon */}
+      {/* Filtre par établissement */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ delay: 0.05 }}
-        className="mt-4 liquid-glass rounded-full p-1 flex gap-1"
+        className="mt-5 flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
       >
-        {SALONS.filter((s) => s.tags.includes("services")).map((s) => (
-          <GlassButton
-            key={s.id}
-            type="button"
-            onClick={() => setSalonId(s.id as SalonId)}
-            variant={salonId === s.id ? "primary" : "light"}
-            size="sm"
-            className="flex-1 whitespace-nowrap"
-          >
-            <span className="flex items-center justify-center gap-1">
-              {s.name}
-              <span className="text-[9px] opacity-70">· {s.area}</span>
-            </span>
-          </GlassButton>
-        ))}
+        <button
+          type="button"
+          onClick={() => setEstablishmentFilter("all")}
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-semibold whitespace-nowrap transition-all duration-200 shrink-0 ${
+            establishmentFilter === "all"
+              ? "bg-[var(--gold)] text-white shadow-lg shadow-[var(--gold)]/30"
+              : "glass-button glass-button--light text-foreground"
+          }`}
+        >
+          {establishmentFilter === "all" && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+          Tout
+        </button>
+        {ESTABLISHMENTS.map((est) => {
+          const isActive = establishmentFilter === est;
+          return (
+            <button
+              key={est}
+              type="button"
+              onClick={() => setEstablishmentFilter(isActive ? "all" : est)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-semibold whitespace-nowrap transition-all duration-200 shrink-0 ${
+                isActive
+                  ? "bg-[var(--gold)] text-white shadow-lg shadow-[var(--gold)]/30"
+                  : "glass-button glass-button--light text-foreground"
+              }`}
+            >
+              {isActive && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+              {est}
+            </button>
+          );
+        })}
       </motion.div>
 
       {/* Filtres par catégorie */}
@@ -143,7 +233,8 @@ function ServicesPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="mt-5 flex gap-2 overflow-x-auto pb-2 -mx-5 px-5"
+          className="mt-5 flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
         >
           {categories.map((t) => (
             <GlassButton
@@ -159,11 +250,18 @@ function ServicesPage() {
         </motion.div>
       )}
 
-      {/* Liste des services */}
+      {/* Skeleton / loading */}
       {loading ? (
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--gold)]/30 border-t-[var(--gold)]" />
-          <p className="text-sm text-muted-foreground">Chargement des services...</p>
+        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="animate-pulse rounded-[24px] border border-stone-200 bg-white p-2.5">
+              <div className="aspect-[4/5] w-full rounded-2xl bg-stone-200" />
+              <div className="mt-2 space-y-2">
+                <div className="h-4 w-3/4 rounded bg-stone-200" />
+                <div className="h-3 w-1/2 rounded bg-stone-200" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : filteredServices.length === 0 ? (
         <motion.div
@@ -174,138 +272,160 @@ function ServicesPage() {
           <p className="text-sm text-muted-foreground">Aucun service disponible.</p>
         </motion.div>
       ) : (
-        <div className="mt-5 grid grid-cols-1 gap-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4"
+        >
           {filteredServices.map((s, i) => {
             const durationDisplay = s.duration_min ? `${s.duration_min} min` : "Sur mesure";
-            const isFavorite = favorites.some((f) => f.id === s.id && f.kind === "service");
+            const categoryStyle = getCategoryIcon(s.category);
+            const { icon: CategoryIcon, color, iconColor } = categoryStyle;
             return (
               <motion.div
                 key={s.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04, duration: 0.35 }}
+                transition={{ delay: Math.min(i * 0.03, 0.25), duration: 0.3 }}
+                className="liquid-glass rounded-[24px] p-3"
               >
-                <button
-                  type="button"
-                  onClick={() => setOpen(s)}
-                  className="liquid-glass w-full rounded-[28px] p-5 text-left transition hover:shadow-md active:scale-[0.99]"
-                >
-                  <div className="flex items-start gap-3">
-                    {s.image_url ? (
-                      <div className="flex h-20 w-20 shrink-0 overflow-hidden rounded-[24px] bg-stone-100 ring-1 ring-black/5">
-                        <img
-                          className="h-full w-full object-cover"
-                          src={s.image_url}
-                          alt={s.title}
-                          loading="lazy"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[24px] bg-gradient-to-br from-[var(--gold-soft)] to-[var(--gold-deep)]/20 text-xs font-semibold uppercase text-muted-foreground">
-                        <Sparkles className="h-6 w-6 text-[var(--gold-deep)]" />
-                      </div>
+                <button type="button" onClick={() => setOpen(s)} className="w-full text-left">
+                  {s.image_url ? (
+                    <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
+                      <img
+                        src={s.image_url}
+                        alt={s.title}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        style={{ objectFit: "cover" }}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                  ) : (
+                    <div className={`flex w-full items-center justify-center rounded-2xl bg-gradient-to-br ${color}`} style={{ aspectRatio: "4/5" }}>
+                      <CategoryIcon className={`h-8 w-8 ${iconColor}`} />
+                    </div>
+                  )}
+                  <div className="mt-2">
+                    <p className="font-display text-sm font-semibold leading-tight line-clamp-2">{s.title}</p>
+                    {s.description && (
+                      <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">{s.description}</p>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-display text-xl font-semibold leading-tight">
-                        {s.title}
-                      </h3>
-                      {s.description && (
-                        <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                          {s.description}
-                        </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px]">
+                      <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5">
+                        <Clock className="h-2.5 w-2.5" /> {durationDisplay}
+                      </span>
+                      {s.price > 0 && (
+                        <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5">
+                          💰 {s.price.toLocaleString()} F CFA
+                        </span>
                       )}
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-                    <span className="glass inline-flex items-center gap-1 rounded-full px-2.5 py-1">
-                      <Clock className="h-3 w-3" /> {durationDisplay}
-                    </span>
-                    {s.price > 0 && (
-                      <span className="glass inline-flex items-center gap-1 rounded-full px-2.5 py-1">
-                        💰 {s.price.toLocaleString()} F CFA
-                      </span>
-                    )}
-                    <span className="glass inline-flex items-center gap-1 rounded-full px-2.5 py-1">
-                      <Eye className="h-3 w-3" /> Voir détails
-                    </span>
-                  </div>
-                  <div className="mt-4 flex gap-2">
-                    <GlassButton
-                      type="button"
-                      onClick={() => handleWhatsAppClick(s)}
-                      variant="whatsapp"
-                      size="md"
-                      full
-                      className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/20 hover:shadow-green-500/30"
-                    >
-                      <WhatsAppIcon className="h-3.5 w-3.5" style={{ color: "#25D366" }} /> Réserver
-                    </GlassButton>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite(s);
-                      }}
-                      className={`rounded-full p-2 transition ${
-                        isFavorite ? "text-rose-600" : "text-muted-foreground hover:text-rose-400"
-                      }`}
-                      title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-                    >
-                      <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
-                    </button>
-                  </div>
                 </button>
+                <div className="mt-2 flex gap-2">
+                  <GlassButton
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWhatsAppClick(s);
+                    }}
+                    variant="whatsapp"
+                    size="sm"
+                    full
+                    className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/20"
+                  >
+                    <WhatsAppIcon className="h-3 w-3" style={{ color: "#25D366" }} /> Réserver
+                  </GlassButton>
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      await handleAddToCart(s);
+                    }}
+                    className="rounded-full border border-stone-200 p-1.5 text-stone-600 transition hover:border-[var(--gold)] hover:text-[var(--gold-deep)]"
+                    title="Ajouter au panier"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleFavorite(s);
+                    }}
+                    className={`rounded-full p-1.5 transition ${
+                      favoriteSet.has(`service:${s.id}`) ? "text-rose-600" : "text-muted-foreground hover:text-rose-400"
+                    }`}
+                    title={favoriteSet.has(`service:${s.id}`) ? "Retirer des favoris" : "Ajouter aux favoris"}
+                  >
+                    <Heart className="h-4 w-4" fill={favoriteSet.has(`service:${s.id}`) ? "currentColor" : "none"} />
+                  </button>
+                </div>
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
 
       {/* Modal de détail du service */}
       <AnimatePresence>
         {open && (
           <motion.div
+            key="service-modal"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/60"
             onClick={() => setOpen(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              ref={modalRef}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[32px] border border-[var(--gold-soft)]/30 bg-gradient-to-br from-white to-[var(--gold-light)] p-6 shadow-xl shadow-[var(--gold)]/10"
+              className="absolute left-1/2 top-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-[28px] border border-[var(--gold-soft)]/30 bg-white p-5 shadow-xl"
+              style={{ maxHeight: "90vh", transform: "translateZ(0)" }}
             >
-              <div className="flex items-start justify-between">
-                <h2 className="flex-1 pr-2 font-display text-2xl font-semibold">{open.title}</h2>
+             <div className="flex items-start justify-between">
+                <h2 className="flex-1 pr-2 font-display text-xl font-semibold leading-tight">{open.title}</h2>
                 <button
                   type="button"
                   onClick={() => setOpen(null)}
-                  className="rounded-full p-2 hover:bg-stone-100 transition"
+                  className="rounded-full p-1.5 hover:bg-stone-100 transition"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 
               {open.image_url && (
-                <div className="mt-4 overflow-hidden rounded-[32px] border border-stone-200 bg-stone-100">
-                  <img
-                    className="aspect-[4/3] w-full object-cover"
-                    src={open.image_url}
-                    alt={open.title}
-                    loading="lazy"
-                  />
+                <div className="mt-3 overflow-hidden rounded-[24px] border border-stone-200 bg-stone-100">
+                  <div className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth">
+                     {[open.image_url, ...(open.gallery_images ?? [])].map((src, idx) => (
+                       <img
+                         key={src + idx}
+                         className="aspect-[4/3] w-full shrink-0 snap-center object-cover"
+                         src={src}
+                         alt={`${open.title} ${idx + 1}`}
+                         loading="lazy"
+                       />
+                     ))}
+                  </div>
+                  {(open.gallery_images?.length ?? 0) > 0 && (
+                    <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
+                      Balayez pour voir les autres vues
+                    </p>
+                  )}
                 </div>
               )}
 
               {open.description && (
-                <p className="mt-4 text-sm text-muted-foreground">{open.description}</p>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{open.description}</p>
               )}
 
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-4 grid grid-cols-2 gap-2.5">
                 <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     Catégorie
@@ -334,10 +454,10 @@ function ServicesPage() {
                 )}
               </div>
 
-              <div className="mt-6 flex gap-2">
+              <div className="mt-5 flex gap-2">
                 <GlassButton
                   as="a"
-                  href={waLinkFor(salonId, `Bonjour, je souhaite réserver : ${open.title}.`)}
+                  href={waLinkFor(getSalonIdFromName(open.salon_name), `Bonjour, je souhaite réserver : ${open.title}.`)}
                   target="_blank"
                   rel="noreferrer"
                   variant="whatsapp"
@@ -353,16 +473,12 @@ function ServicesPage() {
                     handleToggleFavorite(open);
                     setOpen(null);
                   }}
-                  className="rounded-full border border-stone-200 p-3 transition hover:bg-stone-50"
+                  className="rounded-full border border-stone-200 p-2.5 transition hover:bg-stone-50"
                   title="Ajouter aux favoris"
                 >
                   <Heart
                     className="h-5 w-5"
-                    fill={
-                      favorites.some((f) => f.id === open.id && f.kind === "service")
-                        ? "currentColor"
-                        : "none"
-                    }
+                    fill={favoriteSet.has(`service:${open.id}`) ? "currentColor" : "none"}
                   />
                 </button>
               </div>
@@ -370,18 +486,6 @@ function ServicesPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* WhatsApp Salon Selection Modal */}
-      <WhatsAppSalonModal
-        isOpen={whatsappModalOpen}
-        onClose={() => setWhatsappModalOpen(false)}
-        itemName={selectedItem?.title || ""}
-        itemImage={selectedItem?.image_url}
-        message={`Bonjour, je souhaite réserver : ${selectedItem?.title || ""}.`}
-        itemLink={selectedItem ? `${window.location.origin}/services` : undefined}
-        itemCategory={selectedItem?.category}
-        userName={userName || undefined}
-      />
-    </AppShell>
+    </>
   );
 }

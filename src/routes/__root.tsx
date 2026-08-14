@@ -141,8 +141,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [userId, setUserId] = React.useState<string | undefined>(undefined);
-  const [authLoading, setAuthLoading] = React.useState(true);
-  const [showSplash, setShowSplash] = React.useState(true);
+  const [authLoading, setAuthLoading] = React.useState(false);
+  const [showSplash, setShowSplash] = React.useState(false);
   const [splashPhase, setSplashPhase] = useState<"loading" | "welcome">("loading");
 
   useEffect(() => {
@@ -174,6 +174,7 @@ function RootComponent() {
   }, []);
 
   useEffect(() => {
+    setShowSplash(true);
     const t1 = setTimeout(() => {
       setSplashPhase("welcome");
       const t2 = setTimeout(() => setShowSplash(false), 2600);

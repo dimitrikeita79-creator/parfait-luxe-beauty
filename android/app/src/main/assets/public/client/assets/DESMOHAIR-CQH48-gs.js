@@ -1,1 +1,0 @@
-var e=`/assets/DESMOHAIR-DeNgcGsn.jpg`;export{e as t};

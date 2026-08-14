@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Parfait.design</string>
+    <string name="title_activity_main">Parfait.design</string>
+    <string name="package_name">bf.parfaitdesign.desmohair</string>
+    <string name="custom_url_scheme">bf.parfaitdesign.desmohair</string>
+</resources>

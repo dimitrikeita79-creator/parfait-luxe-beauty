@@ -1,18 +1,54 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="theme-light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
-    <title>Parfait.Design/Desmohair</title>
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/logo.ico" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
+    <meta name="description" content="Salon de beauté luxe à Ouagadougou — perruques, mèches, tresses, mariage." />
+    <meta name="keywords" content="salon, beauté, perruques, coiffure, Ouagadougou" />
+    <meta name="author" content="Parfait.design" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://parfaitdesign-desmohair.com/" />
+    <title>Parfait.design</title>
+    <link rel="manifest" href="client/manifest.webmanifest" />
+    <link rel="icon" href="client/logo.ico" />
+    <link rel="apple-touch-icon" href="client/logo.ico" />
+    <style>
+      html.theme-light body { background: #ffffff; color: #1c1917; opacity: 1; }
+      #root { opacity: 1; }
+      .glass-nav { -webkit-transform: translateZ(0); transform: translateZ(0); }
+      @media (max-width: 768px) {
+        .glass, .glass-strong, .liquid-glass, .frame-glass { -webkit-backdrop-filter: blur(6px) saturate(140%); backdrop-filter: blur(6px) saturate(140%); }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/assets/index-DJnt_bsn.js"></script>
+    <script>
+      window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error || e.message);
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('Unhandled rejection:', e.reason);
+      });
+    </script>
+    <script>
+      (function() {
+        try {
+          const loc = window.location;
+          if (!loc.origin || loc.origin === 'null') {
+            const fakeOrigin = 'file://' + loc.pathname.replace(/\/[^\/]*$/, '');
+            Object.defineProperty(window.location, 'origin', {
+              get: function() { return fakeOrigin; },
+              enumerable: true,
+              configurable: true
+            });
+          }
+        } catch (e) {
+          console.warn('Could not patch window.location.origin:', e);
+        }
+      })();
+    </script>
+    <script type="module" src="/client/assets/index-De0cGjmA.js"></script>
   </body>
 </html>

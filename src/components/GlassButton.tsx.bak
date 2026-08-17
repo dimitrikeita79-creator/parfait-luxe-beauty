@@ -17,7 +17,7 @@ const SIZES: Record<Size, string> = {
 };
 
 type Props = {
-  as?: string | React.ComponentType<any>;
+  as?: string;
   variant?: Variant;
   size?: Size;
   full?: boolean;
@@ -27,11 +27,6 @@ type Props = {
   href?: string;
   target?: string;
   rel?: string;
-  type?: string;
-  onClick?: React.MouseEventHandler<any>;
-  onMouseDown?: React.MouseEventHandler<any>;
-  disabled?: boolean;
-  preload?: string;
 };
 
 export function GlassButton({

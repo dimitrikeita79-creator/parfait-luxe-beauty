@@ -35,7 +35,7 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       {
-        title: "Contact & Reservation — Parfait.Design / Desmo Hair / Beaute Essentielle / KORO-RASTA",
+        title: "Contact & Reservation — Parfait.Design / Desmo Hair / Beaute Essentielle",
       },
       {
         name: "description",
@@ -44,7 +44,7 @@ export const Route = createFileRoute("/contact")({
       },
       {
         property: "og:title",
-        content: "Contact — Parfait.Design / Desmo Hair / Beaute Essentielle / KORO-RASTA",
+        content: "Contact — Parfait.Design / Desmo Hair / Beaute Essentielle",
       },
       {
         property: "og:description",
@@ -202,6 +202,50 @@ function ContactPage() {
             </div>
           </motion.article>
         ))}
+      </motion.div>
+
+      {/* Réseaux sociaux */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="mt-4 liquid-glass rounded-[24px] p-4"
+      >
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--gold-deep)]">
+          Suivez-nous
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <GlassButton
+            as="a"
+            href={SOCIALS.facebook}
+            target="_blank"
+            rel="noreferrer"
+            variant="light"
+            size="sm"
+          >
+            <Facebook className="h-3.5 w-3.5" /> Facebook
+          </GlassButton>
+          <GlassButton
+            as="a"
+            href={SOCIALS.instagram}
+            target="_blank"
+            rel="noreferrer"
+            variant="light"
+            size="sm"
+          >
+            <Instagram className="h-3.5 w-3.5" /> Instagram
+          </GlassButton>
+          <GlassButton
+            as="a"
+            href={SOCIALS.tiktok}
+            target="_blank"
+            rel="noreferrer"
+            variant="light"
+            size="sm"
+          >
+            <TikTokIcon className="h-3.5 w-3.5" /> TikTok
+          </GlassButton>
+        </div>
       </motion.div>
 
       {/* Formulaire */}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getFavorites, toggleFavorite, type FavoriteItem } from "@/lib/favorites";
+import { getFavorites, toggleFavorite } from "@/lib/favorites";
+import type { FavoriteItem } from "@/backend/models";
 
 export function useFavorites() {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);

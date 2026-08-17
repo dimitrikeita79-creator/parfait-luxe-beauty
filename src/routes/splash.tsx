@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router'
+import { useSafeNavigate } from "@/hooks/useSafeNavigate";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import logoAsset from "@/assets/DESMOHAIR.jpg";
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/splash")({
 });
 
 function Splash() {
-  const navigate = useNavigate();
+  const navigate = useSafeNavigate();
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -95,3 +96,4 @@ function Splash() {
     </div>
   );
 }
+

@@ -1,54 +1,64 @@
-import "./lib/error-capture";
-
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { readFileSync, existsSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
-};
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = join(__dirname, "..");
+const clientIndex = join(root, "dist", "client", "index.html");
+const projectRoot = process.cwd();
+const rootIndex = join(projectRoot, "index.html");
 
-let serverEntryPromise: Promise<ServerEntry> | undefined;
-
-async function getServerEntry(): Promise<ServerEntry> {
-  if (!serverEntryPromise) {
-    serverEntryPromise = import("@tanstack/react-start/server-entry").then(
-      (m) => (m.default ?? m) as ServerEntry,
-    );
-  }
-  return serverEntryPromise;
-}
-
-// h3 swallows in-handler throws into a normal 500 Response with body
-// {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
-  if (response.status < 500) return response;
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) return response;
-
-  const body = await response.clone().text();
-  if (!body.includes('"unhandled":true') || !body.includes('"message":"HTTPError"')) {
-    return response;
-  }
-
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
-  return new Response(renderErrorPage(), {
-    status: 500,
-    headers: { "content-type": "text/html; charset=utf-8" },
-  });
-}
+const SHELL_FALLBACK = `<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Parfait.Design/Desmohair</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./logo.ico" />
+  </head>
+  <body style="margin:0;padding:0;background:#ff00ff;">
+    <div id="root"></div>
+  </body>
+</html>`;
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
-    try {
-      const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
-    } catch (error) {
-      console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
+    const url = new URL(request.url);
+
+    if (url.pathname === "/" || url.pathname === "/index.html") {
+      if (existsSync(rootIndex)) {
+        let html = readFileSync(rootIndex, "utf-8");
+        if (!html.includes("window.$_TSR = undefined")) {
+          html = html.replace(
+            "<script type=\"module\"",
+            "<script>\n      window.$_TSR = undefined;\n      console.log('[server.ts] $_TSR disabled to skip SSR hydration');\n    </script>\n    <script type=\"module\""
+          );
+        }
+        if (!html.includes("injectIntoGlobalHook")) {
+          html = html.replace(
+            "<script type=\"module\"",
+            "<script type=\"module\" src=\"/@react-refresh\"></script>\n    <script>\n      window.$RefreshReg$ = () => {};\n      window.$RefreshSig$ = () => (type) => type;\n    </script>\n    <script type=\"module\""
+          );
+        }
+        return new Response(html, {
+          status: 200,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      }
+
+      return new Response(SHELL_FALLBACK, {
+        status: 200,
         headers: { "content-type": "text/html; charset=utf-8" },
       });
     }
+
+    return new Response(renderErrorPage(), {
+      status: 404,
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
   },
 };

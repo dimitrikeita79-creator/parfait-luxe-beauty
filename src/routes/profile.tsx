@@ -67,14 +67,23 @@ function ProfilePage() {
   useEffect(() => {
     let active = true;
     let unsubscribeCleanup: (() => void) | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const loadUser = async () => {
       try {
+        timeoutId = setTimeout(() => {
+          if (active) {
+            setLoading(false);
+          }
+        }, 10000);
         const currentUser = await authService.getCurrentUser();
         if (active) {
           setUser(currentUser);
         }
       } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
         if (active) {
           setLoading(false);
         }
@@ -129,6 +138,9 @@ function ProfilePage() {
 
     return () => {
       active = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       unsubscribe();
       clearInterval(sessionCheckInterval);
       if (unsubscribeCleanup) {

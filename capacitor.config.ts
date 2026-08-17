@@ -3,7 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "bf.parfaitdesign.desmohair",
   appName: "Parfait.Design/Desmohair",
-  webDir: "dist",
+  webDir: "dist/client",
   backgroundColor: "#ffffff",
   android: {
     allowMixedContent: false,

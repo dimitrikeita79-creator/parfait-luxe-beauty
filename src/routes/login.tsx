@@ -46,6 +46,8 @@ function LoginPage() {
     setLoading(true);
     setError(null);
 
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
     try {
       const normalizedEmail = email.trim().toLowerCase();
 

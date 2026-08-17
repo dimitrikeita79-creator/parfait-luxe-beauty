@@ -308,9 +308,9 @@ export function waLink(message?: string) {
   return waLinkFor("parfait", message);
 }
 export const SOCIALS = {
-  facebook: "https://www.facebook.com/Faso.Perruque/",
-  instagram: "https://www.instagram.com/parfaitdesign",
-  tiktok: "https://www.tiktok.com/@desmohair.faso.perruque",
+  facebook: "https://www.facebook.com/parfai.Nikiema",
+  instagram: "https://www.instagram.com/parfaitdesign/",
+  tiktok: "https://www.tiktok.com/@parfait.design",
   website: "https://parfaitdesign-desmohair.com/",
 };
 export const LOCATION = {

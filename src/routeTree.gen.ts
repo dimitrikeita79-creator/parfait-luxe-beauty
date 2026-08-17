@@ -21,6 +21,7 @@ import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SplashRouteImport } from './routes/splash'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as CatalogCategoryRouteImport } from './routes/catalog.$category'
+import { Route as ServicesCategoryRouteImport } from './routes/services.$category'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +83,11 @@ const CatalogCategoryRoute = CatalogCategoryRouteImport.update({
   path: '/$category',
   getParentRoute: () => CatalogRoute,
 } as any)
+const ServicesCategoryRoute = ServicesCategoryRouteImport.update({
+  id: '/$category',
+  path: '/$category',
+  getParentRoute: () => ServicesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -92,10 +98,11 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
-  '/services': typeof ServicesRoute
+  '/services': typeof ServicesRouteWithChildren
   '/splash': typeof SplashRoute
   '/terms': typeof TermsRoute
   '/catalog/$category': typeof CatalogCategoryRoute
+  '/services/$category': typeof ServicesCategoryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -106,10 +113,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
-  '/services': typeof ServicesRoute
+  '/services': typeof ServicesRouteWithChildren
   '/splash': typeof SplashRoute
   '/terms': typeof TermsRoute
   '/catalog/$category': typeof CatalogCategoryRoute
+  '/services/$category': typeof ServicesCategoryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -121,10 +129,11 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
-  '/services': typeof ServicesRoute
+  '/services': typeof ServicesRouteWithChildren
   '/splash': typeof SplashRoute
   '/terms': typeof TermsRoute
   '/catalog/$category': typeof CatalogCategoryRoute
+  '/services/$category': typeof ServicesCategoryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/terms'
     | '/catalog/$category'
+    | '/services/$category'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/terms'
     | '/catalog/$category'
+    | '/services/$category'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/splash'
     | '/terms'
     | '/catalog/$category'
+    | '/services/$category'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -180,7 +192,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
-  ServicesRoute: typeof ServicesRoute
+  ServicesRoute: typeof ServicesRouteWithChildren
   SplashRoute: typeof SplashRoute
   TermsRoute: typeof TermsRoute
 }
@@ -271,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CatalogCategoryRouteImport
       parentRoute: typeof CatalogRoute
     }
+    '/services/$category': {
+      id: '/services/$category'
+      path: '/$category'
+      fullPath: '/services/$category'
+      preLoaderRoute: typeof ServicesCategoryRouteImport
+      parentRoute: typeof ServicesRoute
+    }
   }
 }
 
@@ -285,6 +304,18 @@ const CatalogRouteChildren: CatalogRouteChildren = {
 const CatalogRouteWithChildren =
   CatalogRoute._addFileChildren(CatalogRouteChildren)
 
+interface ServicesRouteChildren {
+  ServicesCategoryRoute: typeof ServicesCategoryRoute
+}
+
+const ServicesRouteChildren: ServicesRouteChildren = {
+  ServicesCategoryRoute: ServicesCategoryRoute,
+}
+
+const ServicesRouteWithChildren = ServicesRoute._addFileChildren(
+  ServicesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
@@ -294,7 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
-  ServicesRoute: ServicesRoute,
+  ServicesRoute: ServicesRouteWithChildren,
   SplashRoute: SplashRoute,
   TermsRoute: TermsRoute,
 }

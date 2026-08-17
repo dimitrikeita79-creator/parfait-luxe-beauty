@@ -31,6 +31,38 @@ export class ServicesService {
     }
   }
 
+  async getByCategory(category: string): Promise<ServiceItem[]> {
+    try {
+      const normalizedCategory = category.trim().toLowerCase();
+      const categoryMap: Record<string, string> = {
+        coiffure: "Coiffure",
+        meches: "Mèches",
+        mèches: "Mèches",
+        equipement: "Équipement",
+        équipement: "Équipement",
+        produits: "Produits",
+        produit: "Produits",
+        autre: "Autre",
+        autres: "Autre",
+        perruques: "Perruques",
+        perruque: "Perruques",
+        mariage: "Mariage",
+        promo: "Promo",
+        promotion: "Promo",
+      };
+      const queryValue = categoryMap[normalizedCategory] ?? category.trim();
+      const { data, error } = await supabase
+        .from(TABLES.SERVICES)
+        .select("*")
+        .ilike("category", queryValue)
+        .order("title", { ascending: true });
+      if (error) throw error;
+      return data as ServiceItem[];
+    } catch (error) {
+      throw ApiException.fromError(error);
+    }
+  }
+
   async create(item: Omit<ServiceItem, 'id' | 'created_at' | 'updated_at'>): Promise<ServiceItem> {
     try {
       const { data, error } = await supabase

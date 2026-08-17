@@ -1,6 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router'
+import { useSafeNavigate } from "@/hooks/useSafeNavigate";
 import { motion, AnimatePresence } from "motion/react";
-import { Heart, X, Image as ImageIcon } from "lucide-react";
+import { Heart, Image as ImageIcon } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
 import { GlassButton } from "@/components/GlassButton";
@@ -30,34 +31,53 @@ export const Route = createFileRoute("/gallery")({
 });
 
 function GalleryPage() {
-  const navigate = useNavigate();
+  const navigate = useSafeNavigate();
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cat, setCat] = useState("Tout");
-  const [open, setOpen] = useState<GalleryItem | null>(null);
   const { favorites, setFavorites } = useFavorites();
 
   useEffect(() => {
+    let cancelled = false;
     const loadGallery = async () => {
       try {
         setLoading(true);
         setError(null);
         const data = await galleryService.getAll();
-        setItems(data);
+        if (!cancelled) {
+          setItems(data);
+        }
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Erreur lors du chargement de la galerie"
-        );
-        setItems([]);
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Erreur lors du chargement de la galerie"
+          );
+          setItems([]);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
     loadGallery();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setError("Le chargement prend trop de temps. Vérifiez votre connexion.");
+        setLoading(false);
+      }
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const categories = useMemo(() => {
     const unique = Array.from(new Set(items.map((g) => g.category)));
@@ -158,10 +178,9 @@ function GalleryPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03, duration: 0.3 }}
                   >
-                    <button
-                      onClick={() => setOpen(g)}
-                      className="relative block w-full active:scale-[0.98] transition overflow-hidden rounded-3xl group"
-                    >
+                     <div
+                       className="relative block w-full overflow-hidden rounded-3xl group outline-none"
+                     >
                       <Frame
                         variant="plain"
                         rounded="rounded-3xl"
@@ -194,7 +213,7 @@ function GalleryPage() {
                           <Heart className="h-3.5 w-3.5" fill={isFavorite ? "currentColor" : "none"} />
                         </button>
                       </Frame>
-                    </button>
+                    </div>
                   </motion.div>
                 );
               })}
@@ -202,70 +221,6 @@ function GalleryPage() {
           ))}
         </motion.div>
       )}
-
-      {/* Modal */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 grid place-items-center bg-black/80 backdrop-blur-xl p-6"
-            onClick={() => setOpen(null)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="w-full max-w-xs"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                className="glass absolute top-2 right-2 z-10 grid h-9 w-9 place-items-center rounded-full text-white bg-[var(--gold-deep)]/80"
-                onClick={() => setOpen(null)}
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <Frame
-                variant="plain"
-                rounded="rounded-[32px]"
-                className="aspect-[3/4] w-full"
-                image={open.image_url}
-                alt={open.title}
-              />
-              <div className="mt-4 rounded-[24px] border border-white/20 bg-white/10 p-4 text-center backdrop-blur">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-display text-xl font-semibold text-white">
-                    {open.title}
-                  </p>
-                  <button
-                    type="button"
-                    className={`rounded-full border p-2 text-sm font-semibold transition ${
-                      favorites.some(
-                        (f) => f.kind === "gallery" && f.id === open.id
-                      )
-                        ? "border-[var(--gold)] bg-[var(--gold-deep)]/20 text-[var(--gold)]"
-                        : "border-white/30 bg-white/10 text-white hover:bg-white/20"
-                    }`}
-                    onClick={() => handleToggleFavorite(open)}
-                  >
-                    <Heart className="h-4 w-4" fill={favorites.some((f) => f.kind === "gallery" && f.id === open.id) ? "currentColor" : "none"} />
-                  </button>
-                </div>
-                {open.description && (
-                  <p className="mt-2 text-sm text-white/80">
-                    {open.description}
-                  </p>
-                )}
-                <p className="mt-2 text-xs uppercase tracking-[0.2em] text-white/60">
-                  {open.category}
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }

@@ -485,9 +485,12 @@ export function AdminEditor() {
         </form>
         <div className="mt-4 space-y-2">
           {catalogItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between rounded-2xl border border-black/10 bg-white/80 px-3 py-3">
-              <div>
-                <p className="font-medium text-foreground">{item.title}</p>
+            <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/80 px-3 py-3">
+              {item.image_url && (
+                <img src={item.image_url} alt={item.title} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground truncate">{item.title}</p>
                 <p className="text-sm text-muted-foreground">{item.category} • {item.price}€</p>
               </div>
               <button className={blueEditBtnClass} type="button" onClick={() => startCatalogEdit(item)}>✎ Éditer</button>
@@ -533,9 +536,12 @@ export function AdminEditor() {
         </form>
         <div className="mt-4 space-y-2">
           {serviceItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between rounded-2xl border border-black/10 bg-white/80 px-3 py-3">
-              <div>
-                <p className="font-medium text-foreground">{item.title}</p>
+            <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/80 px-3 py-3">
+              {item.image_url && (
+                <img src={item.image_url} alt={item.title} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground truncate">{item.title}</p>
                 <p className="text-sm text-muted-foreground">{item.category} • {item.price}€ • {item.duration_min} min</p>
               </div>
               <button className={blueEditBtnClass} type="button" onClick={() => startServiceEdit(item)}>✎ Éditer</button>

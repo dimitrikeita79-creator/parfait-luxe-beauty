@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
 import { catalogService } from "@/backend/services";
 import type { CatalogItem } from "@/backend/models";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 // Import preview images for fallback
 import coupe1 from "@/assets/catalog/Coupe_1.webp";
@@ -39,6 +39,34 @@ function CatalogLayout() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await catalogService.getAvailable();
+      setItems(data);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erreur lors du chargement du catalogue"
+      );
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setError("Le chargement prend trop de temps. Vérifiez votre connexion.");
+        setLoading(false);
+      }
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   // Map categories to their fallback preview images
   const categoryImagesFallback: Record<string, string> = {
     coiffure: coupe1,
@@ -51,26 +79,8 @@ function CatalogLayout() {
 
   // Charger les items du catalogue
   useEffect(() => {
-    const loadCatalog = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await catalogService.getAvailable();
-        setItems(data);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Erreur lors du chargement du catalogue"
-        );
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCatalog();
-  }, []);
+    void reload();
+  }, [reload]);
 
   // Grouper les items par catégorie et extraire les catégories
   const categories = useMemo(() => {
@@ -99,7 +109,7 @@ function CatalogLayout() {
   }, [items]);
 
   return (
-    <>
+    <div>
       {/* Message d'erreur */}
       {error && (
         <motion.div
@@ -151,7 +161,7 @@ function CatalogLayout() {
                   <div
                     className="absolute inset-x-2 bottom-2 rounded-2xl p-2.5 backdrop-blur-md transition-all duration-300 group-hover:scale-[1.02]"
                     style={{
-                      background: "oklch(1 0 0 / 0.85)",
+                      background: "linear-gradient(135deg, oklch(1 0 0 / 0.9), oklch(1 0 0 / 0.7))",
                       border: "1px solid oklch(1 0 0 / 0.95)",
                     }}
                   >
@@ -166,6 +176,7 @@ function CatalogLayout() {
                     </p>
                   </div>
                 </Frame>
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[var(--gold-soft)] via-[var(--gold)] to-[var(--gold-soft)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
             );
             return (
@@ -178,7 +189,7 @@ function CatalogLayout() {
                 <Link
                   to="/catalog/$category"
                   params={{ category: c.slug }}
-                  search={{} as any}
+                  search={{ highlight: undefined }}
                   preload="intent"
                   className="block active:scale-[0.98] transition"
                 >
@@ -189,6 +200,6 @@ function CatalogLayout() {
           })}
         </motion.div>
       )}
-    </>
+    </div>
   );
 }

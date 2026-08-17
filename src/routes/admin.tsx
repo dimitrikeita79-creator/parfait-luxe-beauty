@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router'
+import { Link, useSafeNavigate } from "@/hooks/useSafeNavigate";
 import { motion } from "motion/react";
 import {
   ShieldCheck,
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminPage() {
-  const navigate = useNavigate();
+  const navigate = useSafeNavigate();
   const [user, setUser] = useState<AppUser | null>(null);
   const [checking, setChecking] = useState(true);
 

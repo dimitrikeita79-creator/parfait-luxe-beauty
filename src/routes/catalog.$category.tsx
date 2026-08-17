@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouterState, useSearch } from "@tanstack/react-router";
+import { useSafeNavigate } from "@/hooks/useSafeNavigate";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronLeft, Heart, X, Eye, ShoppingCart } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
 import { GlassButton } from "@/components/GlassButton";
@@ -12,7 +13,7 @@ import { asFavoriteItem, getFavorites, toggleFavorite } from "@/lib/favorites";
 import { useToast } from "@/hooks/useToast";
 import { useCart } from "@/context/CartContext";
 
-const ESTABLISHMENTS = ["Parfait Design", "Desmo Hair", "Beauté Essentielle", "KORO-RASTA MULTI-SERVICE"] as const;
+const ESTABLISHMENTS = ["Parfait Design", "Desmo Hair", "Beauté Essentielle"] as const;
 type EstablishmentFilter = typeof ESTABLISHMENTS[number] | "all";
 
 const formatFCFA = (price: number) => {
@@ -56,11 +57,10 @@ function CategoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [favorites, setFavorites] = useState(getFavorites());
-  const [open, setOpen] = useState<CatalogItem | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [establishmentFilter, setEstablishmentFilter] = useState<EstablishmentFilter>("all");
-  const navigate = useNavigate();
+  const navigate = useSafeNavigate();
   const { success, error: toastError } = useToast();
   const { addItem: addToCart } = useCart();
 
@@ -71,41 +71,43 @@ function CategoryPage() {
   const activeSalon = establishmentFilter !== "all" ? getSalon(getSalonIdFromName(establishmentFilter)) : null;
   const displaySalon = activeSalon ?? defaultSalon;
 
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await catalogService.getByCategory(category);
+      setItems(data);
+      const user = await authService.getCurrentUser();
+      if (user) {
+        setUserName(user.full_name || user.email);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors du chargement de la catégorie");
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [category]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setError("Le chargement prend trop de temps. Vérifiez votre connexion.");
+        setLoading(false);
+      }
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   useEffect(() => {
     if (!category || category.trim() === "") {
       navigate({ to: "/catalog" });
     }
   }, [category, navigate]);
 
-  const filteredItems = items.filter((item) => {
-    if (establishmentFilter === "all") return true;
-    return item.salon_name === establishmentFilter;
-  });
-
-  // Charger les items de la catégorie
   useEffect(() => {
-    const loadCategory = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await catalogService.getByCategory(category);
-        setItems(data);
-
-        // Load user info
-        const user = await authService.getCurrentUser();
-        if (user) {
-          setUserName(user.full_name || user.email);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur lors du chargement de la catégorie");
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCategory();
-  }, [category]);
+    void reload();
+  }, [reload]);
 
   // Charger les infos du salon
   useEffect(() => {
@@ -131,6 +133,11 @@ function CategoryPage() {
     const nextItems = toggleFavorite(asFavoriteItem(item, "catalog"));
     setFavorites(nextItems);
   };
+
+  const filteredItems = items.filter((item) => {
+    if (establishmentFilter === "all") return true;
+    return item.salon_name === establishmentFilter;
+  });
 
   const handleWhatsAppClick = (item: CatalogItem) => {
     const salonId = getSalonIdFromName(item.salon_name);
@@ -166,7 +173,7 @@ function CategoryPage() {
   }
 
   return (
-    <div className="px-4 pb-32">
+      <div className="px-4 pb-32">
       <Link
         to="/catalog"
         className="glass mt-4 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-medium"
@@ -276,49 +283,60 @@ function CategoryPage() {
                     highlight === p.id ? "ring-2 ring-[var(--gold)] scale-[1.02]" : ""
                   }`}
                 >
-                  <button type="button" onClick={() => setOpen(p)} className="w-full text-left">
-                     {p.image_url && (
-                       <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
-                         <img
-                           src={p.image_url}
-                           alt={p.title}
-                           className="absolute inset-0 h-full w-full object-cover"
-                           style={{ objectFit: "cover" }}
-                           loading="lazy"
-                           decoding="async"
-                         />
-                       </div>
+                   {p.image_url && (
+                     <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
+                       <img
+                         src={p.image_url}
+                         alt={p.title}
+                         className="absolute inset-0 h-full w-full object-cover"
+                         style={{ objectFit: "cover" }}
+                         loading="lazy"
+                         decoding="async"
+                       />
+                     </div>
+                   )}
+                   <div className="mt-2">
+                     <p className="font-display text-sm font-semibold leading-tight md:text-base">{p.title}</p>
+                     {(p as any).code && (
+                       <p className="mt-0.5 text-[10px] font-mono font-semibold text-[var(--gold-deep)]">
+                         Code: {(p as any).code}
+                       </p>
                      )}
-                    <div className="mt-2">
-                      <p className="font-display text-sm font-semibold leading-tight line-clamp-2 md:text-base">{p.title}</p>
-                      {(p as any).code && (
-                        <p className="mt-0.5 text-[10px] font-mono font-semibold text-[var(--gold-deep)]">
-                          Code: {(p as any).code}
-                        </p>
-                      )}
-                      {(() => {
-                        const isPromo = /promo|promotion|offres/i.test(p.category);
-                        const original = Number((p as any).original_price);
-                        if (isPromo && original && original > p.price) {
-                          return (
-                            <div className="mt-0.5 flex flex-col gap-0.5">
-                              <span className="text-[10px] font-semibold text-red-500 line-through">
-                                {formatFCFA(original)}
-                              </span>
-                              <span className="text-xs font-bold text-gold">{formatFCFA(p.price)}</span>
-                            </div>
-                          );
-                        }
-                        if (p.price > 0) {
-                          return (
-                            <p className="mt-0.5 text-xs font-bold text-gold">{formatFCFA(p.price)}</p>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </div>
-                  </button>
-                  <GlassButton
+                     {(() => {
+                       const isPromo = /promo|promotion|offres/i.test(p.category);
+                       const original = Number((p as any).original_price);
+                       if (isPromo && original && original > p.price) {
+                         return (
+                           <div className="mt-0.5 flex flex-col gap-0.5">
+                             <span className="text-[10px] font-semibold text-red-500 line-through">
+                               {formatFCFA(original)}
+                             </span>
+                             <span className="text-xs font-bold text-gold">{formatFCFA(p.price)}</span>
+                           </div>
+                         );
+                       }
+                       if (p.price > 0) {
+                         return (
+                           <p className="mt-0.5 text-xs font-bold text-gold">{formatFCFA(p.price)}</p>
+                         );
+                       }
+                       return null;
+                     })()}
+                     {p.description && (
+                       <p className="mt-0.5 text-[10px] text-muted-foreground leading-relaxed line-clamp-3">{p.description}</p>
+                     )}
+                     <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px]">
+                       <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5">
+                         {p.category}
+                       </span>
+                       {p.salon_name && (
+                         <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5">
+                           📍 {p.salon_name}
+                         </span>
+                       )}
+                     </div>
+                   </div>
+                   <GlassButton
                     type="button"
                     onClick={() => handleWhatsAppClick(p)}
                     variant="whatsapp"
@@ -356,14 +374,7 @@ function CategoryPage() {
                   >
                     <ShoppingCart className="h-3 w-3" /> Ajouter au panier
                   </button>
-                  <div className="mt-2 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setOpen(p)}
-                      className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-[var(--gold-deep)] transition"
-                    >
-                      <Eye className="h-3 w-3" /> Voir détails
-                    </button>
+                  <div className="mt-2 flex items-center justify-end">
                     <button
                       type="button"
                       className={`rounded-full border px-2.5 py-1.5 text-sm transition ${
@@ -382,145 +393,6 @@ function CategoryPage() {
           </motion.div>
         </>
       )}
-
-       {/* Modal de détail du produit */}
-       <AnimatePresence>
-         {open && (
-           <motion.div
-             initial={{ opacity: 0 }}
-             animate={{ opacity: 1 }}
-             exit={{ opacity: 0 }}
-             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-             onClick={() => setOpen(null)}
-           >
-             <motion.div
-               initial={{ opacity: 0, scale: 0.97, y: 8 }}
-               animate={{ opacity: 1, scale: 1, y: 0 }}
-               exit={{ opacity: 0, scale: 0.97, y: 8 }}
-               transition={{ duration: 0.15, ease: "easeOut" }}
-               onClick={(e) => e.stopPropagation()}
-               className="max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-[28px] border border-stone-200 bg-white p-5 shadow-lg"
-               style={{ transform: "translateZ(0)", contain: "layout style paint" }}
-             >
-               <div className="flex items-start justify-between">
-                 <h2 className="flex-1 pr-2 font-display text-xl font-semibold leading-tight">{open.title}</h2>
-                 <button
-                   type="button"
-                   onClick={() => setOpen(null)}
-                   className="rounded-full p-1.5 hover:bg-stone-100 transition"
-                 >
-                   <X className="h-4 w-4" />
-                 </button>
-               </div>
-
-                {open.image_url && (
-                  <div className="mt-3 overflow-hidden rounded-[24px] border border-stone-200 bg-stone-100">
-                    <div className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth">
-                      {[open.image_url, ...(open.gallery_images ?? [])].map((src, idx) => (
-                        <img
-                          key={src + idx}
-                          className="aspect-[4/3] w-full shrink-0 snap-center object-cover"
-                          src={src}
-                          alt={`${open.title} ${idx + 1}`}
-                          loading="lazy"
-                        />
-                      ))}
-                    </div>
-                    {(open.gallery_images?.length ?? 0) > 0 && (
-                      <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
-                        Balayez pour voir les autres vues
-                      </p>
-                    )}
-                  </div>
-                )}
-
-               {open.description && (
-                 <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{open.description}</p>
-               )}
-
-               <div className="mt-4 grid grid-cols-2 gap-2.5">
-                 <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
-                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                     Catégorie
-                   </p>
-                   <p className="mt-1 text-sm font-semibold">{open.category}</p>
-                 </div>
-
-                 {(() => {
-                   const isPromo = /promo|promotion|offres/i.test(open.category);
-                   const original = Number((open as any).original_price);
-                   if (isPromo && original && original > open.price) {
-                     return (
-                       <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
-                         <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                           Tarif
-                         </p>
-                         <div className="mt-1 flex flex-col gap-0.5">
-                           <span className="text-sm font-semibold text-red-600 line-through">{formatFCFA(original)}</span>
-                           <span className="text-sm font-bold text-[var(--gold-deep)]">{formatFCFA(open.price)}</span>
-                         </div>
-                       </div>
-                     );
-                   }
-                   if (open.price > 0) {
-                     return (
-                       <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
-                         <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                           Tarif
-                         </p>
-                         <p className="mt-1 text-sm font-semibold text-[var(--gold-deep)]">{formatFCFA(open.price)}</p>
-                       </div>
-                     );
-                   }
-                   return null;
-                 })()}
-               </div>
-
-               {(open as any).code && (
-                 <div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-3">
-                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                     Code produit
-                   </p>
-                   <p className="mt-1 text-sm font-semibold">{(open as any).code}</p>
-                 </div>
-               )}
-
-               <div className="mt-5 flex gap-2">
-                 <GlassButton
-                   as="a"
-                   href={waLinkFor(getSalonIdFromName(open.salon_name), `Bonjour ${getSalon(getSalonIdFromName(open.salon_name)).name}, je souhaite commander : ${open.title}${open.price ? ` — ${formatFCFA(open.price)}` : ""}${(open as any).code ? ` [Code: ${(open as any).code}]` : ""}.`)}
-                   target="_blank"
-                   rel="noreferrer"
-                   variant="whatsapp"
-                   size="md"
-                   full
-                   className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/20 hover:shadow-green-500/30"
-                 >
-                   <WhatsAppIcon className="h-4 w-4" style={{ color: "#25D366" }} /> Commander
-                 </GlassButton>
-                 <button
-                   type="button"
-                   onClick={() => {
-                     handleToggleFavorite(open);
-                     setOpen(null);
-                   }}
-                   className="rounded-full border border-stone-200 p-2.5 transition hover:bg-stone-50"
-                   title="Ajouter aux favoris"
-                 >
-                   <Heart
-                     className="h-5 w-5"
-                     fill={
-                       favorites.some((f) => f.id === open.id && f.kind === "catalog")
-                         ? "currentColor"
-                         : "none"
-                     }
-                   />
-                 </button>
-               </div>
-             </motion.div>
-           </motion.div>
-         )}
-       </AnimatePresence>
-    </div>
-  );
+     </div>
+   );
 }

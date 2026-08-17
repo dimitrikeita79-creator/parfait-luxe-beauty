@@ -14,6 +14,7 @@ import { X, Bell, ShoppingCart } from "lucide-react";
 import { supabase } from "@/backend/client";
 import { notificationService, authService } from "@/backend/services";
 import { useCart } from "@/context/CartContext";
+import { ColorScrollbar } from "@/components/ColorScrollbar";
 import type { CartItem, Notification } from "@/backend/models";
 
 const NAV = [
@@ -134,6 +135,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
 
   return (
     <div className="relative mx-auto min-h-screen w-full max-w-md overflow-hidden md:max-w-3xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
+      <ColorScrollbar />
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 mx-auto max-w-md md:max-w-3xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
         <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-[var(--gold-soft)] opacity-25 blur-3xl" />
         <div className="absolute bottom-10 left-1/4 h-60 w-60 rounded-full bg-[var(--gold-soft)] opacity-20 blur-3xl" />
@@ -278,7 +280,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
       </main>
 
       <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-2 pb-[calc(0.6rem+env(safe-area-inset-bottom))] pt-1 md:max-w-lg md:px-4 md:pb-[calc(0.8rem+env(safe-area-inset-bottom))] md:pt-1.5 lg:max-w-xl lg:px-6 lg:pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pt-2">
-        <div className="glass-nav flex items-center justify-between rounded-full px-1 py-1 md:px-1.5 md:py-1.5 lg:px-2 lg:py-2">
+        <div className="glass-nav relative flex items-center justify-between rounded-full px-1 py-1 md:px-1.5 md:py-1.5 lg:px-2 lg:py-2">
           {NAV.map(({ to, label, icon, color }) => (
             <NavItem
               key={to}
@@ -289,6 +291,24 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
               pathname={pathname}
             />
           ))}
+          <AnimatePresence>
+            {NAV.map(({ to, color }) => {
+              const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+              if (!active) return null;
+              return (
+                <motion.div
+                  key={to}
+                  layoutId="nav-indicator"
+                  className="pointer-events-none absolute rounded-full"
+                  style={{
+                    background: `linear-gradient(135deg, ${color}20, ${color}08)`,
+                    boxShadow: `0 0 20px ${color}25`,
+                  }}
+                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                />
+              );
+            })}
+          </AnimatePresence>
         </div>
       </nav>
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />

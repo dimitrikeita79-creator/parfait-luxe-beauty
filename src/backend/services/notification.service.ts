@@ -45,12 +45,13 @@ export class NotificationService {
     action: 'created' | 'updated' | 'deleted',
   ): Promise<void> {
     try {
-      const title = `Nouvelle ${itemType} ${action === 'created' ? 'ajoutée' : action === 'updated' ? 'modifiée' : 'supprimée'}`;
-      const message = `${itemTitle} a été ${action === 'created' ? 'ajoutée' : action === 'updated' ? 'modifiée' : 'supprimée'} par un administrateur.`;
+      if (action !== 'created') return;
+      const title = `Nouvel élément disponible`;
+      const message = `${itemTitle} est maintenant disponible sur Parfait.Design.`;
       await this.create({
         title,
         message,
-        type: 'info',
+        type: 'promo',
         read: false,
       });
     } catch (error) {

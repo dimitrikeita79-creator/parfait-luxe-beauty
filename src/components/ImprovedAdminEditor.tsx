@@ -599,7 +599,7 @@ export function ImprovedAdminEditor() {
                     onClick={() => startGalleryEdit(item)}
                     className="w-full text-left"
                   >
-                    {gallerySearch && item.image_url && (
+                    {item.image_url && (
                       <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
                         <img
                           src={item.image_url}
@@ -609,7 +609,7 @@ export function ImprovedAdminEditor() {
                         />
                       </div>
                     )}
-                    <p className={`text-xs font-semibold leading-tight line-clamp-2 ${gallerySearch && item.image_url ? "mt-2" : ""}`}>{item.title}</p>
+                    <p className={`text-xs font-semibold leading-tight line-clamp-2 ${item.image_url ? "mt-2" : ""}`}>{item.title}</p>
                     <p className="text-[10px] text-muted-foreground capitalize">{item.category}</p>
                   </button>
                   <div className="mt-2 flex gap-2">
@@ -800,7 +800,7 @@ export function ImprovedAdminEditor() {
                       onClick={() => startCatalogEdit(item)}
                       className="w-full text-left"
                     >
-                      {catalogSearch && item.image_url && (
+                      {item.image_url && (
                         <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
                           <img
                             src={item.image_url}
@@ -810,7 +810,7 @@ export function ImprovedAdminEditor() {
                           />
                         </div>
                       )}
-                      <p className={`text-xs font-semibold leading-tight line-clamp-2 ${catalogSearch && item.image_url ? "mt-2" : ""}`}>{item.title}</p>
+                      <p className={`text-xs font-semibold leading-tight line-clamp-2 ${item.image_url ? "mt-2" : ""}`}>{item.title}</p>
                       <p className="text-[10px] text-muted-foreground">{item.category}</p>
                        {item.code && (
                          <p className="mt-1 text-[10px] font-mono font-semibold text-[var(--gold-deep)] bg-[var(--gold-soft)]/30 inline-block px-1.5 py-0.5 rounded-full">
@@ -917,31 +917,17 @@ export function ImprovedAdminEditor() {
                 </option>
               ))}
             </select>
-             <div className="space-y-2">
-               <label className="block text-sm font-medium text-foreground">Code</label>
-               <div className="flex gap-2">
-                 <input
-                   className="flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2"
-                   placeholder="ex: CF1, PB1..."
-                   value={catalogForm.code}
-                   onChange={(event) => setCatalogForm({ ...catalogForm, code: event.target.value })}
-                 />
-               </div>
-               {codesLoaded && availableCodes.length > 0 && (
-                 <div className="flex flex-wrap gap-1.5">
-                   {availableCodes.slice(0, 20).map((c) => (
-                     <button
-                       key={c}
-                       type="button"
-                       onClick={() => setCatalogForm({ ...catalogForm, code: c })}
-                       className="rounded-full border border-stone-200 px-2 py-1 text-[11px] font-medium text-stone-600 hover:border-[var(--gold)] hover:text-[var(--gold-deep)] transition active:scale-95"
-                     >
-                       {c}
-                     </button>
-                   ))}
-                 </div>
-               )}
-             </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-foreground">Code</label>
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2"
+                    placeholder="ex: CF1, PB1..."
+                    value={catalogForm.code}
+                    onChange={(event) => setCatalogForm({ ...catalogForm, code: event.target.value })}
+                  />
+                </div>
+              </div>
             <div className="space-y-2">
               <label className="block text-sm font-medium text-foreground">Lien image</label>
               <input
@@ -1101,7 +1087,7 @@ export function ImprovedAdminEditor() {
                     onClick={() => startServiceEdit(item)}
                     className="w-full text-left"
                   >
-                    {serviceSearch && item.image_url && (
+                    {item.image_url && (
                       <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
                         <img
                           src={item.image_url}
@@ -1111,7 +1097,7 @@ export function ImprovedAdminEditor() {
                         />
                       </div>
                     )}
-                    <p className={`text-xs font-semibold leading-tight line-clamp-2 ${serviceSearch && item.image_url ? "mt-2" : ""}`}>{item.title}</p>
+                    <p className={`text-xs font-semibold leading-tight line-clamp-2 ${item.image_url ? "mt-2" : ""}`}>{item.title}</p>
                     <p className="text-[10px] text-muted-foreground">{item.category}</p>
                     <div className="mt-1 flex items-center gap-2">
                       {item.price > 0 && (
@@ -1195,20 +1181,6 @@ export function ImprovedAdminEditor() {
                   value={serviceForm.code}
                   onChange={(event) => setServiceForm({ ...serviceForm, code: event.target.value })}
                 />
-                {codesLoaded && availableCodes.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {availableCodes.slice(0, 20).map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setServiceForm({ ...serviceForm, code: c })}
-                        className="rounded-full border border-stone-200 px-2 py-1 text-[11px] font-medium text-stone-600 hover:border-[var(--gold)] hover:text-[var(--gold-deep)] transition active:scale-95"
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
              <select
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"

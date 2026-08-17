@@ -29,4 +29,9 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware],
+  defaultSsr: false,
+  hydration: false,
 }));
+
+console.log('[start.ts] startInstance created, defaultSsr=false, hydration=false');
+

@@ -5,7 +5,6 @@ import {
   createRootRouteWithContext,
   useRouter,
   HeadContent,
-  Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import React from "react";
@@ -121,28 +120,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr" className="theme-light" suppressHydrationWarning>
-      <head>
-        <HeadContent />
-        <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-
-        <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
-        <meta httpEquiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
-        <meta name="color-scheme" content="light" />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
+    <div>
+      <HeadContent />
+      {children}
+    </div>
   );
 }
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [userId, setUserId] = React.useState<string | undefined>(undefined);
-  const [authLoading, setAuthLoading] = React.useState(false);
-  const [showSplash, setShowSplash] = React.useState(false);
+  const [authLoading, setAuthLoading] = React.useState(true);
+  const [showSplash, setShowSplash] = React.useState(true);
   const [splashPhase, setSplashPhase] = useState<"loading" | "welcome">("loading");
 
   useEffect(() => {
@@ -177,75 +166,76 @@ function RootComponent() {
     setShowSplash(true);
     const t1 = setTimeout(() => {
       setSplashPhase("welcome");
-      const t2 = setTimeout(() => setShowSplash(false), 2600);
+      const t2 = setTimeout(() => setShowSplash(false), 1800);
       return () => clearTimeout(t2);
-    }, 2400);
+    }, 1500);
     return () => clearTimeout(t1);
   }, []);
 
   return (
     <>
-      {showSplash && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-white gpu-accelerated"
-        >
-          <AnimatePresence mode="wait">
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div
+            key="splash"
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-white gpu-accelerated"
+          >
+            <AnimatePresence mode="wait">
             {splashPhase === "loading" ? (
               <motion.div
                 key="splash-loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.35 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                transition={{ duration: 0.3 }}
                 className="text-center gpu-accelerated"
               >
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 0.2, ease: "backOut" }}
-                  className="mx-auto grid h-32 w-32 place-items-center rounded-[40px] shadow-luxe overflow-hidden"
+                  transition={{ duration: 0.5, delay: 0.1, ease: "backOut" }}
+                  className="mx-auto grid h-28 w-28 place-items-center rounded-[36px] shadow-luxe overflow-hidden"
                 >
                   <img src={desmohairLogo} alt="Desmohair" className="h-full w-full object-contain p-2" />
                 </motion.div>
                 <motion.h1
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  className="font-display mt-6 text-3xl font-semibold leading-tight"
+                  transition={{ duration: 0.4, delay: 0.25 }}
+                  className="font-display mt-5 text-2xl font-semibold leading-tight"
                 >
                   Desmohair
                 </motion.h1>
                 <motion.p
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.55 }}
-                  className="mt-3 text-sm italic text-muted-foreground"
+                  transition={{ duration: 0.4, delay: 0.35 }}
+                  className="mt-2 text-xs italic text-muted-foreground"
                 >
                   {"Votre beauté, notre passion"}
                 </motion.p>
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.7 }}
-                  className="mx-auto mt-8 flex items-center justify-center gap-1"
+                  transition={{ duration: 0.4, delay: 0.45 }}
+                  className="mx-auto mt-6 flex items-center justify-center gap-1"
                 >
                   <motion.span
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
+                    animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: 0 }}
                     className="h-2 w-2 rounded-full bg-[var(--gold)]"
                   />
                   <motion.span
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 1.2, repeat: Infinity, delay: 0.15 }}
+                    animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: 0.12 }}
                     className="h-2 w-2 rounded-full bg-[var(--gold)]"
                   />
                   <motion.span
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 1.2, repeat: Infinity, delay: 0.3 }}
+                    animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: 0.24 }}
                     className="h-2 w-2 rounded-full bg-[var(--gold)]"
                   />
                 </motion.div>
@@ -253,33 +243,33 @@ function RootComponent() {
             ) : (
               <motion.div
                 key="splash-welcome"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.05 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
+                exit={{ opacity: 0, scale: 1.04 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
                 className="text-center px-6 gpu-accelerated"
               >
                 <motion.div
-                  initial={{ scale: 0.5, opacity: 0 }}
+                  initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, duration: 0.5, ease: "backOut" }}
-                  className="mx-auto mb-5 grid h-20 w-20 place-items-center rounded-full bg-white shadow-soft ring-1 ring-black/5 md:h-24 md:w-24"
+                  transition={{ delay: 0.05, duration: 0.4, ease: "backOut" }}
+                  className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-white shadow-soft ring-1 ring-black/5 md:h-20 md:w-20"
                 >
                   <img src={desmohairLogo} alt="Desmohair" className="h-full w-full object-contain p-0.5" />
                 </motion.div>
                 <motion.h2
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25, duration: 0.4 }}
-                  className="font-display text-3xl font-semibold leading-tight"
+                  transition={{ delay: 0.2, duration: 0.3 }}
+                  className="font-display text-2xl font-semibold leading-tight"
                 >
                   Bienvenue chez Desmohair
                 </motion.h2>
                 <motion.p
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4, duration: 0.4 }}
-                  className="mt-3 text-sm text-muted-foreground leading-relaxed"
+                  transition={{ delay: 0.3, duration: 0.3 }}
+                  className="mt-2 text-xs text-muted-foreground leading-relaxed"
                 >
                   Laissez-nous révéler votre élégance naturelle.
                 </motion.p>
@@ -288,6 +278,7 @@ function RootComponent() {
           </AnimatePresence>
         </motion.div>
       )}
+      </AnimatePresence>
       {!authLoading && (
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>

@@ -11,7 +11,7 @@ import { asFavoriteItem, getFavorites, toggleFavorite } from "@/lib/favorites";
 import { useToast } from "@/hooks/useToast";
 import { useCart } from "@/context/CartContext";
 
-const ESTABLISHMENTS = ["Parfait Design", "Desmo Hair", "KORO-RASTA MULTI-SERVICE"] as const;
+const ESTABLISHMENTS = ["Parfait Design", "Desmo Hair"] as const;
 type EstablishmentFilter = typeof ESTABLISHMENTS[number] | "all";
 
 type CategoryStyle = { icon: typeof Scissors; color: string; iconColor: string };
@@ -62,46 +62,38 @@ function ServicesPage() {
     favorites.forEach((f) => set.add(`${f.kind}:${f.id}`));
     return set;
   }, [favorites]);
-  const [open, setOpen] = useState<ServiceItem | null>(null);
   const [establishmentFilter, setEstablishmentFilter] = useState<EstablishmentFilter>("all");
   const { success, error: toastError } = useToast();
   const { addItem: addToCart } = useCart();
-  const modalRef = useRef<HTMLDivElement | null>(null);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await servicesService.getActive();
+      setServices(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors du chargement des services");
+      setServices([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (open) {
-      const original = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = original;
-      };
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (open && modalRef.current) {
-      modalRef.current.scrollTop = 0;
-    }
-  }, [open]);
+    const timer = setTimeout(() => {
+      if (loading) {
+        setError("Le chargement prend trop de temps. Vérifiez votre connexion.");
+        setLoading(false);
+      }
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   // Charger les services
   useEffect(() => {
-    const loadServices = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await servicesService.getActive();
-        setServices(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur lors du chargement des services");
-        setServices([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadServices();
-  }, []);
+    void reload();
+  }, [reload]);
 
   // Extraire les catégories uniques
   const categories = useMemo(() => {
@@ -172,7 +164,7 @@ function ServicesPage() {
   );
 
   return (
-    <>
+    <div>
       {/* Message d'erreur */}
       <AnimatePresence>
         {error && (
@@ -288,46 +280,57 @@ function ServicesPage() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i * 0.03, 0.25), duration: 0.3 }}
-                className="liquid-glass rounded-[24px] p-3"
-              >
-                <button type="button" onClick={() => setOpen(s)} className="w-full text-left">
-                  {s.image_url ? (
-                    <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
-                      <img
-                        src={s.image_url}
-                        alt={s.title}
-                        className="absolute inset-0 h-full w-full object-cover"
-                        style={{ objectFit: "cover" }}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                  ) : (
-                    <div className={`flex w-full items-center justify-center rounded-2xl bg-gradient-to-br ${color}`} style={{ aspectRatio: "4/5" }}>
-                      <CategoryIcon className={`h-8 w-8 ${iconColor}`} />
-                    </div>
+              className="liquid-glass rounded-[24px] p-3"
+            >
+              {s.image_url ? (
+                <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
+                  <img
+                    src={s.image_url}
+                    alt={s.title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{ objectFit: "cover" }}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              ) : (
+                <div className={`flex w-full items-center justify-center rounded-2xl bg-gradient-to-br ${color}`} style={{ aspectRatio: "4/5" }}>
+                  <CategoryIcon className={`h-8 w-8 ${iconColor}`} />
+                </div>
+              )}
+              <div className="mt-2">
+                <p className="font-display text-sm font-semibold leading-tight">{s.title}</p>
+                {s.description && (
+                  <p className="mt-0.5 text-[10px] text-muted-foreground leading-relaxed">{s.description}</p>
+                )}
+                <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px]">
+                  <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5">
+                    <Clock className="h-2.5 w-2.5" /> {durationDisplay}
+                  </span>
+                  {s.price > 0 && (
+                    <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5">
+                      💰 {s.price.toLocaleString()} F CFA
+                    </span>
                   )}
-                  <div className="mt-2">
-                    <p className="font-display text-sm font-semibold leading-tight line-clamp-2">{s.title}</p>
-                    {s.description && (
-                      <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2">{s.description}</p>
-                    )}
-                    <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px]">
-                      <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5">
-                        <Clock className="h-2.5 w-2.5" /> {durationDisplay}
-                      </span>
-                      {s.price > 0 && (
-                        <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5">
-                          💰 {s.price.toLocaleString()} F CFA
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </button>
-                <div className="mt-2 flex gap-2">
+                  {s.salon_name && (
+                    <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5">
+                      📍 {s.salon_name}
+                    </span>
+                  )}
+                  {s.code && (
+                    <span className="glass inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono font-semibold text-[var(--gold-deep)]">
+                      Code: {s.code}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{s.category}</span>
+                </div>
+              </div>
+              <div className="mt-2 flex gap-2">
                   <GlassButton
                     type="button"
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();
                       handleWhatsAppClick(s);
                     }}
@@ -368,124 +371,6 @@ function ServicesPage() {
           })}
         </motion.div>
       )}
-
-      {/* Modal de détail du service */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="service-modal"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60"
-            onClick={() => setOpen(null)}
-          >
-            <motion.div
-              ref={modalRef}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="absolute left-1/2 top-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-[28px] border border-[var(--gold-soft)]/30 bg-white p-5 shadow-xl"
-              style={{ maxHeight: "90vh", transform: "translateZ(0)" }}
-            >
-             <div className="flex items-start justify-between">
-                <h2 className="flex-1 pr-2 font-display text-xl font-semibold leading-tight">{open.title}</h2>
-                <button
-                  type="button"
-                  onClick={() => setOpen(null)}
-                  className="rounded-full p-1.5 hover:bg-stone-100 transition"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {open.image_url && (
-                <div className="mt-3 overflow-hidden rounded-[24px] border border-stone-200 bg-stone-100">
-                  <div className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth">
-                     {[open.image_url, ...(open.gallery_images ?? [])].map((src, idx) => (
-                       <img
-                         key={src + idx}
-                         className="aspect-[4/3] w-full shrink-0 snap-center object-cover"
-                         src={src}
-                         alt={`${open.title} ${idx + 1}`}
-                         loading="lazy"
-                       />
-                     ))}
-                  </div>
-                  {(open.gallery_images?.length ?? 0) > 0 && (
-                    <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
-                      Balayez pour voir les autres vues
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {open.description && (
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{open.description}</p>
-              )}
-
-              <div className="mt-4 grid grid-cols-2 gap-2.5">
-                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                    Catégorie
-                  </p>
-                  <p className="mt-1 text-sm font-semibold">{open.category}</p>
-                </div>
-
-                {open.duration_min > 0 && (
-                  <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                      Durée
-                    </p>
-                    <p className="mt-1 text-sm font-semibold">{open.duration_min} minutes</p>
-                  </div>
-                )}
-
-                {open.price > 0 && (
-                  <div className="rounded-2xl border border-stone-200 bg-stone-50 p-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                      Tarif
-                    </p>
-                    <p className="mt-1 text-sm font-semibold">
-                      {open.price.toLocaleString()} F CFA
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-5 flex gap-2">
-                <GlassButton
-                  as="a"
-                  href={waLinkFor(getSalonIdFromName(open.salon_name), `Bonjour, je souhaite réserver : ${open.title}.`)}
-                  target="_blank"
-                  rel="noreferrer"
-                  variant="whatsapp"
-                  size="md"
-                  full
-                  className="bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/20 hover:shadow-green-500/30"
-                >
-                  <WhatsAppIcon className="h-4 w-4" style={{ color: "#25D366" }} /> Réserver
-                </GlassButton>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleToggleFavorite(open);
-                    setOpen(null);
-                  }}
-                  className="rounded-full border border-stone-200 p-2.5 transition hover:bg-stone-50"
-                  title="Ajouter aux favoris"
-                >
-                  <Heart
-                    className="h-5 w-5"
-                    fill={favoriteSet.has(`service:${open.id}`) ? "currentColor" : "none"}
-                  />
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+    </div>
   );
 }

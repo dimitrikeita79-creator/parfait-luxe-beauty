@@ -16,6 +16,23 @@ const EMOJI_MAP: Record<string, string> = {
 
 export class LocalNotificationService {
   private granted = false;
+  private channelCreated = false;
+
+  async createChannel(): Promise<void> {
+    try {
+      if (this.channelCreated) return;
+      await LocalNotifications.createChannel({
+        id: 'default',
+        name: 'Notifications',
+        importance: 5,
+        visibility: 1,
+        sound: 'default',
+      });
+      this.channelCreated = true;
+    } catch (error) {
+      console.error('[LocalNotificationService] createChannel error:', error);
+    }
+  }
 
   async requestPermission(): Promise<boolean> {
     try {
@@ -41,6 +58,7 @@ export class LocalNotificationService {
 
   async ensurePermission(): Promise<boolean> {
     try {
+      await this.createChannel();
       const already = await this.isPermissionGranted();
       if (already) return true;
       const result = await this.requestPermission();
@@ -57,12 +75,16 @@ export class LocalNotificationService {
   }
 
   async notify({ title, body, id = 1 }: NotificationPayload): Promise<void> {
-    if (!this.granted) {
-      const ok = await this.ensurePermission();
-      if (!ok) return;
-    }
-
     try {
+      await this.createChannel();
+      if (!this.granted) {
+        const ok = await this.ensurePermission();
+        if (!ok) {
+          console.warn('[LocalNotificationService] permission not granted, notification skipped:', title);
+          return;
+        }
+      }
+
       await LocalNotifications.schedule({
         notifications: [
           {
@@ -71,6 +93,7 @@ export class LocalNotificationService {
             body,
             sound: 'default',
             iconColor: '#c8a050',
+            smallIcon: 'ic_notification',
           },
         ],
       });

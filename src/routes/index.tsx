@@ -70,7 +70,7 @@ const formatFCFA = (price: number) => {
 
 const isPromoCategory = (category: string) => /promo|promotion|offres/i.test(category);
 
-const HomeCard = ({ image, title, category, price, originalPrice, to, params, search, children }: { image?: string; title: string; category?: string; price?: number; originalPrice?: number | null; to: string; params?: Record<string, string>; search?: Record<string, any>; children?: React.ReactNode }) => {
+const HomeCard = ({ image, title, category, price, originalPrice, to, params, search, children }: { image?: string | null; title: string; category?: string; price?: number; originalPrice?: number | null; to: string; params?: Record<string, string>; search?: Record<string, any>; children?: React.ReactNode }) => {
   const promo = isPromoCategory(category || "");
   return (
     <Link to={to} params={params} search={search} preload="intent" className="block">
@@ -243,7 +243,7 @@ function Index() {
   const reviewsRef = useRef<HTMLDivElement | null>(null);
   const searchDebounce = useRef<number | null>(null);
   const searchOpen = useRef(false);
-  const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  const searchContainerRef = useRef<HTMLFormElement | null>(null);
   const reviewIndexRef = useRef(0);
 
   useEffect(() => {
@@ -670,7 +670,7 @@ function Index() {
                   <GlassButton
                     key={`${h.type}-${"id" in h ? h.id : h.name}`}
                     type="button"
-                    onMouseDown={(e) => {
+                    onMouseDown={(e: React.MouseEvent) => {
                       e.preventDefault();
                       goToHit(h);
                     }}

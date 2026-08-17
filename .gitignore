@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+buildlog.txt
+devlog.txt
 
 node_modules
 dist
@@ -40,3 +42,28 @@ ios/build/
 *.njsproj
 *.sln
 *.sw?
+
+# Temporary / backup files
+*.bak
+check_html.py
+android-backup/
+public/logo.ico
+
+# Scripts temporaires
+scripts/check-dims.ps1
+scripts/check-icons.ps1
+scripts/fix-fav.cjs
+scripts/generate-icons.ps1
+scripts/repro-418.mjs
+
+# Supabase temporaire
+supabase/.temp/
+supabase/migrations/
+
+# Generated Capacitor config
+capacitor.config.json
+
+# Android web assets générés par Capacitor (ne pas tracker)
+android/app/src/main/assets/public/client/assets/
+android/app/src/main/assets/public/server/
+android/app/src/main/assets/public/manifest.webmanifest

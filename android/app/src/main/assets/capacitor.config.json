@@ -1,7 +1,7 @@
 {
 	"appId": "bf.parfaitdesign.desmohair",
-	"appName": "Parfait.design",
-	"webDir": "dist",
+	"appName": "Parfait.Design/Desmohair",
+	"webDir": "dist/client",
 	"backgroundColor": "#ffffff",
 	"android": {
 		"allowMixedContent": false,
@@ -10,8 +10,9 @@
 		"statusBarBackgroundColor": "#ffffff",
 		"statusBarStyle": "dark",
 		"windowSoftInputMode": "adjustResize",
+		"launchAutoHide": true,
 		"splashScreen": {
-			"launchShowDuration": 1000,
+			"launchShowDuration": 2000,
 			"launchAutoHide": true,
 			"backgroundColor": "#ffffff",
 			"androidSplashResourceName": "splash",
@@ -24,8 +25,8 @@
 		"scrollsToTop": true
 	},
 	"server": {
-		"androidScheme": "file",
-		"iosScheme": "file"
+		"androidScheme": "https",
+		"iosScheme": "https"
 	},
 	"plugins": {
 		"StatusBar": {
@@ -47,9 +48,6 @@
 					"host": "gjahsoafbclqpodnblnd.supabase.co"
 				}
 			]
-		},
-		"LocalNotifications": {
-			"iconColor": "#c8a050"
 		}
 	}
 }

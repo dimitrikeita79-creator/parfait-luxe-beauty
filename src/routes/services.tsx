@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Clock, Scissors, Zap, Heart, X, Sparkles, ShoppingCart, Palette, Wind, Droplets, Crown, Paintbrush } from "lucide-react";
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { GlassButton } from "@/components/GlassButton";
+import { ImageCarousel } from "@/components/ImageCarousel";
 import { servicesService, authService } from "@/backend/services";
 import { waLinkFor, getSalonIdFromName, getSalon } from "@/lib/salon-data";
 import type { ServiceItem } from "@/backend/models";
@@ -113,38 +114,38 @@ function ServicesPage() {
     return result;
   }, [services, active, establishmentFilter]);
 
-  const handleToggleFavorite = useCallback(
-    async (service: ServiceItem) => {
-      const user = await authService.getCurrentUser();
-      if (!user) {
-        navigate({ to: "/login" });
-        return;
-      }
-      const nextItems = toggleFavorite(asFavoriteItem(service, "service"));
-      setFavorites(nextItems);
-    },
-    [navigate],
-  );
+   const handleToggleFavorite = useCallback(
+     async (service: ServiceItem) => {
+       const user = await authService.getCurrentUser();
+       if (!user) {
+         navigate({ to: "/login" } as any);
+         return;
+       }
+       const nextItems = toggleFavorite(asFavoriteItem(service, "service"));
+       setFavorites(nextItems);
+     },
+     [navigate],
+   );
 
-  const handleWhatsAppClick = useCallback(
-    (service: ServiceItem) => {
-      const salonId = getSalonIdFromName(service.salon_name);
-      const salon = getSalon(salonId);
-      const msg = `Bonjour ${salon.name}, je souhaite réserver : ${service.title}${service.price ? ` — ${service.price.toLocaleString()} FCFA` : ""}${service.duration_min ? ` (${service.duration_min} min)` : ""}.`;
-      const link = waLinkFor(salonId, msg);
-      window.open(link, "_blank", "noopener,noreferrer");
-    },
-    [],
-  );
+   const handleWhatsAppClick = useCallback(
+     (service: ServiceItem) => {
+       const salonId = getSalonIdFromName(service.salon_name);
+       const salon = getSalon(salonId);
+       const msg = `Bonjour ${salon.name}, je souhaite réserver : ${service.title}${service.price ? ` — ${service.price.toLocaleString()} FCFA` : ""}${service.duration_min ? ` (${service.duration_min} min)` : ""}.`;
+       const link = waLinkFor(salonId, msg);
+       window.open(link, "_blank", "noopener,noreferrer");
+     },
+     [],
+   );
 
-  const handleAddToCart = useCallback(
-    async (service: ServiceItem) => {
-      const user = await authService.getCurrentUser();
-      if (!user) {
-        navigate({ to: "/login" });
-        return;
-      }
-      try {
+   const handleAddToCart = useCallback(
+     async (service: ServiceItem) => {
+       const user = await authService.getCurrentUser();
+       if (!user) {
+         navigate({ to: "/login" } as any);
+         return;
+       }
+       try {
         await addToCart({
           item_type: "service",
           item_id: service.id,
@@ -282,22 +283,31 @@ function ServicesPage() {
                 transition={{ delay: Math.min(i * 0.03, 0.25), duration: 0.3 }}
               className="liquid-glass rounded-[24px] p-3"
             >
-              {s.image_url ? (
-                <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
-                  <img
-                    src={s.image_url}
-                    alt={s.title}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    style={{ objectFit: "cover" }}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              ) : (
-                <div className={`flex w-full items-center justify-center rounded-2xl bg-gradient-to-br ${color}`} style={{ aspectRatio: "4/5" }}>
-                  <CategoryIcon className={`h-8 w-8 ${iconColor}`} />
-                </div>
-              )}
+              {(() => {
+                const imgs = (s.gallery_images?.length ? s.gallery_images : s.image_url ? [s.image_url] : []).filter(Boolean);
+                if (imgs.length > 1) {
+                  return <ImageCarousel images={imgs} autoPlayInterval={4000} />;
+                }
+                if (imgs.length === 1) {
+                  return (
+                    <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
+                      <img
+                        src={imgs[0]}
+                        alt={s.title}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        style={{ objectFit: "cover" }}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                  );
+                }
+                return (
+                  <div className={`flex w-full items-center justify-center rounded-2xl bg-gradient-to-br ${color}`} style={{ aspectRatio: "4/5" }}>
+                    <CategoryIcon className={`h-8 w-8 ${iconColor}`} />
+                  </div>
+                );
+              })()}
               <div className="mt-2">
                 <p className="font-display text-sm font-semibold leading-tight">{s.title}</p>
                 {s.description && (

@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { type CSSProperties, type ReactNode, useState, useEffect, useCallback } from "react";
+import { type CSSProperties, type ReactNode, useState, useEffect, useCallback, useRef } from "react";
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { SALONS, waLinkFor, waLink, getSalonIdFromName } from "@/lib/salon-data";
@@ -12,7 +12,7 @@ import contactIcon from "@/assets/icone/contact.svg";
 import profileIcon from "@/assets/icone/profil.svg";
 import { X, Bell, ShoppingCart } from "lucide-react";
 import { supabase } from "@/backend/client";
-import { notificationService, authService } from "@/backend/services";
+import { notificationService, authService, localNotificationService } from "@/backend/services";
 import { useCart } from "@/context/CartContext";
 import { ColorScrollbar } from "@/components/ColorScrollbar";
 import type { CartItem, Notification } from "@/backend/models";
@@ -44,15 +44,23 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { items: cartItems, totalItems, clearCart } = useCart();
+  const notifLoadedRef = useRef(false);
+
+  const hideNav = pathname === "/splash";
+
+  useEffect(() => {
+    setNotifOpen(false);
+  }, [pathname]);
 
   const refreshNotifications = useCallback(async () => {
+    if (!isAuthenticated) return;
     try {
       const data = await notificationService.getAll();
       setNotifications(data);
     } catch (error) {
       console.error("[AppShell] notifications error:", error);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const checkAuth = useCallback(async () => {
     let user: { id: string } | null = null;
@@ -98,14 +106,34 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    void refreshNotifications();
+    if (!notifLoadedRef.current) {
+      void refreshNotifications();
+      notifLoadedRef.current = true;
+    }
   }, [isAuthenticated, refreshNotifications]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     const channel = supabase
       .channel('notifications-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, async (payload) => {
+        const newNotif = payload.new as Notification | null;
+        if (newNotif) {
+          try {
+            const prefs = await notificationService.getNotificationPreferences();
+            const enabledTypes = prefs.enabledTypes ?? ['gallery', 'catalog', 'service'];
+            const type = (newNotif as any).type || 'promo';
+            if (enabledTypes.includes(type)) {
+              await localNotificationService.notify({
+                title: newNotif.title || 'Nouvelle notification',
+                body: newNotif.message || '',
+                id: Date.now(),
+              });
+            }
+          } catch (e) {
+            console.error('[AppShell] realtime notification error:', e);
+          }
+        }
         void refreshNotifications();
       })
       .subscribe();
@@ -117,11 +145,11 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
   const handleDeleteNotification = useCallback(async (id: string) => {
     try {
       await notificationService.delete(id);
-      await refreshNotifications();
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
     } catch (error) {
       console.error('[AppShell] delete notification error:', error);
     }
-  }, [refreshNotifications]);
+  }, []);
 
   if (!routerState) {
     return (
@@ -237,7 +265,7 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
               type="button"
               onClick={() => {
                 if (!isAuthenticated) {
-                  navigate({ to: '/login' });
+                  navigate({ to: '/login', search: {} } as any);
                   return;
                 }
                 setCartOpen(true);
@@ -279,38 +307,40 @@ export function AppShell({ children, title, subtitle }: { children: ReactNode; t
         </motion.div>
       </main>
 
-      <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-2 pb-[calc(0.6rem+env(safe-area-inset-bottom))] pt-1 md:max-w-lg md:px-4 md:pb-[calc(0.8rem+env(safe-area-inset-bottom))] md:pt-1.5 lg:max-w-xl lg:px-6 lg:pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pt-2">
-        <div className="glass-nav relative flex items-center justify-between rounded-full px-1 py-1 md:px-1.5 md:py-1.5 lg:px-2 lg:py-2">
-          {NAV.map(({ to, label, icon, color }) => (
-            <NavItem
-              key={to}
-              to={to}
-              label={label}
-              icon={icon}
-              color={color}
-              pathname={pathname}
-            />
-          ))}
-          <AnimatePresence>
-            {NAV.map(({ to, color }) => {
-              const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
-              if (!active) return null;
-              return (
-                <motion.div
-                  key={to}
-                  layoutId="nav-indicator"
-                  className="pointer-events-none absolute rounded-full"
-                  style={{
-                    background: `linear-gradient(135deg, ${color}20, ${color}08)`,
-                    boxShadow: `0 0 20px ${color}25`,
-                  }}
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                />
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      </nav>
+      {!hideNav && (
+        <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-2 pb-[calc(0.6rem+env(safe-area-inset-bottom))] pt-1 md:max-w-lg md:px-4 md:pb-[calc(0.8rem+env(safe-area-inset-bottom))] md:pt-1.5 lg:max-w-xl lg:px-6 lg:pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pt-2">
+          <div className="glass-nav relative flex items-center justify-between rounded-full px-1 py-1 md:px-1.5 md:py-1.5 lg:px-2 lg:py-2">
+            {NAV.map(({ to, label, icon, color }) => (
+              <NavItem
+                key={to}
+                to={to}
+                label={label}
+                icon={icon}
+                color={color}
+                pathname={pathname}
+              />
+            ))}
+            <AnimatePresence>
+              {NAV.map(({ to, color }) => {
+                const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+                if (!active) return null;
+                return (
+                  <motion.div
+                    key={to}
+                    layoutId="nav-indicator"
+                    className="pointer-events-none absolute rounded-full"
+                    style={{
+                      background: `linear-gradient(135deg, ${color}20, ${color}08)`,
+                      boxShadow: `0 0 20px ${color}25`,
+                    }}
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  />
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </nav>
+      )}
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
     </div>
   );

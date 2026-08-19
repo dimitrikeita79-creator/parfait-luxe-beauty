@@ -51,6 +51,17 @@ const config: CapacitorConfig = {
         },
       ],
     },
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
+    LocalNotifications: {
+      defaultChannel: "parfait-notifications",
+      android: {
+        foregroundService: {
+          notificationPriority: 5,
+        },
+      },
+    },
   },
 };
 

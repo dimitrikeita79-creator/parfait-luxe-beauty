@@ -11,7 +11,7 @@
     "postbuild": "node scripts/generate-index.js",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
-    "build:android": "npm run build:capacitor && cd android && ./gradlew assembleDebug",
+    "build:android": "node scripts/bump-version.js && npm run build:capacitor && cd android && ./gradlew assembleDebug",
     "build:android:release": "npm run build:capacitor && cd android && ./gradlew assembleRelease",
     "build:ios": "npm run build:capacitor && npx cap open ios",
     "sync:android": "npx cap sync android",
@@ -20,6 +20,7 @@
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/cli": "^8.4.2",
     "@capacitor/core": "^8.4.2",
     "@capacitor/local-notifications": "^8.3.0",

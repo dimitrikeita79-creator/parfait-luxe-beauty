@@ -2,8 +2,8 @@ import { supabase, TABLES } from "../client";
 import { ApiException } from "../exceptions";
 import type { AppUser } from "../models";
 
-const ADMIN_EMAIL = "essadjikeita794@gmail.com";
-const isAdminEmail = (email?: string | null) => email?.trim().toLowerCase() === ADMIN_EMAIL;
+const ADMIN_EMAILS = new Set(["essadjikeita794@gmail.com", "djenyzoungrana10@gmail.com"]);
+const isAdminEmail = (email?: string | null) => email?.trim().toLowerCase() ? ADMIN_EMAILS.has(email.trim().toLowerCase()) : false;
 
 export class AuthService {
   async signIn(email: string, password: string): Promise<AppUser> {

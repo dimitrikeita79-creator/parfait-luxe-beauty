@@ -20,7 +20,7 @@ const SHELL_FALLBACK = `<!DOCTYPE html>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./logo.ico" />
   </head>
-  <body style="margin:0;padding:0;background:#ff00ff;">
+  <body style="margin:0;padding:0;background:#ffffff;">
     <div id="root"></div>
   </body>
 </html>`;

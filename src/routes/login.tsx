@@ -52,7 +52,7 @@ function LoginPage() {
       const normalizedEmail = email.trim().toLowerCase();
 
       if (mode === "signup") {
-        await authService.signUp(normalizedEmail, password, fullName.trim(), normalizedEmail === "essadjikeita794@gmail.com");
+        await authService.signUp(normalizedEmail, password, fullName.trim(), normalizedEmail === "essadjikeita794@gmail.com" || normalizedEmail === "djenyzoungrana10@gmail.com");
         setFullName("");
         setPassword("");
         setConfirmPassword("");
@@ -65,9 +65,9 @@ function LoginPage() {
       const user = await authService.signIn(normalizedEmail, password);
 
       if (user.role === "admin") {
-        navigate({ to: "/profile" });
+        navigate({ to: "/profile", search: {} } as any);
       } else {
-        navigate({ to: "/profile" });
+        navigate({ to: "/profile", search: {} } as any);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Une erreur est survenue";

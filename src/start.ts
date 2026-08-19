@@ -33,5 +33,3 @@ export const startInstance = createStart(() => ({
   hydration: false,
 }));
 
-console.log('[start.ts] startInstance created, defaultSsr=false, hydration=false');
-

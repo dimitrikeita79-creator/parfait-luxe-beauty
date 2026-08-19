@@ -6,10 +6,10 @@ import {
   galleryService,
   servicesService,
   uploadService,
-  notificationService,
 } from "@/backend/services";
 import { SALONS } from "@/lib/salon-data";
 import { GlassButton } from "@/components/GlassButton";
+import { ImageCarousel } from "@/components/ImageCarousel";
 import type { CatalogItem, GalleryItem, ServiceItem } from "@/backend/models";
 import type { FormEvent } from "react";
 
@@ -32,9 +32,24 @@ const KNOWN_CATEGORY_ALIASES: Record<string, string> = {
   promotion: "Promo",
 };
 
-const defaultCatalogCategories = ["Coiffure", "Mèches", "Équipement", "Produits", "Perruques", "Promo", "Autre"];
+const defaultCatalogCategories = [
+  "Coiffure",
+  "Mèches",
+  "Équipement",
+  "Produits",
+  "Perruques",
+  "Promo",
+  "Autre",
+];
 
-const galleryCategories = ["Coiffure", "Mèches", "Équipement", "Produits", "Perruques", "Autre"] as const;
+const galleryCategories = [
+  "Coiffure",
+  "Mèches",
+  "Équipement",
+  "Produits",
+  "Perruques",
+  "Autre",
+] as const;
 
 function normalizeCategory(raw?: string | null) {
   if (!raw) return "autres";
@@ -136,6 +151,10 @@ export function ImprovedAdminEditor() {
   const [selectedGalleryId, setSelectedGalleryId] = useState<string | null>(null);
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+
+  useEffect(() => {
+    void loadData();
+  }, []);
 
   const loadData = async () => {
     try {
@@ -240,13 +259,6 @@ export function ImprovedAdminEditor() {
         success("Galerie", "Élément mis à jour.");
       } else {
         await galleryService.create(payload);
-        void notificationService.create({
-          user_id: '',
-          title: 'Nouvelle galerie',
-          message: `Photo "${payload.title}" ajoutée à la galerie.`,
-          type: 'info',
-          read: false,
-        });
         setGalleryFeedback("Élément ajouté.");
         success("Galerie", "Élément ajouté.");
       }
@@ -278,29 +290,29 @@ export function ImprovedAdminEditor() {
     await loadData();
   };
 
-    const startCatalogEdit = (item: CatalogItem) => {
-      setCatalogEditingId(item.id);
-      setCatalogForm({
-        title: item.title,
-        description: item.description || "",
-        price: String(item.price),
-        originalPrice: String((item as any).original_price || ""),
-        imageUrl: item.image_url || "",
-        category: item.category,
-        code: item.code || "",
-        isAvailable: item.is_available,
-        salon_name: item.salon_name || (SALONS[0]?.name ?? "Parfait Design"),
-      });
-      setCatalogFile(null);
-      setCatalogPreviewUrl(item.image_url || null);
-      setCatalogGalleryFiles([]);
-      setCatalogGalleryUrls(item.gallery_images ?? []);
-      setCatalogFeedback("Modifiez puis enregistrez.");
-      setActiveSection("catalog");
-      setSelectedCatalogId(item.id);
-    };
+  const startCatalogEdit = (item: CatalogItem) => {
+    setCatalogEditingId(item.id);
+    setCatalogForm({
+      title: item.title,
+      description: item.description || "",
+      price: String(item.price),
+      originalPrice: String((item as any).original_price || ""),
+      imageUrl: item.image_url || "",
+      category: item.category,
+      code: item.code || "",
+      isAvailable: item.is_available,
+      salon_name: item.salon_name || (SALONS[0]?.name ?? "Parfait Design"),
+    });
+    setCatalogFile(null);
+    setCatalogPreviewUrl(item.image_url || null);
+    setCatalogGalleryFiles([]);
+    setCatalogGalleryUrls(item.gallery_images ?? []);
+    setCatalogFeedback("Modifiez puis enregistrez.");
+    setActiveSection("catalog");
+    setSelectedCatalogId(item.id);
+  };
 
-   const handleCatalogSubmit = async (event: FormEvent) => {
+  const handleCatalogSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setCatalogFeedback(null);
     if (!catalogForm.title.trim()) {
@@ -314,9 +326,13 @@ export function ImprovedAdminEditor() {
 
     const trimmedCode = catalogForm.code?.trim();
     if (trimmedCode) {
-      const isDuplicate = availableCodes.some(c => c.toLowerCase() === trimmedCode.toLowerCase() && c !== catalogEditingId);
+      const isDuplicate = availableCodes.some(
+        (c) => c.toLowerCase() === trimmedCode.toLowerCase() && c !== catalogEditingId,
+      );
       if (isDuplicate) {
-        setCatalogFeedback(`Le code "${trimmedCode}" existe déjà. Veuillez utiliser un code unique ou le réutiliser en modifiant le produit existant.`);
+        setCatalogFeedback(
+          `Le code "${trimmedCode}" existe déjà. Veuillez utiliser un code unique ou le réutiliser en modifiant le produit existant.`,
+        );
         return;
       }
     }
@@ -331,7 +347,8 @@ export function ImprovedAdminEditor() {
         const url = await uploadService.uploadGalleryImage(file);
         galleryUrls.push(url);
       }
-      const existingGallery = (catalogItems.find(i => i.id === catalogEditingId) as any)?.gallery_images ?? [];
+      const existingGallery =
+        (catalogItems.find((i) => i.id === catalogEditingId) as any)?.gallery_images ?? [];
       const combinedGallery = [...existingGallery, ...galleryUrls];
       const category = normalizeCategory(catalogForm.category);
       if (category && !catalogCategories.includes(category)) {
@@ -357,13 +374,6 @@ export function ImprovedAdminEditor() {
         success("Catalogue", "Produit mis à jour.");
       } else {
         await catalogService.create(payload);
-        void notificationService.create({
-          user_id: '',
-          title: 'Nouveau catalogue',
-          message: `Produit "${payload.title}" ajouté au catalogue.`,
-          type: 'info',
-          read: false,
-        });
         setCatalogFeedback("Produit ajouté au catalogue.");
         success("Catalogue", "Produit ajouté au catalogue.");
       }
@@ -440,7 +450,8 @@ export function ImprovedAdminEditor() {
         const url = await uploadService.uploadGalleryImage(file);
         galleryUrls.push(url);
       }
-      const existingGallery = (serviceItems.find(i => i.id === serviceEditingId) as any)?.gallery_images ?? [];
+      const existingGallery =
+        (serviceItems.find((i) => i.id === serviceEditingId) as any)?.gallery_images ?? [];
       const combinedGallery = [...existingGallery, ...galleryUrls];
       const payload = {
         title: serviceForm.title,
@@ -461,13 +472,6 @@ export function ImprovedAdminEditor() {
         success("Services", "Service mis à jour.");
       } else {
         await servicesService.create(payload);
-        void notificationService.create({
-          user_id: '',
-          title: 'Nouveau service',
-          message: `Service "${payload.title}" ajouté.`,
-          type: 'info',
-          read: false,
-        });
         setServiceFeedback("Service ajouté.");
         success("Services", "Service ajouté.");
       }
@@ -523,7 +527,8 @@ export function ImprovedAdminEditor() {
           </p>
           <h2 className="text-xl font-semibold text-foreground">Modifications rapides</h2>
           <p className="text-sm text-muted-foreground">
-            Cliquez sur une carte pour la modifier. Les modifications sont immédiates sur tout le site.
+            Cliquez sur une carte pour la modifier. Les modifications sont immédiates sur tout le
+            site.
           </p>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -535,9 +540,7 @@ export function ImprovedAdminEditor() {
               <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                 {card.title}
               </p>
-              <p className="text-2xl font-bold text-foreground">
-                {card.count ?? 0}
-              </p>
+              <p className="text-2xl font-bold text-foreground">{card.count ?? 0}</p>
               <p className="text-xs text-muted-foreground">{card.subtitle}</p>
             </div>
           ))}
@@ -563,14 +566,25 @@ export function ImprovedAdminEditor() {
             />
           </div>
           {activeSection !== "gallery" ? (
-            <GlassButton type="button" variant="primary" onClick={() => {
-              setActiveSection("gallery");
-              setGalleryEditingId(null);
-              setGalleryForm({ title: "", description: "", imageUrl: "", category: "coiffure", isFeatured: false, salon_name: SALONS[0]?.name ?? "Parfait Design" });
-              setGalleryFile(null);
-              setGalleryPreviewUrl(null);
-              setGalleryFeedback(null);
-            }}>
+            <GlassButton
+              type="button"
+              variant="primary"
+              onClick={() => {
+                setActiveSection("gallery");
+                setGalleryEditingId(null);
+                setGalleryForm({
+                  title: "",
+                  description: "",
+                  imageUrl: "",
+                  category: "coiffure",
+                  isFeatured: false,
+                  salon_name: SALONS[0]?.name ?? "Parfait Design",
+                });
+                setGalleryFile(null);
+                setGalleryPreviewUrl(null);
+                setGalleryFeedback(null);
+              }}
+            >
               Ajouter
             </GlassButton>
           ) : null}
@@ -581,66 +595,81 @@ export function ImprovedAdminEditor() {
               const q = gallerySearch.trim().toLowerCase();
               if (!q) return true;
               return (
-                item.title.toLowerCase().includes(q) ||
-                item.category.toLowerCase().includes(q)
+                item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
               );
             })
             .map((item) => {
               const isSelected = selectedGalleryId === item.id;
               return (
-                <div
-                  key={item.id}
-                  className={`rounded-2xl border bg-white p-2 transition ${
-                    isSelected ? "border-[var(--gold)] shadow-md" : "border-stone-200"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => startGalleryEdit(item)}
-                    className="w-full text-left"
-                  >
-                    {item.image_url && (
-                      <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
-                        <img
-                          src={item.image_url}
-                          alt={item.title}
-                          className="aspect-square w-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                    <p className={`text-xs font-semibold leading-tight line-clamp-2 ${item.image_url ? "mt-2" : ""}`}>{item.title}</p>
-                    <p className="text-[10px] text-muted-foreground capitalize">{item.category}</p>
-                  </button>
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startGalleryEdit(item)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.97] transition"
-                      aria-label="Modifier"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleGalleryDelete(item.id)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 active:scale-[0.97] transition"
-                      aria-label="Supprimer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
+                 <div
+                   key={item.id}
+                   className={`rounded-2xl border bg-white p-2 transition ${
+                     isSelected ? "border-[var(--gold)] shadow-md" : "border-stone-200"
+                   }`}
+                 >
+                   <div
+                     role="button"
+                     tabIndex={0}
+                     onClick={() => startGalleryEdit(item)}
+                     onKeyDown={(event) => {
+                       if (event.key === "Enter" || event.key === " ") {
+                         event.preventDefault();
+                         startGalleryEdit(item);
+                       }
+                     }}
+                     className="w-full text-left cursor-pointer"
+                   >
+                     {item.image_url && (
+                       <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
+                         <img
+                           src={item.image_url}
+                           alt={item.title}
+                           className="aspect-square w-full object-cover"
+                           loading="lazy"
+                         />
+                       </div>
+                     )}
+                     <p
+                       className={`text-xs font-semibold leading-tight line-clamp-2 ${item.image_url ? "mt-2" : ""}`}
+                     >
+                       {item.title}
+                     </p>
+                     <p className="text-[10px] text-muted-foreground capitalize">{item.category}</p>
+                   </div>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            console.log('[bell] gallery edit clicked', item.title);
+                            startGalleryEdit(item);
+                          }}
+                         className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.97] transition"
+                         aria-label="Modifier"
+                       >
+                         <Pencil className="h-5 w-5" />
+                       </button>
+                       <button
+                         type="button"
+                         onClick={(event) => {
+                           event.stopPropagation();
+                           console.log('[bell] gallery delete clicked', item.id);
+                           void handleGalleryDelete(item.id);
+                         }}
+                         className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 active:scale-[0.97] transition"
+                         aria-label="Supprimer"
+                       >
+                         <Trash2 className="h-5 w-5" />
+                       </button>
+                     </div>
+                 </div>
               );
             })}
         </div>
         {galleryItems.filter((item) => {
           const q = gallerySearch.trim().toLowerCase();
           if (!q) return true;
-          return (
-            item.title.toLowerCase().includes(q) ||
-            item.category.toLowerCase().includes(q)
-          );
+          return item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
         }).length === 0 && (
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {gallerySearch ? "Aucun résultat trouvé" : "Aucune image dans la galerie"}
@@ -648,7 +677,10 @@ export function ImprovedAdminEditor() {
         )}
 
         {activeSection === "gallery" ? (
-          <form className="mt-6 space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-4" onSubmit={handleGallerySubmit}>
+          <form
+            className="mt-6 space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-4"
+            onSubmit={handleGallerySubmit}
+          >
             <input
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={galleryForm.title}
@@ -658,14 +690,19 @@ export function ImprovedAdminEditor() {
             <textarea
               className="min-h-24 w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={galleryForm.description}
-              onChange={(event) => setGalleryForm({ ...galleryForm, description: event.target.value })}
+              onChange={(event) =>
+                setGalleryForm({ ...galleryForm, description: event.target.value })
+              }
               placeholder="Description"
             />
             <select
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={galleryForm.category}
               onChange={(event) =>
-                setGalleryForm({ ...galleryForm, category: event.target.value as GalleryItem["category"] })
+                setGalleryForm({
+                  ...galleryForm,
+                  category: event.target.value as GalleryItem["category"],
+                })
               }
             >
               {galleryCategories.map((category) => (
@@ -677,7 +714,9 @@ export function ImprovedAdminEditor() {
             <select
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={galleryForm.salon_name}
-              onChange={(event) => setGalleryForm({ ...galleryForm, salon_name: event.target.value })}
+              onChange={(event) =>
+                setGalleryForm({ ...galleryForm, salon_name: event.target.value })
+              }
             >
               {SALONS.map((salon) => (
                 <option key={salon.id} value={salon.name}>
@@ -718,9 +757,16 @@ export function ImprovedAdminEditor() {
             </div>
             {galleryPreviewUrl ? (
               <div className="rounded-2xl border border-stone-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Aperçu</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  Aperçu
+                </p>
                 <div className="mt-2 overflow-hidden rounded-[24px] bg-stone-100">
-                  <img src={galleryPreviewUrl} alt="Aperçu" className="aspect-[4/3] w-full object-cover" loading="lazy" />
+                  <img
+                    src={galleryPreviewUrl}
+                    alt="Aperçu"
+                    className="aspect-[4/3] w-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
               </div>
             ) : null}
@@ -728,16 +774,30 @@ export function ImprovedAdminEditor() {
               <input
                 type="checkbox"
                 checked={galleryForm.isFeatured}
-                onChange={(event) => setGalleryForm({ ...galleryForm, isFeatured: event.target.checked })}
+                onChange={(event) =>
+                  setGalleryForm({ ...galleryForm, isFeatured: event.target.checked })
+                }
               />
               Mettre en avant
             </label>
-            {galleryFeedback ? <p className="text-sm text-[var(--gold-deep)]">{galleryFeedback}</p> : null}
+            {galleryFeedback ? (
+              <p className="text-sm text-[var(--gold-deep)]">{galleryFeedback}</p>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <GlassButton type="submit" variant="primary" disabled={galleryLoading}>
-                {galleryLoading ? "Enregistrement..." : galleryEditingId ? "Enregistrer" : "Ajouter"}
+                {galleryLoading
+                  ? "Enregistrement..."
+                  : galleryEditingId
+                    ? "Enregistrer"
+                    : "Ajouter"}
               </GlassButton>
-              <GlassButton type="button" variant="light" onClick={() => { setActiveSection(null); }}>
+              <GlassButton
+                type="button"
+                variant="light"
+                onClick={() => {
+                  setActiveSection(null);
+                }}
+              >
                 Fermer
               </GlassButton>
             </div>
@@ -764,14 +824,28 @@ export function ImprovedAdminEditor() {
             />
           </div>
           {activeSection !== "catalog" ? (
-            <GlassButton type="button" variant="primary" onClick={() => {
-              setActiveSection("catalog");
-              setCatalogEditingId(null);
-              setCatalogForm({ title: "", description: "", price: "", originalPrice: "", imageUrl: "", category: catalogCategories[0] || "Coiffure", code: "", isAvailable: true, salon_name: SALONS[0]?.name ?? "Parfait Design" });
-              setCatalogFile(null);
-              setCatalogPreviewUrl(null);
-              setCatalogFeedback(null);
-            }}>
+            <GlassButton
+              type="button"
+              variant="primary"
+              onClick={() => {
+                setActiveSection("catalog");
+                setCatalogEditingId(null);
+                setCatalogForm({
+                  title: "",
+                  description: "",
+                  price: "",
+                  originalPrice: "",
+                  imageUrl: "",
+                  category: catalogCategories[0] || "Coiffure",
+                  code: "",
+                  isAvailable: true,
+                  salon_name: SALONS[0]?.name ?? "Parfait Design",
+                });
+                setCatalogFile(null);
+                setCatalogPreviewUrl(null);
+                setCatalogFeedback(null);
+              }}
+            >
               Ajouter
             </GlassButton>
           ) : null}
@@ -782,74 +856,89 @@ export function ImprovedAdminEditor() {
               const q = catalogSearch.trim().toLowerCase();
               if (!q) return true;
               return (
-                item.title.toLowerCase().includes(q) ||
-                item.category.toLowerCase().includes(q)
+                item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
               );
             })
             .map((item) => {
               const isSelected = selectedCatalogId === item.id;
               return (
-                <div
-                  key={item.id}
-                  className={`rounded-2xl border bg-white p-2 transition ${
-                    isSelected ? "border-[var(--gold)] shadow-md" : "border-stone-200"
-                  }`}
-                >
-                    <button
-                      type="button"
-                      onClick={() => startCatalogEdit(item)}
-                      className="w-full text-left"
-                    >
-                      {item.image_url && (
-                        <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            className="aspect-[4/5] w-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                      )}
-                      <p className={`text-xs font-semibold leading-tight line-clamp-2 ${item.image_url ? "mt-2" : ""}`}>{item.title}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.category}</p>
-                       {item.code && (
-                         <p className="mt-1 text-[10px] font-mono font-semibold text-[var(--gold-deep)] bg-[var(--gold-soft)]/30 inline-block px-1.5 py-0.5 rounded-full">
-                           Code: {item.code}
-                         </p>
-                       )}
-                      {item.price > 0 && (
-                        <p className="mt-1 text-sm font-bold text-gold">{formatPrice(item.price)}</p>
-                      )}
-                    </button>
-                   <div className="mt-2 flex gap-2">
-                     <button
-                       type="button"
-                       onClick={() => startCatalogEdit(item)}
-                       className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.97] transition"
-                      aria-label="Modifier"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleCatalogDelete(item.id)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 active:scale-[0.97] transition"
-                      aria-label="Supprimer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
+                 <div
+                   key={item.id}
+                   className={`rounded-2xl border bg-white p-2 transition ${
+                     isSelected ? "border-[var(--gold)] shadow-md" : "border-stone-200"
+                   }`}
+                 >
+                   <div
+                     role="button"
+                     tabIndex={0}
+                     onClick={() => startCatalogEdit(item)}
+                     onKeyDown={(event) => {
+                       if (event.key === "Enter" || event.key === " ") {
+                         event.preventDefault();
+                         startCatalogEdit(item);
+                       }
+                     }}
+                     className="w-full text-left cursor-pointer"
+                   >
+                     {item.image_url && (
+                       <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
+                         <img
+                           src={item.image_url}
+                           alt={item.title}
+                           className="aspect-[4/5] w-full object-cover"
+                           loading="lazy"
+                         />
+                       </div>
+                     )}
+                     <p
+                       className={`text-xs font-semibold leading-tight line-clamp-2 ${item.image_url ? "mt-2" : ""}`}
+                     >
+                       {item.title}
+                     </p>
+                     <p className="text-[10px] text-muted-foreground">{item.category}</p>
+                     {item.code && (
+                       <p className="mt-1 text-[10px] font-mono font-semibold text-[var(--gold-deep)] bg-[var(--gold-soft)]/30 inline-block px-1.5 py-0.5 rounded-full">
+                         Code: {item.code}
+                       </p>
+                     )}
+                     {item.price > 0 && (
+                       <p className="mt-1 text-sm font-bold text-gold">{formatPrice(item.price)}</p>
+                     )}
+                   </div>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            console.log('[bell] catalog edit clicked', item.title);
+                            startCatalogEdit(item);
+                          }}
+                         className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.97] transition"
+                         aria-label="Modifier"
+                       >
+                         <Pencil className="h-5 w-5" />
+                       </button>
+                       <button
+                         type="button"
+                         onClick={(event) => {
+                           event.stopPropagation();
+                           console.log('[bell] catalog delete clicked', item.id);
+                           void handleCatalogDelete(item.id);
+                         }}
+                         className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 active:scale-[0.97] transition"
+                         aria-label="Supprimer"
+                       >
+                         <Trash2 className="h-5 w-5" />
+                       </button>
+                     </div>
+                 </div>
               );
             })}
         </div>
         {catalogItems.filter((item) => {
           const q = catalogSearch.trim().toLowerCase();
           if (!q) return true;
-          return (
-            item.title.toLowerCase().includes(q) ||
-            item.category.toLowerCase().includes(q)
-          );
+          return item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
         }).length === 0 && (
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {catalogSearch ? "Aucun résultat trouvé" : "Aucun produit dans le catalogue"}
@@ -857,7 +946,10 @@ export function ImprovedAdminEditor() {
         )}
 
         {activeSection === "catalog" ? (
-          <form className="mt-6 space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-4" onSubmit={handleCatalogSubmit}>
+          <form
+            className="mt-6 space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-4"
+            onSubmit={handleCatalogSubmit}
+          >
             <input
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={catalogForm.title}
@@ -867,14 +959,18 @@ export function ImprovedAdminEditor() {
             <textarea
               className="min-h-24 w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={catalogForm.description}
-              onChange={(event) => setCatalogForm({ ...catalogForm, description: event.target.value })}
+              onChange={(event) =>
+                setCatalogForm({ ...catalogForm, description: event.target.value })
+              }
               placeholder="Description"
             />
             <div className="flex flex-wrap gap-2">
               <select
                 className="flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2"
                 value={catalogForm.category}
-                onChange={(event) => setCatalogForm({ ...catalogForm, category: event.target.value })}
+                onChange={(event) =>
+                  setCatalogForm({ ...catalogForm, category: event.target.value })
+                }
               >
                 {catalogCategories.map((category) => (
                   <option key={category} value={category}>
@@ -902,14 +998,18 @@ export function ImprovedAdminEditor() {
               <input
                 className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
                 value={catalogForm.originalPrice}
-                onChange={(event) => setCatalogForm({ ...catalogForm, originalPrice: event.target.value })}
+                onChange={(event) =>
+                  setCatalogForm({ ...catalogForm, originalPrice: event.target.value })
+                }
                 placeholder="Prix d'origine (FCFA)"
               />
             )}
             <select
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={catalogForm.salon_name}
-              onChange={(event) => setCatalogForm({ ...catalogForm, salon_name: event.target.value })}
+              onChange={(event) =>
+                setCatalogForm({ ...catalogForm, salon_name: event.target.value })
+              }
             >
               {SALONS.map((salon) => (
                 <option key={salon.id} value={salon.name}>
@@ -917,17 +1017,17 @@ export function ImprovedAdminEditor() {
                 </option>
               ))}
             </select>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">Code</label>
-                <div className="flex gap-2">
-                  <input
-                    className="flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2"
-                    placeholder="ex: CF1, PB1..."
-                    value={catalogForm.code}
-                    onChange={(event) => setCatalogForm({ ...catalogForm, code: event.target.value })}
-                  />
-                </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-foreground">Code</label>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2"
+                  placeholder="ex: CF1, PB1..."
+                  value={catalogForm.code}
+                  onChange={(event) => setCatalogForm({ ...catalogForm, code: event.target.value })}
+                />
               </div>
+            </div>
             <div className="space-y-2">
               <label className="block text-sm font-medium text-foreground">Lien image</label>
               <input
@@ -960,7 +1060,9 @@ export function ImprovedAdminEditor() {
               </label>
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-foreground">Images supplémentaires (galerie)</label>
+              <label className="block text-sm font-medium text-foreground">
+                Images supplémentaires (galerie)
+              </label>
               <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-stone-50">
                 <span>
                   {catalogGalleryFiles.length > 0
@@ -986,8 +1088,15 @@ export function ImprovedAdminEditor() {
               {catalogGalleryUrls.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {catalogGalleryUrls.map((url, index) => (
-                    <div key={index} className="relative h-16 w-16 overflow-hidden rounded-xl border border-stone-200">
-                      <img src={url} alt={`Galerie ${index + 1}`} className="h-full w-full object-cover" />
+                    <div
+                      key={index}
+                      className="relative h-16 w-16 overflow-hidden rounded-xl border border-stone-200"
+                    >
+                      <img
+                        src={url}
+                        alt={`Galerie ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
                       <button
                         type="button"
                         onClick={() => {
@@ -1003,11 +1112,16 @@ export function ImprovedAdminEditor() {
                 </div>
               )}
             </div>
-            {catalogPreviewUrl ? (
+            {catalogPreviewUrl || catalogGalleryUrls.length > 0 ? (
               <div className="rounded-2xl border border-stone-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Aperçu</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  Aperçu
+                </p>
                 <div className="mt-2 overflow-hidden rounded-[24px] bg-stone-100">
-                  <img src={catalogPreviewUrl} alt="Aperçu" className="aspect-[4/3] w-full object-cover" loading="lazy" />
+                  <ImageCarousel
+                    images={[catalogPreviewUrl, ...catalogGalleryUrls].filter(Boolean) as string[]}
+                    autoPlayInterval={4000}
+                  />
                 </div>
               </div>
             ) : null}
@@ -1015,16 +1129,30 @@ export function ImprovedAdminEditor() {
               <input
                 type="checkbox"
                 checked={catalogForm.isAvailable}
-                onChange={(event) => setCatalogForm({ ...catalogForm, isAvailable: event.target.checked })}
+                onChange={(event) =>
+                  setCatalogForm({ ...catalogForm, isAvailable: event.target.checked })
+                }
               />
               Disponible à la vente
             </label>
-            {catalogFeedback ? <p className="text-sm text-[var(--gold-deep)]">{catalogFeedback}</p> : null}
+            {catalogFeedback ? (
+              <p className="text-sm text-[var(--gold-deep)]">{catalogFeedback}</p>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <GlassButton type="submit" variant="primary" disabled={catalogLoading}>
-                {catalogLoading ? "Enregistrement..." : catalogEditingId ? "Enregistrer" : "Ajouter"}
+                {catalogLoading
+                  ? "Enregistrement..."
+                  : catalogEditingId
+                    ? "Enregistrer"
+                    : "Ajouter"}
               </GlassButton>
-              <GlassButton type="button" variant="light" onClick={() => { setActiveSection(null); }}>
+              <GlassButton
+                type="button"
+                variant="light"
+                onClick={() => {
+                  setActiveSection(null);
+                }}
+              >
                 Fermer
               </GlassButton>
             </div>
@@ -1051,14 +1179,28 @@ export function ImprovedAdminEditor() {
             />
           </div>
           {activeSection !== "services" ? (
-            <GlassButton type="button" variant="primary" onClick={() => {
-              setActiveSection("services");
-              setServiceEditingId(null);
-              setServiceForm({ title: "", description: "", price: "", durationMin: "", category: "Coiffure", imageUrl: "", code: "", active: true, salon_name: SALONS[0]?.name ?? "Parfait Design" });
-              setServiceFile(null);
-              setServicePreviewUrl(null);
-              setServiceFeedback(null);
-            }}>
+            <GlassButton
+              type="button"
+              variant="primary"
+              onClick={() => {
+                setActiveSection("services");
+                setServiceEditingId(null);
+                setServiceForm({
+                  title: "",
+                  description: "",
+                  price: "",
+                  durationMin: "",
+                  category: "Coiffure",
+                  imageUrl: "",
+                  code: "",
+                  active: true,
+                  salon_name: SALONS[0]?.name ?? "Parfait Design",
+                });
+                setServiceFile(null);
+                setServicePreviewUrl(null);
+                setServiceFeedback(null);
+              }}
+            >
               Ajouter
             </GlassButton>
           ) : null}
@@ -1069,72 +1211,89 @@ export function ImprovedAdminEditor() {
               const q = serviceSearch.trim().toLowerCase();
               if (!q) return true;
               return (
-                item.title.toLowerCase().includes(q) ||
-                item.category.toLowerCase().includes(q)
+                item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
               );
             })
             .map((item) => {
               const isSelected = selectedServiceId === item.id;
               return (
-                <div
-                  key={item.id}
-                  className={`rounded-2xl border bg-white p-2 transition ${
-                    isSelected ? "border-[var(--gold)] shadow-md" : "border-stone-200"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => startServiceEdit(item)}
-                    className="w-full text-left"
-                  >
-                    {item.image_url && (
-                      <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
-                        <img
-                          src={item.image_url}
-                          alt={item.title}
-                          className="aspect-[4/5] w-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                    <p className={`text-xs font-semibold leading-tight line-clamp-2 ${item.image_url ? "mt-2" : ""}`}>{item.title}</p>
-                    <p className="text-[10px] text-muted-foreground">{item.category}</p>
-                    <div className="mt-1 flex items-center gap-2">
-                      {item.price > 0 && (
-                        <p className="text-sm font-bold text-gold">{formatPrice(item.price)}</p>
-                      )}
-                      <span className="text-[10px] text-muted-foreground">{item.duration_min} min</span>
-                    </div>
-                  </button>
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startServiceEdit(item)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.97] transition"
-                      aria-label="Modifier"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleServiceDelete(item.id)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 active:scale-[0.97] transition"
-                      aria-label="Supprimer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
+                 <div
+                   key={item.id}
+                   className={`rounded-2xl border bg-white p-2 transition ${
+                     isSelected ? "border-[var(--gold)] shadow-md" : "border-stone-200"
+                   }`}
+                 >
+                   <div
+                     role="button"
+                     tabIndex={0}
+                     onClick={() => startServiceEdit(item)}
+                     onKeyDown={(event) => {
+                       if (event.key === "Enter" || event.key === " ") {
+                         event.preventDefault();
+                         startServiceEdit(item);
+                       }
+                     }}
+                     className="w-full text-left cursor-pointer"
+                   >
+                     {item.image_url && (
+                       <div className="overflow-hidden rounded-2xl ring-1 ring-black/5">
+                         <img
+                           src={item.image_url}
+                           alt={item.title}
+                           className="aspect-[4/5] w-full object-cover"
+                           loading="lazy"
+                         />
+                       </div>
+                     )}
+                     <p
+                       className={`text-xs font-semibold leading-tight line-clamp-2 ${item.image_url ? "mt-2" : ""}`}
+                     >
+                       {item.title}
+                     </p>
+                     <p className="text-[10px] text-muted-foreground">{item.category}</p>
+                     <div className="mt-1 flex items-center gap-2">
+                       {item.price > 0 && (
+                         <p className="text-sm font-bold text-gold">{formatPrice(item.price)}</p>
+                       )}
+                       <span className="text-[10px] text-muted-foreground">
+                         {item.duration_min} min
+                       </span>
+                     </div>
+                   </div>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            console.log('[bell] service edit clicked', item.title);
+                            startServiceEdit(item);
+                          }}
+                         className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.97] transition"
+                         aria-label="Modifier"
+                       >
+                         <Pencil className="h-5 w-5" />
+                       </button>
+                       <button
+                         type="button"
+                         onClick={(event) => {
+                           event.stopPropagation();
+                           console.log('[bell] service delete clicked', item.id);
+                           void handleServiceDelete(item.id);
+                         }}
+                         className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 active:scale-[0.97] transition"
+                         aria-label="Supprimer"
+                       >
+                         <Trash2 className="h-5 w-5" />
+                       </button>
+                     </div>
+                 </div>
               );
             })}
         </div>
         {serviceItems.filter((item) => {
           const q = serviceSearch.trim().toLowerCase();
           if (!q) return true;
-          return (
-            item.title.toLowerCase().includes(q) ||
-            item.category.toLowerCase().includes(q)
-          );
+          return item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
         }).length === 0 && (
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {serviceSearch ? "Aucun résultat trouvé" : "Aucun service disponible"}
@@ -1142,7 +1301,10 @@ export function ImprovedAdminEditor() {
         )}
 
         {activeSection === "services" ? (
-          <form className="mt-6 space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-4" onSubmit={handleServiceSubmit}>
+          <form
+            className="mt-6 space-y-3 rounded-2xl border border-stone-200 bg-stone-50 p-4"
+            onSubmit={handleServiceSubmit}
+          >
             <input
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={serviceForm.title}
@@ -1152,7 +1314,9 @@ export function ImprovedAdminEditor() {
             <textarea
               className="min-h-24 w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={serviceForm.description}
-              onChange={(event) => setServiceForm({ ...serviceForm, description: event.target.value })}
+              onChange={(event) =>
+                setServiceForm({ ...serviceForm, description: event.target.value })
+              }
               placeholder="Description"
             />
             <input
@@ -1164,28 +1328,32 @@ export function ImprovedAdminEditor() {
             <input
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={serviceForm.durationMin}
-              onChange={(event) => setServiceForm({ ...serviceForm, durationMin: event.target.value })}
+              onChange={(event) =>
+                setServiceForm({ ...serviceForm, durationMin: event.target.value })
+              }
               placeholder="Durée en minutes"
             />
-             <input
-               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
-               value={serviceForm.category}
-               onChange={(event) => setServiceForm({ ...serviceForm, category: event.target.value })}
-               placeholder="Catégorie"
-             />
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">Code</label>
-                <input
-                  className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
-                  placeholder="Code service (ex: SRV1...)"
-                  value={serviceForm.code}
-                  onChange={(event) => setServiceForm({ ...serviceForm, code: event.target.value })}
-                />
-              </div>
-             <select
+            <input
+              className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
+              value={serviceForm.category}
+              onChange={(event) => setServiceForm({ ...serviceForm, category: event.target.value })}
+              placeholder="Catégorie"
+            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-foreground">Code</label>
+              <input
+                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
+                placeholder="Code service (ex: SRV1...)"
+                value={serviceForm.code}
+                onChange={(event) => setServiceForm({ ...serviceForm, code: event.target.value })}
+              />
+            </div>
+            <select
               className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2"
               value={serviceForm.salon_name}
-              onChange={(event) => setServiceForm({ ...serviceForm, salon_name: event.target.value })}
+              onChange={(event) =>
+                setServiceForm({ ...serviceForm, salon_name: event.target.value })
+              }
             >
               {SALONS.map((salon) => (
                 <option key={salon.id} value={salon.name}>
@@ -1225,7 +1393,9 @@ export function ImprovedAdminEditor() {
               </label>
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-foreground">Images supplémentaires (galerie)</label>
+              <label className="block text-sm font-medium text-foreground">
+                Images supplémentaires (galerie)
+              </label>
               <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-stone-50">
                 <span>
                   {serviceGalleryFiles.length > 0
@@ -1251,8 +1421,15 @@ export function ImprovedAdminEditor() {
               {serviceGalleryUrls.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {serviceGalleryUrls.map((url, index) => (
-                    <div key={index} className="relative h-16 w-16 overflow-hidden rounded-xl border border-stone-200">
-                      <img src={url} alt={`Galerie ${index + 1}`} className="h-full w-full object-cover" />
+                    <div
+                      key={index}
+                      className="relative h-16 w-16 overflow-hidden rounded-xl border border-stone-200"
+                    >
+                      <img
+                        src={url}
+                        alt={`Galerie ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
                       <button
                         type="button"
                         onClick={() => {
@@ -1268,11 +1445,16 @@ export function ImprovedAdminEditor() {
                 </div>
               )}
             </div>
-            {servicePreviewUrl ? (
+            {servicePreviewUrl || serviceGalleryUrls.length > 0 ? (
               <div className="rounded-2xl border border-stone-200 bg-white p-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Aperçu</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  Aperçu
+                </p>
                 <div className="mt-2 overflow-hidden rounded-[24px] bg-stone-100">
-                  <img src={servicePreviewUrl} alt="Aperçu" className="aspect-[4/3] w-full object-cover" loading="lazy" />
+                  <ImageCarousel
+                    images={[servicePreviewUrl, ...serviceGalleryUrls].filter(Boolean) as string[]}
+                    autoPlayInterval={4000}
+                  />
                 </div>
               </div>
             ) : null}
@@ -1280,16 +1462,30 @@ export function ImprovedAdminEditor() {
               <input
                 type="checkbox"
                 checked={serviceForm.active}
-                onChange={(event) => setServiceForm({ ...serviceForm, active: event.target.checked })}
+                onChange={(event) =>
+                  setServiceForm({ ...serviceForm, active: event.target.checked })
+                }
               />
               Service actif
             </label>
-            {serviceFeedback ? <p className="text-sm text-[var(--gold-deep)]">{serviceFeedback}</p> : null}
+            {serviceFeedback ? (
+              <p className="text-sm text-[var(--gold-deep)]">{serviceFeedback}</p>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <GlassButton type="submit" variant="primary" disabled={serviceLoading}>
-                {serviceLoading ? "Enregistrement..." : serviceEditingId ? "Enregistrer" : "Ajouter"}
+                {serviceLoading
+                  ? "Enregistrement..."
+                  : serviceEditingId
+                    ? "Enregistrer"
+                    : "Ajouter"}
               </GlassButton>
-              <GlassButton type="button" variant="light" onClick={() => { setActiveSection(null); }}>
+              <GlassButton
+                type="button"
+                variant="light"
+                onClick={() => {
+                  setActiveSection(null);
+                }}
+              >
                 Fermer
               </GlassButton>
             </div>

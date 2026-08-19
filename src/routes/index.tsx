@@ -133,7 +133,7 @@ function ReviewForm({ onReviewSubmitted }: { onReviewSubmitted?: () => void }) {
     const user = await authService.getCurrentUser();
     if (!user) {
       // Rediriger vers la page de connexion
-      navigate({ to: "/login" });
+      navigate({ to: "/login", search: {} } as any);
       return;
     }
     
@@ -444,18 +444,18 @@ function Index() {
         to: "/catalog/$category",
         params: { category: makeCategorySlug(h.category) },
         search: { highlight: h.id },
-      });
+      } as any);
     } else if (h.type === "service") {
       navigate({
         to: "/services",
         search: { highlight: h.id },
-      });
+      } as any);
     } else {
       navigate({
         to: "/catalog/$category",
         params: { category: makeCategorySlug(h.name) },
         search: {} as any,
-      });
+      } as any);
     }
   };
 
@@ -467,10 +467,10 @@ function Index() {
     }
     const q = norm(query.trim());
     if (!q) return;
-    if (q.includes("galerie") || q.includes("photo")) return navigate({ to: "/gallery" });
+    if (q.includes("galerie") || q.includes("photo")) return navigate({ to: "/gallery", search: {} } as any);
     if (q.includes("contact") || q.includes("rdv") || q.includes("rendez") || q.includes("reserv"))
-      return navigate({ to: "/contact" });
-    navigate({ to: "/catalog" });
+      return navigate({ to: "/contact", search: {} } as any);
+    navigate({ to: "/catalog", search: {} } as any);
   };
 
   const defaultCovers = [
@@ -797,51 +797,40 @@ function Index() {
         })}
       </motion.div>
 
-      {/* Services populaires */}
-      {!loading && (
-        <>
-          <SectionTitle
-            title="Services populaires"
-            action={
-              <Link to="/services" className="text-xs font-medium text-[var(--gold-deep)]">
-                Voir tout
-              </Link>
-            }
-          />
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-            className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory md:mx-0 md:px-0"
-            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-          >
-            {popularServices.map((s, i) => {
-              const Icon = getCategoryIcon(s.category);
-              return (
-                <motion.div
-                  key={s.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 + i * 0.03, duration: 0.3 }}
-                  style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-                >
-                  <div className="snap-start block">
-                    <div className="w-44 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm hover:shadow-md hover:shadow-[var(--gold)]/10 transition-all duration-200">
-                      <HomeCard
-                        image={s.image_url}
-                        title={s.title}
-                        category="service"
-                        price={s.price}
-                        to="/services"
-                        params={{}}
-                        search={{}}
-                      />
+          {/* Services populaires */}
+          {!loading && (
+            <>
+              <SectionTitle
+                title="Services populaires"
+                action={
+                  <Link to="/services" className="text-xs font-medium text-[var(--gold-deep)]">
+                    Voir tout
+                  </Link>
+                }
+              />
+              <div
+                className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory md:mx-0 md:px-0 animate-fade-up"
+                style={{ overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
+              >
+                {popularServices.map((s) => {
+                  const Icon = getCategoryIcon(s.category);
+                  return (
+                    <div key={s.id} className="snap-start block">
+                      <div className="w-44 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm hover:shadow-md hover:shadow-[var(--gold)]/10 transition-all duration-200">
+                        <HomeCard
+                          image={s.image_url}
+                          title={s.title}
+                          category="service"
+                          price={s.price}
+                          to="/services"
+                          params={{}}
+                          search={{}}
+                        />
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
+                  );
+                })}
+              </div>
 
           {/* Catalogue teaser */}
           <SectionTitle
@@ -852,36 +841,22 @@ function Index() {
               </Link>
             }
           />
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.25, duration: 0.3 }}
-            className="grid grid-cols-2 gap-2 md:grid-cols-4"
-            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-          >
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 animate-fade-up-stagger">
             {Array.from(categorizedCatalog.entries())
               .slice(0, 4)
-              .map(([cat, items], i) => (
-                <motion.div
-                  key={cat}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + i * 0.04, duration: 0.3 }}
-                  style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-                >
-                   <div className="block">
-                     <HomeCard
-                       image={items[0]?.image_url || categoryImages[cat.toLowerCase()]}
-                       title={cat.charAt(0).toUpperCase() + cat.slice(1)}
-                       category={cat}
-                       to="/catalog/$category"
-                       params={{ category: makeCategorySlug(cat) }}
-                       search={{}}
-                     />
-                   </div>
-                </motion.div>
+              .map(([cat, items]) => (
+                <div key={cat} className="block">
+                  <HomeCard
+                    image={items[0]?.image_url || categoryImages[cat.toLowerCase()]}
+                    title={cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    category={cat}
+                    to="/catalog/$category"
+                    params={{ category: makeCategorySlug(cat) }}
+                    search={{}}
+                  />
+                </div>
               ))}
-          </motion.div>
+          </div>
 
           {/* Réalisations */}
           {works.length > 0 && (
@@ -894,34 +869,23 @@ function Index() {
                   </Link>
                 }
               />
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.35, duration: 0.3 }}
-            className="grid grid-cols-3 gap-1.5 md:grid-cols-4 lg:grid-cols-6"
-            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-          >
-                {works.map((g, i) => (
-                  <motion.div
-                    key={g.id}
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.4 + i * 0.02, duration: 0.25 }}
-                    style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-                  >
-                     <div className="block aspect-square">
-                       <HomeCard
-                         image={g.image_url}
-                         title={g.title}
-                         category={g.category}
-                         to="/gallery"
-                         params={{}}
-                         search={{}}
-                       />
-                     </div>
-                  </motion.div>
+              <div
+                className="grid grid-cols-3 gap-1.5 md:grid-cols-4 lg:grid-cols-6 animate-fade-up-stagger"
+                style={{ overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
+              >
+                {works.map((g) => (
+                  <div key={g.id} className="block aspect-square">
+                    <HomeCard
+                      image={g.image_url}
+                      title={g.title}
+                      category={g.category}
+                      to="/gallery"
+                      params={{}}
+                      search={{}}
+                    />
+                  </div>
                 ))}
-              </motion.div>
+              </div>
             </>
           )}
 
@@ -941,39 +905,29 @@ function Index() {
                   </Link>
                 }
               />
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.3 }}
-            className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory md:mx-0 md:px-0"
-            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-          >
-                {popularWigs.map((p, i) => (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.45 + i * 0.03, duration: 0.3 }}
-                    className="snap-start"
-                    style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-                  >
-                     <div className="block">
-                       <div className="w-36 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm">
-                         <HomeCard
-                           image={p.image_url}
-                           title={p.title}
-                           category={p.category}
-                           price={p.price}
-                           originalPrice={(p as any).original_price}
-                           to="/catalog/$category"
-                           params={{ category: makeCategorySlug("Perruques") }}
-                           search={{ highlight: p.id }}
-                         />
-                       </div>
-                     </div>
-                  </motion.div>
+              <div
+                className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory md:mx-0 md:px-0 animate-fade-up"
+                style={{ overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
+              >
+                {popularWigs.map((p) => (
+                  <div key={p.id} className="snap-start">
+                    <div className="block">
+                      <div className="w-36 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm">
+                        <HomeCard
+                          image={p.image_url}
+                          title={p.title}
+                          category={p.category}
+                          price={p.price}
+                          originalPrice={(p as any).original_price}
+                          to="/catalog/$category"
+                          params={{ category: makeCategorySlug("Perruques") }}
+                          search={{ highlight: p.id }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </motion.div>
+              </div>
             </>
           )}
 
@@ -993,63 +947,47 @@ function Index() {
                   </Link>
                 }
               />
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.45, duration: 0.3 }}
-            className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory md:mx-0 md:px-0"
-            style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-          >
-                {popularBraids.map((p, i) => (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + i * 0.03, duration: 0.3 }}
-                    className="snap-start"
-                    style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-                  >
-                     <div className="block">
-                       <div className="w-36 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm">
-                         <HomeCard
-                           image={p.image_url}
-                           title={p.title}
-                           category={p.category}
-                           price={p.price}
-                           originalPrice={(p as any).original_price}
-                           to="/catalog/$category"
-                           params={{ category: makeCategorySlug("Coiffure") }}
-                           search={{ highlight: p.id }}
-                         />
-                       </div>
-                     </div>
-                  </motion.div>
+              <div
+                className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory md:mx-0 md:px-0 animate-fade-up"
+                style={{ overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
+              >
+                {popularBraids.map((p) => (
+                  <div key={p.id} className="snap-start">
+                    <div className="block">
+                      <div className="w-36 shrink-0 rounded-[24px] border border-[var(--gold-soft)]/20 bg-white/70 p-2.5 shadow-sm">
+                        <HomeCard
+                          image={p.image_url}
+                          title={p.title}
+                          category={p.category}
+                          price={p.price}
+                          originalPrice={(p as any).original_price}
+                          to="/catalog/$category"
+                          params={{ category: makeCategorySlug("Coiffure") }}
+                          search={{ highlight: p.id }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </motion.div>
+              </div>
             </>
           )}
 
           {/* Avis clientes */}
           <SectionTitle title="Avis clientes" />
-          <motion.div
+          <div
             ref={reviewsRef}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.3 }}
-            className="flex gap-3 overflow-x-auto pb-3 -mx-5 px-5 snap-x snap-mandatory scroll-smooth md:mx-0 md:px-0"
-            style={{ willChange: "transform, opacity", transform: "translateZ(0)", overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
+            className="flex gap-3 overflow-x-auto pb-3 -mx-5 px-5 snap-x snap-mandatory scroll-smooth md:mx-0 md:px-0 animate-fade-up"
+            style={{ overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
           >
             {reviewSlides.map((t, i) => {
               const reviewObj = typeof t === "object" && t !== null ? (t as Record<string, unknown>) : null;
               const reviewId = reviewObj?.id ? String(reviewObj.id) : null;
               return (
-                <motion.div
+                <div
                   key={reviewObj?.id ? String(reviewObj.id) : `r-${i}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.55 + i * 0.03, duration: 0.3 }}
                   className="relative min-w-[18rem] shrink-0 snap-start rounded-[24px] border border-[var(--gold-soft)]/25 bg-white/80 p-4 shadow-md shadow-[var(--gold)]/5 backdrop-blur-sm"
-                  style={{ willChange: "transform, opacity", transform: "translateZ(0)", touchAction: "manipulation" }}
+                  style={{ touchAction: "manipulation" }}
                   data-review-slide
                 >
                   <div className="flex items-center justify-between">
@@ -1078,10 +1016,10 @@ function Index() {
                       </button>
                     )}
                   </div>
-                </motion.div>
+                </div>
               );
             })}
-          </motion.div>
+          </div>
 
           {/* Carousel promo */}
           {promotionItems.length > 0 ? (
@@ -1099,22 +1037,12 @@ function Index() {
                   </Link>
                 }
               />
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.55, duration: 0.3 }}
-                className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory scroll-smooth md:mx-0 md:px-0"
-                style={{ willChange: "transform, opacity", transform: "translateZ(0)", overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
+              <div
+                className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 snap-x snap-mandatory scroll-smooth md:mx-0 md:px-0 animate-fade-up"
+                style={{ overscrollBehaviorX: "contain", WebkitOverflowScrolling: "touch" }}
               >
-                {promotionItems.map((p, i) => (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 + i * 0.03, duration: 0.3 }}
-                    className="snap-start"
-                    style={{ willChange: "transform, opacity", transform: "translateZ(0)" }}
-                  >
+                {promotionItems.map((p) => (
+                  <div key={p.id} className="snap-start">
                     <Link
                       to="/catalog/$category"
                       params={{ category: "promotion" }}
@@ -1146,9 +1074,9 @@ function Index() {
                          </div>
                        </div>
                     </Link>
-                  </motion.div>
+                  </div>
                 ))}
-              </motion.div>
+              </div>
             </>
           ) : (
             <motion.section

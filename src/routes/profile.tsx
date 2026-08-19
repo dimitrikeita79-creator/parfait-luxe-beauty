@@ -62,7 +62,12 @@ function ProfilePage() {
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewFeedback, setReviewFeedback] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const isAdmin = user?.role === "admin";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -164,7 +169,7 @@ function ProfilePage() {
 
   const handleSignOut = async () => {
     await authService.signOut();
-    navigate({ to: "/login", replace: true });
+    navigate({ to: "/login", replace: true, search: {} } as any);
   };
 
   const handleAvatarUpload = async (event: FormEvent<HTMLFormElement>) => {
@@ -342,7 +347,7 @@ function ProfilePage() {
 
   const handleOpenFavorite = (favorite: FavoriteItem) => {
     const destination = getFavoriteDestination(favorite);
-    navigate(destination);
+    navigate(destination as any);
   };
 
   const norm = (s: string) =>
@@ -412,7 +417,7 @@ function ProfilePage() {
         transition={{ duration: 0.4 }}
         className="mt-6"
       >
-        <div className="rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-blue-50/80 to-white p-5 space-y-5 shadow-md shadow-blue-200/20">
+        <div className="rounded-[32px] border border-blue-200/40 bg-gradient-to-br from-blue-50/80 to-white p-5 space-y-5 shadow-md shadow-blue-200/20 gpu-accelerated">
           {/* En-tête profil */}
           <div className="flex items-center gap-4">
             <div className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[24px] bg-gradient-to-br from-[var(--gold-soft)] to-[var(--gold-deep)]/40 shadow-md">
@@ -549,12 +554,12 @@ function ProfilePage() {
 
       {/* Section Produits sauvegardés */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={mounted ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
         className="mt-4"
       >
-        <div className="liquid-glass rounded-[32px] p-5">
+        <div className="liquid-glass rounded-[32px] p-5 gpu-accelerated">
           <div className="flex items-center gap-2 mb-4">
             <Bookmark className="h-4 w-4 text-blue-600" />
             <h3 className="text-sm font-semibold text-foreground">Produits sauvegardés</h3>
@@ -599,7 +604,7 @@ function ProfilePage() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
-                    className="flex items-start justify-between gap-3 rounded-2xl border border-stone-200 bg-white/60 p-3"
+                    className="flex items-start justify-between gap-3 rounded-2xl border border-stone-200 bg-white/60 p-3 gpu-accelerated"
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">{item.title}</p>
@@ -628,7 +633,7 @@ function ProfilePage() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="mt-4"
       >
-        <div className="liquid-glass rounded-[32px] p-5">
+        <div className="liquid-glass rounded-[32px] p-5 gpu-accelerated">
           <div className="flex items-center gap-2 mb-4">
             <Star className="h-4 w-4 text-red-600" />
             <h3 className="text-sm font-semibold text-foreground">Votre avis</h3>

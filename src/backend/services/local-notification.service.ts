@@ -17,20 +17,26 @@ const EMOJI_MAP: Record<string, string> = {
 export class LocalNotificationService {
   private granted = false;
   private channelCreated = false;
+  private lastCheck = 0;
+  private checkCacheMs = 5000;
+
+  private safeId(): number {
+    return Math.floor(Date.now() / 1000);
+  }
 
   async createChannel(): Promise<void> {
     try {
       if (this.channelCreated) return;
       await LocalNotifications.createChannel({
-        id: 'default',
-        name: 'Notifications',
-        importance: 5,
+        id: 'parfait-notifications',
+        name: 'Notifications Parfait',
+        importance: 4,
         visibility: 1,
         sound: 'default',
       });
       this.channelCreated = true;
-    } catch (error) {
-      console.error('[LocalNotificationService] createChannel error:', error);
+    } catch {
+      // ignore
     }
   }
 
@@ -39,19 +45,22 @@ export class LocalNotificationService {
       const perm = await LocalNotifications.requestPermissions();
       this.granted = perm.display === 'granted';
       return this.granted;
-    } catch (error) {
-      console.error('[LocalNotificationService] requestPermission error:', error);
+    } catch {
       return false;
     }
   }
 
   async isPermissionGranted(): Promise<boolean> {
     try {
+      const now = Date.now();
+      if (now - this.lastCheck < this.checkCacheMs) {
+        return this.granted;
+      }
       const perm = await LocalNotifications.checkPermissions();
       this.granted = perm.display === 'granted';
+      this.lastCheck = now;
       return this.granted;
-    } catch (error) {
-      console.error('[LocalNotificationService] checkPermissions error:', error);
+    } catch {
       return false;
     }
   }
@@ -59,17 +68,23 @@ export class LocalNotificationService {
   async ensurePermission(): Promise<boolean> {
     try {
       await this.createChannel();
-      const already = await this.isPermissionGranted();
-      if (already) return true;
-      const result = await this.requestPermission();
-      if (!result && typeof window !== "undefined" && "Notification" in window) {
+      const now = Date.now();
+      if (now - this.lastCheck < this.checkCacheMs) {
+        return this.granted;
+      }
+      const perm = await LocalNotifications.checkPermissions();
+      this.granted = perm.display === 'granted';
+      this.lastCheck = now;
+      if (this.granted) return true;
+      const result = await LocalNotifications.requestPermissions();
+      this.granted = result.display === 'granted';
+      if (!this.granted && typeof window !== "undefined" && "Notification" in window) {
         const browserGranted = Notification.permission === "granted";
         this.granted = browserGranted;
         return browserGranted;
       }
-      return result;
-    } catch (error) {
-      console.error('[LocalNotificationService] ensurePermission error:', error);
+      return this.granted;
+    } catch {
       return false;
     }
   }
@@ -77,10 +92,15 @@ export class LocalNotificationService {
   async notify({ title, body, id = 1 }: NotificationPayload): Promise<void> {
     try {
       await this.createChannel();
+      const now = Date.now();
+      if (now - this.lastCheck >= this.checkCacheMs) {
+        const perm = await LocalNotifications.checkPermissions();
+        this.granted = perm.display === 'granted';
+        this.lastCheck = now;
+      }
       if (!this.granted) {
         const ok = await this.ensurePermission();
         if (!ok) {
-          console.warn('[LocalNotificationService] permission not granted, notification skipped:', title);
           return;
         }
       }
@@ -97,15 +117,24 @@ export class LocalNotificationService {
           },
         ],
       });
-    } catch (error) {
-      console.error('[LocalNotificationService] notify error:', error);
-      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-        try {
+    } catch {
+      void this.notifyBrowserFallback(title, body);
+    }
+  }
+
+  private async notifyBrowserFallback(title: string, body: string): Promise<void> {
+    try {
+      if (typeof window !== "undefined" && "Notification" in window) {
+        const perm = await Notification.requestPermission();
+        if (perm === "granted") {
           new Notification(title, { body, icon: '/logo.ico' });
-        } catch (browserError) {
-          console.error('[LocalNotificationService] browser fallback error:', browserError);
+          console.log(`[LocalNotificationService] browser fallback notification shown`);
+        } else {
+          console.warn('[LocalNotificationService] browser fallback permission denied');
         }
       }
+    } catch (browserError) {
+      console.error('[LocalNotificationService] browser fallback error:', browserError);
     }
   }
 
@@ -124,29 +153,33 @@ export class LocalNotificationService {
       quantity > 1
         ? `"${itemTitle}" x${quantity} ajouté(s) — Votre panier contient maintenant ${totalItems} article${totalItems > 1 ? 's' : ''}.`
         : `"${itemTitle}" a été ajouté — Votre panier contient maintenant ${totalItems} article${totalItems > 1 ? 's' : ''}.`;
-    await this.notify({ title, body, id: Date.now() });
+    await this.notify({ title, body, id: this.safeId() });
   }
 
   async cartUpdated(totalItems: number): Promise<void> {
     const emoji = EMOJI_MAP.cart;
     const title = `${emoji} Panier mis à jour`;
     const body = `Votre panier contient maintenant ${totalItems} article${totalItems > 1 ? 's' : ''}.`;
-    await this.notify({ title, body, id: Date.now() + 1 });
+    await this.notify({ title, body, id: this.safeId() + 1 });
   }
 
   async cartCleared(): Promise<void> {
     const emoji = EMOJI_MAP.cart;
     const title = `${emoji} Panier vidé`;
     const body = 'Votre panier a été vidé avec succès.';
-    await this.notify({ title, body, id: Date.now() + 2 });
+    await this.notify({ title, body, id: this.safeId() + 2 });
   }
 
   async itemRemoved(itemTitle: string): Promise<void> {
     const emoji = EMOJI_MAP.cart;
     const title = `${emoji} Article retiré`;
     const body = `"${itemTitle}" a été retiré de votre panier.`;
-    await this.notify({ title, body, id: Date.now() + 3 });
+    await this.notify({ title, body, id: this.safeId() + 3 });
   }
 }
 
 export const localNotificationService = new LocalNotificationService();
+
+if (typeof window !== 'undefined') {
+  (window as any).localNotificationService = localNotificationService;
+}

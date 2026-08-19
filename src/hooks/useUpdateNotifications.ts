@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase, TABLES } from "@/backend/client";
 
 interface UpdateNotification {
   id: string;
@@ -11,51 +12,64 @@ export function useUpdateNotifications() {
   const [notifications, setNotifications] = useState<UpdateNotification[]>([]);
 
   useEffect(() => {
-    // Vérifier les mises à jour toutes les 30 secondes
     const interval = setInterval(() => {
-      checkForUpdates();
+      void checkForUpdates();
     }, 30000);
 
-    // Vérifier au chargement
-    checkForUpdates();
+    void checkForUpdates();
 
     return () => clearInterval(interval);
   }, []);
 
   const checkForUpdates = async () => {
     try {
-      // Récupérer le dernier timestamp depuis localStorage
       const lastCheck = localStorage.getItem("last-update-check");
       const now = Date.now();
+      const last = lastCheck ? parseInt(lastCheck) : 0;
 
-      // Vérifier les services
-      const servicesRes = await fetch("/api/services/last-update");
-      if (servicesRes.ok) {
-        const { timestamp } = await servicesRes.json();
-        if (timestamp > (lastCheck ? parseInt(lastCheck) : 0)) {
+      const [
+        servicesRes,
+        galleryRes,
+        catalogRes,
+      ] = await Promise.all([
+        supabase
+          .from(TABLES.SERVICES)
+          .select("updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(1),
+        supabase
+          .from(TABLES.GALLERY)
+          .select("updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(1),
+        supabase
+          .from(TABLES.CATALOG)
+          .select("updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(1),
+      ]);
+
+      if (!servicesRes.error && servicesRes.data?.[0]?.updated_at) {
+        const ts = new Date(servicesRes.data[0].updated_at).getTime();
+        if (ts > last) {
           addNotification("service", "Nouveau service disponible !");
         }
       }
 
-      // Vérifier la galerie
-      const galleryRes = await fetch("/api/gallery/last-update");
-      if (galleryRes.ok) {
-        const { timestamp } = await galleryRes.json();
-        if (timestamp > (lastCheck ? parseInt(lastCheck) : 0)) {
+      if (!galleryRes.error && galleryRes.data?.[0]?.updated_at) {
+        const ts = new Date(galleryRes.data[0].updated_at).getTime();
+        if (ts > last) {
           addNotification("gallery", "Nouvelles photos dans la galerie !");
         }
       }
 
-      // Vérifier le catalogue
-      const catalogRes = await fetch("/api/catalog/last-update");
-      if (catalogRes.ok) {
-        const { timestamp } = await catalogRes.json();
-        if (timestamp > (lastCheck ? parseInt(lastCheck) : 0)) {
+      if (!catalogRes.error && catalogRes.data?.[0]?.updated_at) {
+        const ts = new Date(catalogRes.data[0].updated_at).getTime();
+        if (ts > last) {
           addNotification("catalog", "Nouveaux produits dans le catalogue !");
         }
       }
 
-      // Mettre à jour le dernier check
       localStorage.setItem("last-update-check", now.toString());
     } catch (error) {
       console.error("Erreur lors de la vérification des mises à jour:", error);
@@ -72,7 +86,6 @@ export function useUpdateNotifications() {
 
     setNotifications((prev) => [...prev, notification]);
 
-    // Auto-supprimer après 5 secondes
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
     }, 5000);

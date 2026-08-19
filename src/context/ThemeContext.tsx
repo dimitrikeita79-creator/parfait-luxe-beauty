@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 
 export type Theme = "light" | "gold" | "silver" | "green" | "red";
 
@@ -12,23 +12,29 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Deterministic on first render (matches SSR). The stored theme is read
-  // after mount so client/server hydration never mismatch.
-  const [theme, setThemeState] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-      if (stored && THEMES.includes(stored)) {
-        setThemeState(stored);
-      }
-    } catch (e) {
-      console.error("Error reading localStorage:", e);
+function getStoredTheme(): Theme {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored && THEMES.includes(stored as Theme)) {
+      return stored as Theme;
     }
-    setMounted(true);
-  }, []);
+  } catch {
+    // ignore
+  }
+  return "light";
+}
+
+function subscribeToStorage(callback: () => void) {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const theme = useSyncExternalStore(
+    subscribeToStorage,
+    getStoredTheme,
+    () => "light" as Theme
+  );
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -42,13 +48,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     try {
       localStorage.setItem(STORAGE_KEY, theme);
-    } catch (e) {
-      console.error("Error saving to localStorage:", e);
+    } catch {
+      // ignore
     }
   }, [theme]);
 
   const setTheme = (next: Theme) => {
-    setThemeState(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+      window.dispatchEvent(new Event("storage"));
+    } catch {
+      // ignore
+    }
   };
 
   return (

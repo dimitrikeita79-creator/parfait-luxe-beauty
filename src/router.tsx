@@ -2,24 +2,34 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
+let router: any = null;
+
 export const getRouter = () => {
-  console.log('[router.tsx] getRouter() called');
-  return createAppRouter();
+  if (!router) {
+    router = createAppRouter();
+  }
+  return router;
 };
 
 export const createAppRouter = () => {
-  console.log('[router.tsx] createAppRouter() called');
   try {
-    const queryClient = new QueryClient();
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          refetchOnWindowFocus: false,
+          retry: 1,
+          staleTime: 1000 * 60,
+        },
+      },
+    });
     const router = createRouter({
       routeTree,
       context: { queryClient },
       scrollRestoration: true,
-      defaultPreload: false,
-      defaultPreloadStaleTime: 0,
+      defaultPreload: "intent",
+      defaultPreloadStaleTime: 1000 * 60,
       basepath: "/",
     });
-    console.log('[router.tsx] createAppRouter success');
     return router;
   } catch (e) {
     console.error('[router.tsx] createAppRouter failed:', e);

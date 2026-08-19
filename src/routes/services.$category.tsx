@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ChevronLeft, Clock, Heart, X, ShoppingCart } from "lucide-react";
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { GlassButton } from "@/components/GlassButton";
+import { ImageCarousel } from "@/components/ImageCarousel";
 import { servicesService, authService } from "@/backend/services";
 import { waLinkFor, getSalonIdFromName, getSalon } from "@/lib/salon-data";
 import type { ServiceItem } from "@/backend/models";
@@ -304,23 +305,32 @@ function ServiceCategoryPage() {
                     highlight === s.id ? "ring-2 ring-[var(--gold)] scale-[1.02]" : ""
                   }`}
                 >
-                  {s.image_url ? (
-                    <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
-                      <img
-                        src={s.image_url}
-                        alt={s.title}
-                        className="absolute inset-0 h-full w-full object-cover"
-                        style={{ objectFit: "cover" }}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex w-full items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-100 to-amber-100" style={{ aspectRatio: "4/5" }}>
-                      <Clock className="h-8 w-8 text-yellow-600" />
-                    </div>
-                  )}
-                  <div className="mt-2">
+                  {(() => {
+                    const imgs = (s.gallery_images?.length ? s.gallery_images : s.image_url ? [s.image_url] : []).filter(Boolean);
+                    if (imgs.length > 1) {
+                      return <ImageCarousel images={imgs} autoPlayInterval={4000} />;
+                    }
+                    if (imgs.length === 1) {
+                      return (
+                        <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
+                          <img
+                            src={imgs[0]}
+                            alt={s.title}
+                            className="absolute inset-0 h-full w-full object-cover"
+                            style={{ objectFit: "cover" }}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="flex w-full items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-100 to-amber-100" style={{ aspectRatio: "4/5" }}>
+                        <Clock className="h-8 w-8 text-yellow-600" />
+                      </div>
+                    );
+                  })()}
+                   <div className="mt-2">
                     <p className="font-display text-sm font-semibold leading-tight">{s.title}</p>
                     {s.description && (
                       <p className="mt-0.5 text-[10px] text-muted-foreground leading-relaxed">{s.description}</p>

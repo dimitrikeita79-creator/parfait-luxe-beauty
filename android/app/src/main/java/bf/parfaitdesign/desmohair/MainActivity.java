@@ -1,5 +1,14 @@
 package bf.parfaitdesign.desmohair;
 
-import com.getcapacitor.BridgeActivity;
+import android.app.Application;
+import android.content.Context;
+import android.util.Log;
 
-public class MainActivity extends BridgeActivity {}
+import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.Plugin;
+import com.google.firebase.FirebaseApp;
+
+import java.util.ArrayList;
+
+public class MainActivity extends BridgeActivity {
+}

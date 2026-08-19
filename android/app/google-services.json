@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "974690791463",
+    "project_id": "parfait-design-desmohair",
+    "storage_bucket": "parfait-design-desmohair.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:974690791463:android:4f8d37fdd3de66d1b8de02",
+        "android_client_info": {
+          "package_name": "bf.parfaitdesign.desmohair"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6pydy6-jVca1PGb-8QMnOsSRD2eQrDkM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

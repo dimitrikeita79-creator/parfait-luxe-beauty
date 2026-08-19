@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { AppShell, WhatsAppIcon } from "@/components/AppShell";
 import { Frame } from "@/components/Frame";
 import { GlassButton } from "@/components/GlassButton";
+import { ImageCarousel } from "@/components/ImageCarousel";
 import { catalogService, salonService, authService } from "@/backend/services";
 import { waLinkFor, SALONS, pickSalonFor, getSalonIdFromName, getSalon, type SalonId } from "@/lib/salon-data";
 import type { CatalogItem, SalonInfo } from "@/backend/models";
@@ -281,20 +282,29 @@ function CategoryPage() {
                   transition={{ delay: i * 0.03, duration: 0.3 }}
                   className={`liquid-glass rounded-[24px] p-3 transition-all duration-300 ${
                     highlight === p.id ? "ring-2 ring-[var(--gold)] scale-[1.02]" : ""
-                  }`}
+                   }`}
                 >
-                   {p.image_url && (
-                     <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
-                       <img
-                         src={p.image_url}
-                         alt={p.title}
-                         className="absolute inset-0 h-full w-full object-cover"
-                         style={{ objectFit: "cover" }}
-                         loading="lazy"
-                         decoding="async"
-                       />
-                     </div>
-                   )}
+                   {(() => {
+                     const imgs = (p.gallery_images?.length ? p.gallery_images : p.image_url ? [p.image_url] : []).filter(Boolean);
+                     if (imgs.length > 1) {
+                       return <ImageCarousel images={imgs} autoPlayInterval={4000} />;
+                     }
+                     if (imgs.length === 1) {
+                       return (
+                         <div className="relative overflow-hidden rounded-2xl aspect-[4/5] w-full bg-white">
+                           <img
+                             src={imgs[0]}
+                             alt={p.title}
+                             className="absolute inset-0 h-full w-full object-cover"
+                             style={{ objectFit: "cover" }}
+                             loading="lazy"
+                             decoding="async"
+                           />
+                         </div>
+                       );
+                     }
+                     return null;
+                   })()}
                    <div className="mt-2">
                      <p className="font-display text-sm font-semibold leading-tight md:text-base">{p.title}</p>
                      {(p as any).code && (

@@ -8,7 +8,6 @@ export class PushNotificationService {
   async register(): Promise<string | null> {
     try {
       if (typeof PushNotifications === 'undefined') {
-        console.warn('[PushNotificationService] PushNotifications plugin not available');
         return null;
       }
       const perm = await PushNotifications.requestPermissions();
@@ -17,8 +16,7 @@ export class PushNotificationService {
         return null;
       }
       return null;
-    } catch (error) {
-      console.error('[PushNotificationService] register error:', error);
+    } catch {
       return null;
     }
   }

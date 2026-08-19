@@ -48,6 +48,21 @@
 					"host": "gjahsoafbclqpodnblnd.supabase.co"
 				}
 			]
+		},
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
+		},
+		"LocalNotifications": {
+			"defaultChannel": "parfait-notifications",
+			"android": {
+				"foregroundService": {
+					"notificationPriority": 5
+				}
+			}
 		}
 	}
 }

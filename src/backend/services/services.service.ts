@@ -1,17 +1,27 @@
-import { supabase, TABLES } from '../client';
+import { supabase, TABLES, withRetry } from '../client';
 import { ApiException } from '../exceptions';
 import type { ServiceItem } from '../models';
 import { notificationService } from './notification.service';
+import { normalizeGalleryImages } from '@/lib/normalize';
+
+function normalizeServiceItems(items: ServiceItem[]): ServiceItem[] {
+  return items.map((item) => ({
+    ...item,
+    gallery_images: normalizeGalleryImages(item.gallery_images),
+  }));
+}
 
 export class ServicesService {
   async getAll(): Promise<ServiceItem[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.SERVICES)
-        .select('*')
-        .order('title', { ascending: true });
-      if (error) throw error;
-      return data as ServiceItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.SERVICES)
+          .select('id, title, description, price, duration_min, category, image_url, gallery_images, code, active, salon_name, created_at, updated_at')
+          .order('title', { ascending: true });
+        if (error) throw error;
+        return normalizeServiceItems(data as ServiceItem[]);
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }
@@ -19,13 +29,15 @@ export class ServicesService {
 
   async getActive(): Promise<ServiceItem[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.SERVICES)
-        .select('*')
-        .eq('active', true)
-        .order('title', { ascending: true });
-      if (error) throw error;
-      return data as ServiceItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.SERVICES)
+          .select('id, title, description, price, duration_min, category, image_url, gallery_images, code, active, salon_name, created_at, updated_at')
+          .eq('active', true)
+          .order('title', { ascending: true });
+        if (error) throw error;
+        return normalizeServiceItems(data as ServiceItem[]);
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }
@@ -51,13 +63,15 @@ export class ServicesService {
         promotion: "Promo",
       };
       const queryValue = categoryMap[normalizedCategory] ?? category.trim();
-      const { data, error } = await supabase
-        .from(TABLES.SERVICES)
-        .select("*")
-        .ilike("category", queryValue)
-        .order("title", { ascending: true });
-      if (error) throw error;
-      return data as ServiceItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.SERVICES)
+          .select('id, title, description, price, duration_min, category, image_url, gallery_images, code, active, salon_name, created_at, updated_at')
+          .ilike("category", queryValue)
+          .order("title", { ascending: true });
+        if (error) throw error;
+        return normalizeServiceItems(data as ServiceItem[]);
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }

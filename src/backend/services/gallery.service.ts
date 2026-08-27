@@ -1,4 +1,4 @@
-import { supabase, TABLES } from '../client';
+import { supabase, TABLES, withRetry } from '../client';
 import { ApiException } from '../exceptions';
 import type { GalleryItem } from '../models';
 import { notificationService } from './notification.service';
@@ -6,12 +6,14 @@ import { notificationService } from './notification.service';
 export class GalleryService {
   async getAll(): Promise<GalleryItem[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.GALLERY)
-        .select('*')
-        .order('sort_order', { ascending: true });
-      if (error) throw error;
-      return data as GalleryItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.GALLERY)
+          .select('id, title, description, image_url, category, is_featured, sort_order, salon_name, created_at, updated_at')
+          .order('sort_order', { ascending: true });
+        if (error) throw error;
+        return data as GalleryItem[];
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }
@@ -19,13 +21,15 @@ export class GalleryService {
 
   async getFeatured(): Promise<GalleryItem[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.GALLERY)
-        .select('*')
-        .eq('is_featured', true)
-        .order('sort_order', { ascending: true });
-      if (error) throw error;
-      return data as GalleryItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.GALLERY)
+          .select('id, title, description, image_url, category, is_featured, sort_order, salon_name, created_at, updated_at')
+          .eq('is_featured', true)
+          .order('sort_order', { ascending: true });
+        if (error) throw error;
+        return data as GalleryItem[];
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }
@@ -33,13 +37,15 @@ export class GalleryService {
 
   async getByCategory(category: string): Promise<GalleryItem[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.GALLERY)
-        .select('*')
-        .eq('category', category)
-        .order('sort_order', { ascending: true });
-      if (error) throw error;
-      return data as GalleryItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.GALLERY)
+          .select('id, title, description, image_url, category, is_featured, sort_order, salon_name, created_at, updated_at')
+          .eq('category', category)
+          .order('sort_order', { ascending: true });
+        if (error) throw error;
+        return data as GalleryItem[];
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }

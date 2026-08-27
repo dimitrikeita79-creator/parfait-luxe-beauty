@@ -1,4 +1,4 @@
-import { supabase, TABLES } from "../client";
+import { supabase, TABLES, withRetry } from "../client";
 import { ApiException } from "../exceptions";
 import type { Review } from "../models";
 
@@ -98,11 +98,13 @@ export class ReviewsService {
 
   async getApprovedReviews(): Promise<Review[]> {
     const tryFetch = async (columnName?: string) => {
-      let query = supabase.from(TABLES.REVIEWS).select("*");
-      if (columnName) query = query.eq(columnName, true);
-      const { data, error } = await query.order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      return await withRetry(async () => {
+        let query = supabase.from(TABLES.REVIEWS).select('id, user_id, author_name, title, comment, rating, is_approved, created_at');
+        if (columnName) query = query.eq(columnName, true);
+        const { data, error } = await query.order("created_at", { ascending: false });
+        if (error) throw error;
+        return data;
+      });
     };
 
     try {
@@ -130,12 +132,18 @@ export class ReviewsService {
   }
 
   async getAllReviews(): Promise<Review[]> {
-    const { data, error } = await supabase
-      .from(TABLES.REVIEWS)
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return (data ?? []) as Review[];
+    try {
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.REVIEWS)
+          .select('id, user_id, author_name, title, comment, rating, is_approved, created_at')
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return (data ?? []) as Review[];
+      });
+    } catch (error) {
+      throw ApiException.fromError(error);
+    }
   }
 
   async deleteReview(id: string): Promise<void> {

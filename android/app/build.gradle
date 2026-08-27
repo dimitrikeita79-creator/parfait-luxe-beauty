@@ -16,23 +16,43 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    defaultConfig {
+        vectorDrawables.useSupportLibrary = true
+    }
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("ANDROID_KEYSTORE_FILE") ?: "keystore/release.keystore")
+            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD") ?: "REPLACE_ME"
+            keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "REPLACE_ME"
+            keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: "REPLACE_ME"
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
         debug {
             minifyEnabled false
             shrinkResources false
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    defaultConfig {
-        vectorDrawables.useSupportLibrary = true
+    bundle {
+        abi {
+            enableSplit true
+        }
+        density {
+            enableSplit true
+        }
+        language {
+            enableSplit true
+        }
     }
 }
 
@@ -43,7 +63,7 @@ dependencies {
     implementation project(':capacitor-android')
     implementation project(':capacitor-local-notifications')
     implementation project(':capacitor-push-notifications')
-    implementation platform('com.google.firebase:firebase-bom:33.6.0')
+    implementation platform('com.google.firebase:firebase-bom:34.18.0')
     implementation 'com.google.firebase:firebase-messaging'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

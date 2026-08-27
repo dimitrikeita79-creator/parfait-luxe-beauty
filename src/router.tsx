@@ -22,6 +22,11 @@ export const createAppRouter = () => {
         },
       },
     });
+
+    if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+      console.warn('[router] file:// protocol detected. For full navigation, prefer Capacitor WebView or a local dev server (npm run dev).');
+    }
+
     const router = createRouter({
       routeTree,
       context: { queryClient },

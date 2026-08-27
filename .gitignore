@@ -60,6 +60,9 @@ scripts/repro-418.mjs
 supabase/.temp/
 supabase/migrations/
 
+# Android keystores
+android/keystore/
+
 # Generated Capacitor config
 capacitor.config.json
 

@@ -1,16 +1,18 @@
-import { supabase, TABLES } from '../client';
+import { supabase, TABLES, withRetry } from '../client';
 import { ApiException } from '../exceptions';
 import type { TeamMember } from '../models';
 
 export class TeamService {
   async getAll(): Promise<TeamMember[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.TEAM)
-        .select('*')
-        .order('full_name', { ascending: true });
-      if (error) throw error;
-      return data as TeamMember[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.TEAM)
+          .select('id, full_name, role, description, photo_url, specialties, created_at, updated_at')
+          .order('full_name', { ascending: true });
+        if (error) throw error;
+        return data as TeamMember[];
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }

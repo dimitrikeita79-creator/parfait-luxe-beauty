@@ -12,8 +12,8 @@
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
     "build:android": "node scripts/bump-version.js && npm run build:capacitor && cd android && ./gradlew assembleDebug",
-    "build:android:release": "npm run build:capacitor && cd android && ./gradlew assembleRelease",
-    "build:ios": "npm run build:capacitor && npx cap open ios",
+    "build:android:release": "node scripts/bump-version.js && npm run build:capacitor && cd android && ./gradlew assembleRelease",
+    "build:ios": "node scripts/bump-version.js && npm run build:capacitor && npx cap open ios",
     "sync:android": "npx cap sync android",
     "sync:ios": "npx cap sync ios"
   },
@@ -101,6 +101,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
+    "lru-cache": "^11.5.2",
     "magicui-cli": "^0.1.6",
     "nitro": "^3.0.260610-beta",
     "prettier": "^3.7.3",
@@ -108,5 +109,8 @@
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.16",
     "wrangler": "^4.15.2"
+  },
+  "allowScripts": {
+    "workerd": true
   }
 }

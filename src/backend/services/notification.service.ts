@@ -1,4 +1,4 @@
-import { supabase, TABLES } from "../client";
+import { supabase, TABLES, withRetry } from "../client";
 import { ApiException } from "../exceptions";
 import type { Notification } from "../models";
 import { localNotificationService } from "./local-notification.service";
@@ -6,16 +6,18 @@ import { localNotificationService } from "./local-notification.service";
 export class NotificationService {
   async getAll(): Promise<Notification[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.NOTIFICATIONS)
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) {
-        console.error("[NotificationService] query error:", error);
-        return [];
-      }
-      return (data ?? []) as Notification[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.NOTIFICATIONS)
+          .select('id, user_id, title, message, type, read, created_at')
+          .order("created_at", { ascending: false })
+          .limit(50);
+        if (error) {
+          console.error("[NotificationService] query error:", error);
+          return [];
+        }
+        return (data ?? []) as Notification[];
+      });
     } catch (error) {
       console.error("[NotificationService] unexpected error:", error);
       return [];

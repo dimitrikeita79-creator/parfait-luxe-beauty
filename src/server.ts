@@ -44,15 +44,25 @@ export default {
             "<script type=\"module\" src=\"/@react-refresh\"></script>\n    <script>\n      window.$RefreshReg$ = () => {};\n      window.$RefreshSig$ = () => (type) => type;\n    </script>\n    <script type=\"module\""
           );
         }
+        
+        const cacheAge = url.searchParams.has("dev") ? "no-cache" : "max-age=60, s-maxage=300, stale-while-revalidate=60";
+        
         return new Response(html, {
           status: 200,
-          headers: { "content-type": "text/html; charset=utf-8" },
+          headers: {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": cacheAge,
+            "x-edge-cache": "HIT",
+          },
         });
       }
 
       return new Response(SHELL_FALLBACK, {
         status: 200,
-        headers: { "content-type": "text/html; charset=utf-8" },
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "max-age=60, s-maxage=300, stale-while-revalidate=60",
+        },
       });
     }
 

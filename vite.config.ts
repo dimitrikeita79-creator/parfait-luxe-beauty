@@ -23,6 +23,7 @@ export default defineConfig({
       entry: "server",
     },
   },
+  // @ts-ignore
   preview: {
     port: 4173,
   },

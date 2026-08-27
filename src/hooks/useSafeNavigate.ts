@@ -14,7 +14,10 @@ export function useSafeNavigate() {
 
   return useCallback(
     (opts: Parameters<typeof navigate>[0]) => {
-      if (!routerState) return;
+      if (!routerState) {
+        console.warn('[useSafeNavigate] router not ready, navigation dropped', opts);
+        return;
+      }
       navigate(opts);
     },
     [navigate, routerState],

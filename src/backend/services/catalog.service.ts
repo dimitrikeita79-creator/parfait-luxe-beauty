@@ -1,17 +1,27 @@
-import { supabase, TABLES } from '../client';
+import { supabase, TABLES, withRetry } from '../client';
 import { ApiException } from '../exceptions';
 import type { CatalogItem } from '../models';
 import { notificationService } from './notification.service';
+import { normalizeGalleryImages } from '@/lib/normalize';
+
+function normalizeCatalogItems(items: CatalogItem[]): CatalogItem[] {
+  return items.map((item) => ({
+    ...item,
+    gallery_images: normalizeGalleryImages(item.gallery_images),
+  }));
+}
 
 export class CatalogService {
   async getAll(): Promise<CatalogItem[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.CATALOG)
-        .select("*")
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      return data as CatalogItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.CATALOG)
+          .select('id, code, title, description, price, original_price, image_url, gallery_images, category, is_available, sort_order, salon_name, created_at, updated_at')
+          .order("sort_order", { ascending: true });
+        if (error) throw error;
+        return normalizeCatalogItems(data as CatalogItem[]);
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }
@@ -19,13 +29,15 @@ export class CatalogService {
 
   async getAvailable(): Promise<CatalogItem[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.CATALOG)
-        .select("*")
-        .eq("is_available", true)
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      return data as CatalogItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.CATALOG)
+          .select('id, code, title, description, price, original_price, image_url, gallery_images, category, is_available, sort_order, salon_name, created_at, updated_at')
+          .eq("is_available", true)
+          .order("sort_order", { ascending: true });
+        if (error) throw error;
+        return normalizeCatalogItems(data as CatalogItem[]);
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }
@@ -51,13 +63,15 @@ export class CatalogService {
         promotion: "Promo",
       };
       const queryValue = categoryMap[normalizedCategory] ?? category.trim();
-      const { data, error } = await supabase
-        .from(TABLES.CATALOG)
-        .select("*")
-        .ilike("category", queryValue)
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      return data as CatalogItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.CATALOG)
+          .select('id, code, title, description, price, original_price, image_url, gallery_images, category, is_available, sort_order, salon_name, created_at, updated_at')
+          .ilike("category", queryValue)
+          .order("sort_order", { ascending: true });
+        if (error) throw error;
+        return normalizeCatalogItems(data as CatalogItem[]);
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }

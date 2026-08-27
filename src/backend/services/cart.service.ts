@@ -1,20 +1,22 @@
-import { supabase, TABLES } from '../client';
+import { supabase, TABLES, withRetry } from '../client';
 import { ApiException } from '../exceptions';
 import type { CartItem } from '../models';
 
 export class CartService {
   async getAllForUser(userId: string): Promise<CartItem[]> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.CART)
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-      if (error) {
-        console.error('[CartService] getAllForUser error:', error);
-        throw new Error(`Erreur récupération panier: ${error.message}`);
-      }
-      return (data ?? []) as CartItem[];
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.CART)
+          .select('id, user_id, item_type, item_id, title, image_url, price, quantity, salon_name, code, created_at, updated_at')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+        if (error) {
+          console.error('[CartService] getAllForUser error:', error);
+          throw new Error(`Erreur récupération panier: ${error.message}`);
+        }
+        return (data ?? []) as CartItem[];
+      });
     } catch (error) {
       console.error('[CartService] getAllForUser unexpected error:', error);
       throw error;

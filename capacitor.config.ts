@@ -44,12 +44,7 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
     App: {
-      urlHandlers: [
-        {
-          scheme: "https",
-          host: "gjahsoafbclqpodnblnd.supabase.co",
-        },
-      ],
+      urlHandlers: [],
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],

@@ -1,22 +1,23 @@
-import { supabase, TABLES } from '../client';
+import { supabase, TABLES, withRetry } from '../client';
 import { ApiException } from '../exceptions';
 import type { SalonInfo } from '../models';
 
 export class SalonService {
   async getInfo(): Promise<SalonInfo> {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.SALON_INFO)
-        .select('*')
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
+      return await withRetry(async () => {
+        const { data, error } = await supabase
+          .from(TABLES.SALON_INFO)
+          .select('id, logo_url, banner_url, salon_name, slogan, about_text, address, phone_number, email, instagram_url, facebook_url, tiktok_url, whatsapp_url, opening_hours, updated_at')
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
 
-      if (!data) {
-        // Crée une entrée par défaut si aucune n'existe
-        return await this._createDefault();
-      }
-      return data as SalonInfo;
+        if (!data) {
+          return await this._createDefault();
+        }
+        return data as SalonInfo;
+      });
     } catch (error) {
       throw ApiException.fromError(error);
     }

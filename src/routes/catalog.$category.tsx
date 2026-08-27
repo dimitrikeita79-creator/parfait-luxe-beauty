@@ -71,6 +71,7 @@ function CategoryPage() {
   const defaultSalon = SALONS.find((s) => s.tags.some((tag) => tag === category)) || pickSalonFor(category);
   const activeSalon = establishmentFilter !== "all" ? getSalon(getSalonIdFromName(establishmentFilter)) : null;
   const displaySalon = activeSalon ?? defaultSalon;
+  const safeDisplaySalon = displaySalon ?? SALONS[0];
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -261,7 +262,7 @@ function CategoryPage() {
           >
             {establishmentFilter === "all"
               ? "Tous les établissements"
-              : `Commandes traitées par ${activeSalon?.name ?? displaySalon.name} · ${displaySalon.area}`}
+              : `Commandes traitées par ${activeSalon?.name ?? safeDisplaySalon.name} · ${safeDisplaySalon.area}`}
           </motion.p>
           <motion.div
             initial={{ opacity: 0 }}
@@ -307,31 +308,31 @@ function CategoryPage() {
                    })()}
                    <div className="mt-2">
                      <p className="font-display text-sm font-semibold leading-tight md:text-base">{p.title}</p>
-                     {(p as any).code && (
-                       <p className="mt-0.5 text-[10px] font-mono font-semibold text-[var(--gold-deep)]">
-                         Code: {(p as any).code}
-                       </p>
-                     )}
-                     {(() => {
-                       const isPromo = /promo|promotion|offres/i.test(p.category);
-                       const original = Number((p as any).original_price);
-                       if (isPromo && original && original > p.price) {
-                         return (
-                           <div className="mt-0.5 flex flex-col gap-0.5">
-                             <span className="text-[10px] font-semibold text-red-500 line-through">
-                               {formatFCFA(original)}
-                             </span>
-                             <span className="text-xs font-bold text-gold">{formatFCFA(p.price)}</span>
-                           </div>
-                         );
-                       }
-                       if (p.price > 0) {
-                         return (
-                           <p className="mt-0.5 text-xs font-bold text-gold">{formatFCFA(p.price)}</p>
-                         );
-                       }
-                       return null;
-                     })()}
+                      {p.code && (
+                        <p className="mt-0.5 text-[10px] font-mono font-semibold text-[var(--gold-deep)]">
+                          Code: {p.code}
+                        </p>
+                      )}
+                      {(() => {
+                        const isPromo = /promo|promotion|offres/i.test(p.category);
+                        const original = p.original_price;
+                        if (isPromo && typeof original === "number" && original > p.price) {
+                          return (
+                            <div className="mt-0.5 flex flex-col gap-0.5">
+                              <span className="text-[10px] font-semibold text-red-500 line-through">
+                                {formatFCFA(original)}
+                              </span>
+                              <span className="text-xs font-bold text-gold">{formatFCFA(p.price)}</span>
+                            </div>
+                          );
+                        }
+                        if (p.price > 0) {
+                          return (
+                            <p className="mt-0.5 text-xs font-bold text-gold">{formatFCFA(p.price)}</p>
+                          );
+                        }
+                        return null;
+                      })()}
                      {p.description && (
                        <p className="mt-0.5 text-[10px] text-muted-foreground leading-relaxed line-clamp-3">{p.description}</p>
                      )}

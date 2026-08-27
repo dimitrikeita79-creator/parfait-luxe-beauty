@@ -163,8 +163,8 @@ function RootComponent() {
         history.back();
         return true;
       }
-      if (typeof window !== "undefined" && window.history && window.history.length > 1) {
-        window.history.back();
+      if (typeof window !== "undefined" && window.location && window.location.pathname !== "/") {
+        navigate({ to: "/" });
         return true;
       }
     } catch {

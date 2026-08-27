@@ -201,6 +201,7 @@ export class AuthService {
       const { data, error } = await supabase
         .from(TABLES.PROFILES)
         .select('id, email, full_name, avatar_url, role, theme, created_at, updated_at')
+        .eq('id', userId)
         .maybeSingle();
 
       if (error) {

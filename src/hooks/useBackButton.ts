@@ -32,9 +32,6 @@ export function useBackButton(handler: () => boolean | void) {
                 handled = false;
               }
             }
-            if (!handled && typeof window !== "undefined" && (window as any).history && (window as any).history.length > 1) {
-              handled = true;
-            }
             if (!handled) {
               try {
                 await App.exitApp?.();

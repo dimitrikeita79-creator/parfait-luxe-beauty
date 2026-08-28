@@ -132,7 +132,7 @@ try {
   console.warn('[postbuild] Failed to patch useStore:', e);
 }
 
-// Remove Nitro-generated Pages-incompatible wrangler config
+// Remove Nitro-generated Pages-incompatible wrangler configs
 try {
   const serverWrangler = join(root, "dist", "server", "wrangler.json");
   if (existsSync(serverWrangler)) {
@@ -141,4 +141,14 @@ try {
   }
 } catch (e) {
   console.warn('[postbuild] Failed to remove dist/server/wrangler.json:', e);
+}
+
+try {
+  const deployConfig = join(root, ".wrangler", "deploy", "config.json");
+  if (existsSync(deployConfig)) {
+    rmSync(deployConfig, { force: true });
+    console.log('[postbuild] Removed .wrangler/deploy/config.json for Pages compatibility');
+  }
+} catch (e) {
+  console.warn('[postbuild] Failed to remove .wrangler/deploy/config.json:', e);
 }

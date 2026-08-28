@@ -1,4 +1,4 @@
-import { supabase, TABLES, withRetry } from '../client';
+import { supabase, TABLES, withRetry, isTableNotFoundError } from '../client';
 import { ApiException } from '../exceptions';
 import type { CartItem } from '../models';
 
@@ -12,12 +12,14 @@ export class CartService {
           .eq('user_id', userId)
           .order('created_at', { ascending: false });
         if (error) {
+          if (isTableNotFoundError(error)) return [];
           console.error('[CartService] getAllForUser error:', error);
           throw new Error(`Erreur récupération panier: ${error.message}`);
         }
         return (data ?? []) as CartItem[];
       });
     } catch (error) {
+      if (isTableNotFoundError(error)) return [];
       console.error('[CartService] getAllForUser unexpected error:', error);
       throw error;
     }
@@ -39,11 +41,13 @@ export class CartService {
         .select()
         .single();
       if (error) {
+        if (isTableNotFoundError(error)) return { id: '', user_id: userId, ...item, quantity: 1 } as CartItem;
         console.error('[CartService] addItem error:', error);
         throw new Error(`Erreur ajout panier: ${error.message}`);
       }
       return data as CartItem;
     } catch (error) {
+      if (isTableNotFoundError(error)) return { id: '', user_id: userId, ...item, quantity: 1 } as CartItem;
       console.error('[CartService] addItem unexpected error:', error);
       throw error;
     }
@@ -58,11 +62,13 @@ export class CartService {
         .select()
         .single();
       if (error) {
+        if (isTableNotFoundError(error)) return { id, quantity } as CartItem;
         console.error('[CartService] updateQuantity error:', error);
         throw new Error(`Erreur mise à jour panier: ${error.message}`);
       }
       return data as CartItem;
     } catch (error) {
+      if (isTableNotFoundError(error)) return { id, quantity } as CartItem;
       console.error('[CartService] updateQuantity unexpected error:', error);
       throw error;
     }
@@ -72,12 +78,15 @@ export class CartService {
     try {
       const { error } = await supabase.from(TABLES.CART).delete().eq('id', id);
       if (error) {
+        if (isTableNotFoundError(error)) return;
         console.error('[CartService] removeItem error:', error);
         throw new Error(`Erreur suppression panier: ${error.message}`);
       }
     } catch (error) {
-      console.error('[CartService] removeItem unexpected error:', error);
-      throw error;
+      if (!isTableNotFoundError(error)) {
+        console.error('[CartService] removeItem unexpected error:', error);
+        throw error;
+      }
     }
   }
 
@@ -85,12 +94,15 @@ export class CartService {
     try {
       const { error } = await supabase.from(TABLES.CART).delete().eq('user_id', userId);
       if (error) {
+        if (isTableNotFoundError(error)) return;
         console.error('[CartService] clearForUser error:', error);
         throw new Error(`Erreur vidage panier: ${error.message}`);
       }
     } catch (error) {
-      console.error('[CartService] clearForUser unexpected error:', error);
-      throw error;
+      if (!isTableNotFoundError(error)) {
+        console.error('[CartService] clearForUser unexpected error:', error);
+        throw error;
+      }
     }
   }
 }

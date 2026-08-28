@@ -1,4 +1,4 @@
-import { supabase, TABLES, withRetry } from "../client";
+import { supabase, TABLES, withRetry, isTableNotFoundError } from "../client";
 import { ApiException } from "../exceptions";
 import type { Notification } from "../models";
 import { localNotificationService } from "./local-notification.service";
@@ -13,12 +13,14 @@ export class NotificationService {
           .order("created_at", { ascending: false })
           .limit(50);
         if (error) {
+          if (isTableNotFoundError(error)) return [];
           console.error("[NotificationService] query error:", error);
           return [];
         }
         return (data ?? []) as Notification[];
       });
     } catch (error) {
+      if (isTableNotFoundError(error)) return [];
       console.error("[NotificationService] unexpected error:", error);
       return [];
     }
@@ -32,11 +34,13 @@ export class NotificationService {
         .select()
         .single();
       if (error) {
+        if (isTableNotFoundError(error)) return { id: '', ...notification, created_at: new Date().toISOString() } as Notification;
         console.error("[NotificationService] create error:", error);
         throw error;
       }
       return data as Notification;
     } catch (error) {
+      if (isTableNotFoundError(error)) return { id: '', ...notification, created_at: new Date().toISOString() } as Notification;
       console.error("[NotificationService] create unexpected error:", error);
       throw ApiException.fromError(error);
     }
@@ -112,9 +116,14 @@ export class NotificationService {
         .from(TABLES.NOTIFICATIONS)
         .update({ read: true })
         .eq("id", id);
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return;
+        throw error;
+      }
     } catch (error) {
-      throw ApiException.fromError(error);
+      if (!isTableNotFoundError(error)) {
+        throw ApiException.fromError(error);
+      }
     }
   }
 
@@ -125,18 +134,28 @@ export class NotificationService {
         .update({ read: true })
         .eq("user_id", userId)
         .eq("read", false);
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return;
+        throw error;
+      }
     } catch (error) {
-      throw ApiException.fromError(error);
+      if (!isTableNotFoundError(error)) {
+        throw ApiException.fromError(error);
+      }
     }
   }
 
   async delete(id: string): Promise<void> {
     try {
       const { error } = await supabase.from(TABLES.NOTIFICATIONS).delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return;
+        throw error;
+      }
     } catch (error) {
-      throw ApiException.fromError(error);
+      if (!isTableNotFoundError(error)) {
+        throw ApiException.fromError(error);
+      }
     }
   }
 

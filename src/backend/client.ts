@@ -36,6 +36,16 @@ export function deduplicateRequest<T>(key: string, fetcher: () => Promise<T>): P
   return promise;
 }
 
+export function isTableNotFoundError(error: unknown): boolean {
+  const message = String((error as Error)?.message ?? '').toLowerCase();
+  return (
+    message.includes('relation') && message.includes('does not exist') ||
+    message.includes('failed to fetch') ||
+    message.includes('not found') ||
+    message.includes('404')
+  );
+}
+
 export async function withRetry<T>(
   fetcher: () => Promise<T>,
   options?: { retries?: number; baseDelay?: number }

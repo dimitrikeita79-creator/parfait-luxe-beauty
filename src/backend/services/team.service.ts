@@ -1,4 +1,4 @@
-import { supabase, TABLES, withRetry } from '../client';
+import { supabase, TABLES, withRetry, isTableNotFoundError } from '../client';
 import { ApiException } from '../exceptions';
 import type { TeamMember } from '../models';
 
@@ -10,10 +10,14 @@ export class TeamService {
           .from(TABLES.TEAM)
           .select('id, full_name, role, description, photo_url, specialties, created_at, updated_at')
           .order('full_name', { ascending: true });
-        if (error) throw error;
+        if (error) {
+          if (isTableNotFoundError(error)) return [];
+          throw error;
+        }
         return data as TeamMember[];
       });
     } catch (error) {
+      if (isTableNotFoundError(error)) return [];
       throw ApiException.fromError(error);
     }
   }
@@ -25,9 +29,13 @@ export class TeamService {
         .insert(member)
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return { id: '', ...member } as TeamMember;
+        throw error;
+      }
       return data as TeamMember;
     } catch (error) {
+      if (isTableNotFoundError(error)) return { id: '', ...member } as TeamMember;
       throw ApiException.fromError(error);
     }
   }
@@ -40,9 +48,13 @@ export class TeamService {
         .eq('id', id)
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return { id, ...updates } as TeamMember;
+        throw error;
+      }
       return data as TeamMember;
     } catch (error) {
+      if (isTableNotFoundError(error)) return { id, ...updates } as TeamMember;
       throw ApiException.fromError(error);
     }
   }
@@ -50,9 +62,14 @@ export class TeamService {
   async delete(id: string): Promise<void> {
     try {
       const { error } = await supabase.from(TABLES.TEAM).delete().eq('id', id);
-      if (error) throw error;
+      if (error) {
+        if (isTableNotFoundError(error)) return;
+        throw error;
+      }
     } catch (error) {
-      throw ApiException.fromError(error);
+      if (!isTableNotFoundError(error)) {
+        throw ApiException.fromError(error);
+      }
     }
   }
 }

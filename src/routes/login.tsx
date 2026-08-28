@@ -64,11 +64,7 @@ function LoginPage() {
 
       const user = await authService.signIn(normalizedEmail, password);
 
-      if (user.role === "admin") {
-        navigate({ to: "/admin" });
-      } else {
-        navigate({ to: "/profile" });
-      }
+      navigate({ to: "/profile" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Une erreur est survenue";
       setError(message);

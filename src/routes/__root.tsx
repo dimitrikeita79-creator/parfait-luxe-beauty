@@ -164,7 +164,7 @@ function RootComponent() {
         return true;
       }
       if (typeof window !== "undefined" && window.location && window.location.pathname !== "/") {
-        navigate({ to: "/" });
+        router.navigate({ to: "/" });
         return true;
       }
     } catch {
@@ -204,63 +204,98 @@ function RootComponent() {
 
   useEffect(() => {
     setShowSplash(true);
-    let t2: ReturnType<typeof setTimeout> | undefined;
-    const t1 = setTimeout(() => {
+    setSplashPhase("loading");
+    let authUnsubscribe: (() => void) | undefined;
+
+    const phase1 = setTimeout(() => {
       setSplashPhase("welcome");
-      t2 = setTimeout(() => {
-        if (mounted) setShowSplash(false);
-      }, 1800);
-    }, 1500);
-    const safety = setTimeout(() => {
-      if (mounted) setShowSplash(false);
-    }, 5000);
-    return () => {
-      clearTimeout(t1);
-      if (t2) clearTimeout(t2);
-      clearTimeout(safety);
+    }, 1200);
+
+    const hideWhenReady = () => {
+      setTimeout(() => {
+        setShowSplash(false);
+      }, 800);
     };
-  }, [mounted]);
+
+    const minSplash = setTimeout(() => {
+      if (!authLoading) {
+        hideWhenReady();
+      }
+    }, 2200);
+
+    const maxSplash = setTimeout(() => {
+      setShowSplash(false);
+    }, 5000);
+
+    const waitForAuth = async () => {
+      if (!authLoading) {
+        return;
+      }
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+        if (!authLoading) {
+          hideWhenReady();
+        }
+      });
+      authUnsubscribe = () => subscription.unsubscribe();
+    };
+
+    void waitForAuth();
+
+    return () => {
+      clearTimeout(phase1);
+      clearTimeout(minSplash);
+      clearTimeout(maxSplash);
+      if (authUnsubscribe) authUnsubscribe();
+    };
+  }, [authLoading, mounted]);
 
   return (
     <>
-      {showSplash && (
-        <div
-          key="splash"
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-white gpu-accelerated"
-          style={{ animation: "fade-up 0.3s ease-out both" }}
-        >
-          {splashPhase === "loading" ? (
-            <div className="text-center" style={{ animation: "fade-up 0.4s ease-out 0.1s both" }}>
-              <div className="mx-auto grid h-28 w-28 place-items-center rounded-[36px] shadow-luxe overflow-hidden">
-                <img src={desmohairLogo} alt="Desmohair" className="h-full w-full object-contain p-2" />
-              </div>
-              <h1 className="font-display mt-5 text-2xl font-semibold leading-tight" style={{ animation: "fade-up 0.4s ease-out 0.25s both" }}>
-                Desmohair
-              </h1>
-              <p className="mt-2 text-xs italic text-muted-foreground" style={{ animation: "fade-up 0.4s ease-out 0.35s both" }}>
-                {"Votre beauté, notre passion"}
-              </p>
-              <div className="mx-auto mt-6 flex items-center justify-center gap-1" style={{ animation: "fade-up 0.4s ease-out 0.45s both" }}>
-                <span className="h-2 w-2 rounded-full bg-[var(--gold)] animate-pulse" />
-                <span className="h-2 w-2 rounded-full bg-[var(--gold)] animate-pulse" style={{ animationDelay: "0.12s" }} />
-                <span className="h-2 w-2 rounded-full bg-[var(--gold)] animate-pulse" style={{ animationDelay: "0.24s" }} />
-              </div>
-            </div>
-          ) : (
-            <div className="text-center px-6" style={{ animation: "fade-up 0.35s ease-out 0.05s both" }}>
-              <div className="mx-auto mb-4 grid h-28 w-28 place-items-center rounded-[36px] shadow-luxe overflow-hidden">
-                <img src={desmohairLogo} alt="Desmohair" className="h-full w-full object-contain p-2" />
-              </div>
-              <h2 className="font-display text-2xl font-semibold leading-tight" style={{ animation: "fade-up 0.3s ease-out 0.2s both" }}>
-                Bienvenue chez Desmohair
-              </h2>
-              <p className="mt-2 text-xs text-muted-foreground leading-relaxed" style={{ animation: "fade-up 0.3s ease-out 0.3s both" }}>
-                Laissez-nous révéler votre élégance naturelle.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div
+            key="splash"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-white gpu-accelerated"
+          >
+            {splashPhase === "loading" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-center"
+              >
+                <div className="mx-auto grid h-28 w-28 place-items-center rounded-[36px] shadow-luxe overflow-hidden">
+                  <img src={desmohairLogo} alt="Desmohair" className="h-full w-full object-contain p-2" />
+                </div>
+                <h1 className="font-display mt-5 text-2xl font-semibold leading-tight">Desmohair</h1>
+                <p className="mt-2 text-xs italic text-muted-foreground">{"Votre beauté, notre passion"}</p>
+                <div className="mx-auto mt-6 flex items-center justify-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-[var(--gold)] animate-pulse" />
+                  <span className="h-2 w-2 rounded-full bg-[var(--gold)] animate-pulse" style={{ animationDelay: "0.12s" }} />
+                  <span className="h-2 w-2 rounded-full bg-[var(--gold)] animate-pulse" style={{ animationDelay: "0.24s" }} />
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="text-center px-6"
+              >
+                <div className="mx-auto mb-4 grid h-28 w-28 place-items-center rounded-[36px] shadow-luxe overflow-hidden">
+                  <img src={desmohairLogo} alt="Desmohair" className="h-full w-full object-contain p-2" />
+                </div>
+                <h2 className="font-display text-2xl font-semibold leading-tight">Bienvenue chez Desmohair</h2>
+                <p className="mt-2 text-xs text-muted-foreground leading-relaxed">Laissez-nous révéler votre élégance naturelle.</p>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       {!authLoading && (
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>

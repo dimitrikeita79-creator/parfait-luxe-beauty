@@ -1,4 +1,4 @@
-import { readdirSync, existsSync, writeFileSync, readFileSync } from "node:fs";
+import { readdirSync, existsSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -130,4 +130,15 @@ try {
   }
 } catch (e) {
   console.warn('[postbuild] Failed to patch useStore:', e);
+}
+
+// Remove Nitro-generated Pages-incompatible wrangler config
+try {
+  const serverWrangler = join(root, "dist", "server", "wrangler.json");
+  if (existsSync(serverWrangler)) {
+    rmSync(serverWrangler, { force: true });
+    console.log('[postbuild] Removed dist/server/wrangler.json for Pages compatibility');
+  }
+} catch (e) {
+  console.warn('[postbuild] Failed to remove dist/server/wrangler.json:', e);
 }

@@ -1,8 +1,0 @@
-{
-  // "$schema": "https://raw.githubusercontent.com/cloudflare/wrangler/main/packages/wrangler/config-schema.json",
-  "name": "test",
-  "compatibility_date": "2026-06-18",
-  "main": "./dist/server/server.js",
-  "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true }
-}
